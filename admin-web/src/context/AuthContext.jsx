@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from 'react';
 const AuthContext = createContext(null);
 
 const getApiBaseUrl = () => {
-  return 'http://localhost:5001/api/auth';
+  return import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api/auth';
 };
 
 export const AuthProvider = ({ children }) => {

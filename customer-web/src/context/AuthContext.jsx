@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
 const getApiBaseUrl = () => {
-  return 'http://localhost:5001/api/auth';
+  return import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api/auth';
 };
 
 export const AuthProvider = ({ children }) => {
@@ -40,14 +40,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, company) => {
+  const register = async (name, email, password, sponsorId) => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${getApiBaseUrl()}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, company }),
+        body: JSON.stringify({ name, email, password, sponsorId }),
       });
 
       const data = await response.json();
