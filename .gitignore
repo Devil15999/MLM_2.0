@@ -1,0 +1,13 @@
+# Environment & sensitive credentials
+*.env
+atlas-credentials.env
+.env
+.env.local
+.env.*.local
+
+# Node modules & build artifacts
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
