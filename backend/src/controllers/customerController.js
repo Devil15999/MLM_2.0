@@ -214,11 +214,103 @@ export const requestWalletWithdrawal = async (req, res) => {
       return res.status(400).json({ message: 'Minimum withdrawal amount is $50' });
     }
 
+// @desc    Enroll a New Member into a Tree Node Slot
+// @route   POST /api/customer/team/enroll
+export const enrollDownlineMember = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    const { memberName, memberEmail, position, packageName } = req.body;
+
+    if (!memberName || !position || !packageName) {
+      return res.status(400).json({ message: 'Please provide member name, leg position, and package.' });
+    }
+
+    // Determine package commission
+    const packagePrices = {
+      'Bronze Starter ($500)': 500,
+      'Silver Pro ($1,000)': 1000,
+      'Gold Executive ($2,500)': 2500,
+      'Diamond VIP ($5,000)': 5000,
+    };
+    const price = packagePrices[packageName] || 1000;
+    const isLevel1 = position.includes('Node 1') || position === 'Left Leg' || position === 'Right Leg' || !position.includes('L2');
+    const commRate = isLevel1 ? 0.10 : 0.05;
+    const commAmount = price * commRate;
+
+    let updatedUser = null;
+    if (userId) {
+      const user = await User.findById(userId);
+      if (user) {
+        if (isLevel1) {
+          user.level1MembersCount = (user.level1MembersCount || 0) + 1;
+          user.level1AffiliateIncome = (user.level1AffiliateIncome || 0) + commAmount;
+        } else {
+          user.level2MembersCount = (user.level2MembersCount || 0) + 1;
+          user.level2AffiliateIncome = (user.level2AffiliateIncome || 0) + commAmount;
+        }
+        user.downlineCount = (user.level1MembersCount || 0) + (user.level2MembersCount || 0);
+        user.walletBalance = (user.walletBalance || 0) + commAmount;
+        user.totalIncome = (user.totalIncome || 0) + commAmount;
+        user.totalEarnings = (user.totalEarnings || 0) + commAmount;
+        await user.save();
+        updatedUser = user;
+      }
+    }
+
     res.json({
       success: true,
-      message: `Withdrawal request of $${Number(amount).toFixed(2)} via ${method || 'Bank Account'} submitted successfully!`,
-      transactionId: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
-      timestamp: new Date().toISOString(),
+      message: `Successfully enrolled ${memberName} into ${position} with ${packageName}!`,
+      commissionEarned: `$${commAmount.toFixed(2)}`,
+      newNode: {
+        name: memberName,
+        email: memberEmail || `${memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+        position,
+        package: packageName,
+        status: 'Active',
+        joined: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+      },
+      updatedStats: updatedUser ? {
+        level1MembersCount: updatedUser.level1MembersCount,
+        level2MembersCount: updatedUser.level2MembersCount,
+        totalTeamCount: updatedUser.downlineCount,
+        level1AffiliateIncome: updatedUser.level1AffiliateIncome,
+        level2AffiliateIncome: updatedUser.level2AffiliateIncome,
+        totalIncome: updatedUser.totalIncome,
+        walletBalance: updatedUser.walletBalance
+      } : null
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Activate Product Package for User
+// @route   POST /api/customer/packages/activate
+export const activateUserPackage = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    const { packageName } = req.body;
+
+    if (!packageName) {
+      return res.status(400).json({ message: 'Package name is required.' });
+    }
+
+    if (userId) {
+      const user = await User.findById(userId);
+      if (user) {
+        user.selectedPackage = packageName;
+        if (packageName.includes('Gold')) user.rank = 'Gold';
+        else if (packageName.includes('Silver')) user.rank = 'Silver';
+        else if (packageName.includes('Diamond')) user.rank = 'Diamond';
+        else user.rank = 'Member';
+        await user.save();
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Package ${packageName} activated successfully!`,
+      selectedPackage: packageName,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

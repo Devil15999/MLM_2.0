@@ -72,6 +72,34 @@ const autoSeedUsers = async () => {
       });
       console.log('[Seed] Nexis Distributor created (alex@nexismlm.com / User@123456)');
     }
+
+    const freshUserCount = await User.countDocuments({ email: 'fresh@nexismlm.com' });
+    if (freshUserCount === 0) {
+      await User.create({
+        name: 'New Distributor (Fresh)',
+        email: 'fresh@nexismlm.com',
+        password: 'User@123456',
+        role: 'customer',
+        sponsorId: 'SP-2000',
+        rank: 'Member',
+        selectedPackage: 'None',
+        walletBalance: 0.00,
+        totalEarnings: 0.00,
+        downlineCount: 0,
+        level1MembersCount: 0,
+        level2MembersCount: 0,
+        level1AffiliateIncome: 0.00,
+        level2AffiliateIncome: 0.00,
+        investmentReturns: 0.00,
+        totalIncome: 0.00,
+        phone: '+1 (555) 000-0000',
+        address: '100 Clean Slate Way',
+        city: 'New City',
+        country: 'United States',
+        kycStatus: 'Not Submitted',
+      });
+      console.log('[Seed] Fresh Distributor created (fresh@nexismlm.com / User@123456) with 0 stats');
+    }
   } catch (err) {
     console.error('[Seed Error]:', err.message);
   }

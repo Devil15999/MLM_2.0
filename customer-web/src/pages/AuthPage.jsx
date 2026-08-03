@@ -252,21 +252,64 @@ export const AuthPage = () => {
             </button>
           </form>
 
-          {/* Quick Demo Fill button */}
-          <div style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid var(--border-color)', textAlign: 'center' }}>
+          {/* Quick Demo Fill buttons */}
+          <div style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
             <button
-              onClick={handleDemoFill}
+              onClick={() => {
+                setFormData({
+                  name: 'Alex Rivera',
+                  email: 'alex@nexismlm.com',
+                  password: 'User@123456',
+                  sponsorId: 'SP-1001',
+                });
+                setIsLogin(true);
+                if (error) setError(null);
+              }}
               style={{
-                background: 'transparent',
-                color: 'var(--primary)',
+                background: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                borderRadius: '8px',
+                padding: '8px 14px',
                 fontSize: '13px',
                 fontWeight: '700',
+                width: '100%',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '6px'
               }}
             >
-              <Sparkles size={16} /> Auto-fill Demo Distributor Credentials
+              <Sparkles size={16} /> Demo Account: Alex Rivera (Existing Network Stats)
+            </button>
+
+            <button
+              onClick={() => {
+                setFormData({
+                  name: 'New Distributor (Fresh)',
+                  email: 'fresh@nexismlm.com',
+                  password: 'User@123456',
+                  sponsorId: 'SP-2000',
+                });
+                setIsLogin(true);
+                if (error) setError(null);
+              }}
+              style={{
+                background: '#eff6ff',
+                color: '#2563eb',
+                border: '1px solid #bfdbfe',
+                borderRadius: '8px',
+                padding: '8px 14px',
+                fontSize: '13px',
+                fontWeight: '700',
+                width: '100%',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              <Sparkles size={16} /> Demo Account: Fresh User (Everything 0)
             </button>
           </div>
         </div>

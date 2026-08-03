@@ -35,28 +35,107 @@ export const DashboardPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [teamTab, setTeamTab] = useState('level1');
-  const [teamViewMode, setTeamViewMode] = useState('tree');
-  const [backendStats, setBackendStats] = useState(null);
+  const isFreshUser = user?.email === 'fresh@nexismlm.com' || user?.sponsorId === 'SP-2000';
+  const [activePackage, setActivePackage] = useState(user?.selectedPackage || (isFreshUser ? 'None' : 'Gold Executive ($2,500)'));
+  
+  // Tree Enrollment Modal State
+  const [enrollModalOpen, setEnrollModalOpen] = useState(false);
+  const [selectedSlotPosition, setSelectedSlotPosition] = useState('');
+  const [enrollFormData, setEnrollFormData] = useState({ memberName: '', memberEmail: '', packageName: 'Silver Pro ($1,000)' });
+  const [enrollSuccessMessage, setEnrollSuccessMessage] = useState('');
 
-  useEffect(() => {
-    const fetchDashboardStats = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
-        const res = await fetch(`${apiUrl.replace('/auth', '')}/customer/dashboard`, {
-          headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {}
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.metrics) {
-            setBackendStats(data.metrics);
-          }
-        }
-      } catch (err) {
-        console.log('Customer API fallback to client state');
-      }
+  // Dynamic Nodes State (for fresh user or added members)
+  const [enrolledLevel1, setEnrolledLevel1] = useState([]);
+  const [enrolledLevel2, setEnrolledLevel2] = useState([]);
+  const [dynamicWallet, setDynamicWallet] = useState(isFreshUser ? 0 : 6250);
+  const [dynamicTotalIncome, setDynamicTotalIncome] = useState(isFreshUser ? 0 : 10450);
+  const [dynamicL1Income, setDynamicL1Income] = useState(isFreshUser ? 0 : 4850);
+  const [dynamicL2Income, setDynamicL2Income] = useState(isFreshUser ? 0 : 2420);
+
+  const handleOpenEnrollModal = (position) => {
+    setSelectedSlotPosition(position);
+    setEnrollFormData({ memberName: '', memberEmail: '', packageName: 'Silver Pro ($1,000)' });
+    setEnrollModalOpen(true);
+  };
+
+  const handleEnrollSubmit = async (e) => {
+    e.preventDefault();
+    if (!enrollFormData.memberName) return;
+
+    const packagePrices = {
+      'Bronze Starter ($500)': 500,
+      'Silver Pro ($1,000)': 1000,
+      'Gold Executive ($2,500)': 2500,
+      'Diamond VIP ($5,000)': 5000,
     };
-    fetchDashboardStats();
-  }, [user]);
+    const price = packagePrices[enrollFormData.packageName] || 1000;
+    const isLevel1 = selectedSlotPosition.includes('Node 1') || selectedSlotPosition === 'Left Leg' || selectedSlotPosition === 'Right Leg' || !selectedSlotPosition.includes('L2');
+    const commRate = isLevel1 ? 0.10 : 0.05;
+    const commAmount = price * commRate;
+
+    const newNode = {
+      name: enrollFormData.memberName,
+      position: selectedSlotPosition,
+      email: enrollFormData.memberEmail || `${enrollFormData.memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      package: enrollFormData.packageName,
+      joined: 'Today',
+      status: 'Active',
+      level1Earned: isLevel1 ? `$${commAmount.toFixed(2)}` : '$0.00',
+      level2Earned: isLevel1 ? '$0.00' : `$${commAmount.toFixed(2)}`,
+      sponsor: isLevel1 ? (user?.name || 'You') : 'Sarah Connor'
+    };
+
+    if (isLevel1) {
+      setEnrolledLevel1(prev => [...prev, newNode]);
+      setDynamicL1Income(prev => prev + commAmount);
+    } else {
+      setEnrolledLevel2(prev => [...prev, newNode]);
+      setDynamicL2Income(prev => prev + commAmount);
+    }
+
+    setDynamicWallet(prev => prev + commAmount);
+    setDynamicTotalIncome(prev => prev + commAmount);
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
+      await fetch(`${apiUrl.replace('/auth', '')}/customer/team/enroll`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {})
+        },
+        body: JSON.stringify({
+          memberName: enrollFormData.memberName,
+          memberEmail: enrollFormData.memberEmail,
+          position: selectedSlotPosition,
+          packageName: enrollFormData.packageName
+        })
+      });
+    } catch (err) {
+      console.log('Enrollment updated locally');
+    }
+
+    setEnrollSuccessMessage(`Successfully enrolled ${enrollFormData.memberName} into ${selectedSlotPosition}! Credited +$${commAmount.toFixed(2)} commission.`);
+    setEnrollModalOpen(false);
+    setTimeout(() => setEnrollSuccessMessage(''), 4000);
+  };
+
+  const handleActivatePackage = async (pkgName) => {
+    setActivePackage(pkgName);
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
+      await fetch(`${apiUrl.replace('/auth', '')}/customer/packages/activate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {})
+        },
+        body: JSON.stringify({ packageName: pkgName })
+      });
+    } catch (err) {
+      console.log('Package activated locally');
+    }
+  };
 
 
   // Forms state
@@ -116,13 +195,32 @@ export const DashboardPage = () => {
     }, 3000);
   };
 
+  const defaultL1 = [
+    { name: 'Sarah Connor', position: 'Left Leg (Node 1)', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
+    { name: 'David Vance', position: 'Right Leg (Node 2)', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' }
+  ];
+
+  const defaultL2 = [
+    { name: 'Kevin Flynn', position: 'Left-Left Leg (L2 Node 1)', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
+    { name: 'Claire Bennet', position: 'Left-Right Leg (L2 Node 2)', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' },
+    { name: 'Arthur Pendelton', position: 'Right-Left Leg (L2 Node 3)', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
+    { name: 'Rachel Green', position: 'Right-Right Leg (L2 Node 4)', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Bronze ($500)', level2Earned: '$50.00', status: 'Active' }
+  ];
+
+  const level1MembersList = isFreshUser ? enrolledLevel1 : [...defaultL1, ...enrolledLevel1];
+  const level2MembersList = isFreshUser ? enrolledLevel2 : [...defaultL2, ...enrolledLevel2];
+
+  const l1Count = isFreshUser ? enrolledLevel1.length : (2 + enrolledLevel1.length);
+  const l2Count = isFreshUser ? enrolledLevel2.length : (4 + enrolledLevel2.length);
+  const totalCount = l1Count + l2Count;
+
   // Metrics required by user (2 Nodes Max Level 1, 2 Max Levels)
   const statsMetrics = [
     {
       id: 'total-team',
       title: 'Total Team (Includes Level 1 & 2)',
-      value: '6 Nodes',
-      sub: '2 Level 1 + 4 Level 2 (Max 2 Levels)',
+      value: `${totalCount} Nodes`,
+      sub: `${l1Count} Level 1 + ${l2Count} Level 2 (Max 2 Levels)`,
       icon: Users,
       color: '#4f46e5',
       bg: '#eef2ff'
@@ -130,7 +228,7 @@ export const DashboardPage = () => {
     {
       id: 'level-1-members',
       title: 'Level 1 Members',
-      value: '2 Nodes',
+      value: `${l1Count} Nodes`,
       sub: 'Max 2 Direct Child Nodes (Left & Right)',
       icon: Layers,
       color: '#059669',
@@ -139,7 +237,7 @@ export const DashboardPage = () => {
     {
       id: 'level-2-members',
       title: 'Level 2 Members',
-      value: '4 Nodes',
+      value: `${l2Count} Nodes`,
       sub: 'Secondary Downline Nodes (Max Level 2)',
       icon: Users,
       color: '#0284c7',
@@ -148,7 +246,7 @@ export const DashboardPage = () => {
     {
       id: 'level-1-income',
       title: 'Level 1 Affiliate Income',
-      value: '$4,850.00',
+      value: `$${dynamicL1Income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
       sub: 'Direct Referral Bonus',
       icon: DollarSign,
       color: '#10b981',
@@ -157,7 +255,7 @@ export const DashboardPage = () => {
     {
       id: 'level-2-income',
       title: 'Level 2 Affiliate Income',
-      value: '$2,420.00',
+      value: `$${dynamicL2Income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
       sub: 'Indirect Override Commission',
       icon: DollarSign,
       color: '#8b5cf6',
@@ -166,7 +264,7 @@ export const DashboardPage = () => {
     {
       id: 'investment-returns',
       title: 'Investment Returns',
-      value: '$3,180.00',
+      value: isFreshUser ? '$0.00' : '$3,180.00',
       sub: 'Package Yield & Passive ROI',
       icon: TrendingUp,
       color: '#d97706',
@@ -175,7 +273,7 @@ export const DashboardPage = () => {
     {
       id: 'total-income',
       title: 'Total Income',
-      value: '$10,450.00',
+      value: `$${dynamicTotalIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
       sub: 'Cumulative Lifetime Earnings',
       icon: Award,
       color: '#059669',
@@ -184,25 +282,12 @@ export const DashboardPage = () => {
     {
       id: 'wallet',
       title: 'Wallet',
-      value: '$6,250.00',
+      value: `$${dynamicWallet.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
       sub: 'Available Withdrawable Balance',
       icon: Wallet,
       color: '#2563eb',
       bg: '#eff6ff'
     }
-  ];
-
-  // Team Data (Exactly 2 Nodes Level 1, 4 Nodes Level 2)
-  const level1MembersList = [
-    { name: 'Sarah Connor', position: 'Left Leg (Node 1)', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
-    { name: 'David Vance', position: 'Right Leg (Node 2)', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' }
-  ];
-
-  const level2MembersList = [
-    { name: 'Kevin Flynn', position: 'Left-Left Leg (L2 Node 1)', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-    { name: 'Claire Bennet', position: 'Left-Right Leg (L2 Node 2)', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' },
-    { name: 'Arthur Pendelton', position: 'Right-Left Leg (L2 Node 3)', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-    { name: 'Rachel Green', position: 'Right-Right Leg (L2 Node 4)', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Bronze ($500)', level2Earned: '$50.00', status: 'Active' }
   ];
 
   // Packages list
@@ -381,6 +466,51 @@ export const DashboardPage = () => {
           {/* TAB 1: HOME (DASHBOARD) */}
           {activeTab === 'home' && (
             <div>
+              {/* Unactivated Package Banner for Fresh Accounts */}
+              {activePackage === 'None' && (
+                <div className="light-card" style={{
+                  padding: '24px 28px',
+                  marginBottom: '24px',
+                  background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                  border: '2px solid #f59e0b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#d97706', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Package size={24} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#78350f' }}>Account Status: Pending Package Activation</h3>
+                      <p style={{ fontSize: '13px', color: '#92400e' }}>Select a product package tier to activate your binary tree slot and unlock affiliate earnings.</p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => handleActivatePackage('Bronze Starter ($500)')} className="btn-outline" style={{ fontSize: '12px', padding: '8px 14px' }}>
+                      Activate Bronze ($500)
+                    </button>
+                    <button onClick={() => handleActivatePackage('Silver Pro ($1,000)')} className="btn-outline" style={{ fontSize: '12px', padding: '8px 14px' }}>
+                      Activate Silver ($1,000)
+                    </button>
+                    <button onClick={() => handleActivatePackage('Gold Executive ($2,500)')} className="btn-emerald" style={{ fontSize: '12px', padding: '8px 14px' }}>
+                      Activate Gold ($2,500)
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Enrollment Success Toast Feedback */}
+              {enrollSuccessMessage && (
+                <div style={{ padding: '14px 20px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '12px', color: '#166534', fontWeight: '700', fontSize: '14px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle2 size={20} color="#166534" />
+                  <span>{enrollSuccessMessage}</span>
+                </div>
+              )}
+
               {/* Hero Banner */}
               <div className="light-card" style={{
                 padding: '28px 32px',
@@ -394,8 +524,8 @@ export const DashboardPage = () => {
                 gap: '20px'
               }}>
                 <div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#dcfce7', color: '#15803d', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '10px' }}>
-                    <Sparkles size={14} /> Account Status: Active Distributor
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: activePackage === 'None' ? '#fef3c7' : '#dcfce7', color: activePackage === 'None' ? '#92400e' : '#15803d', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '10px' }}>
+                    <Sparkles size={14} /> Package Active: {activePackage}
                   </div>
                   <h1 style={{ fontSize: '26px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-main)' }}>
                     Welcome to Customer Portal, {user?.name || 'Alex Rivera'}!
@@ -904,42 +1034,78 @@ export const DashboardPage = () => {
                         {/* Level 1 - Left Child Node */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
                           <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                          <div className="tree-node-card level1-card">
-                            <span style={{ background: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
-                              LEFT LEG (NODE 1)
-                            </span>
-                            <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>Sarah Connor</div>
-                            <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>Executive Gold</div>
-                            <div style={{ fontSize: '11px', color: '#059669', fontWeight: '700', marginTop: '2px' }}>$2,500 Package</div>
-                          </div>
+                          
+                          {/* Node Card or Empty Slot */}
+                          {level1MembersList[0] ? (
+                            <div className="tree-node-card level1-card">
+                              <span style={{ background: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
+                                LEFT LEG (NODE 1)
+                              </span>
+                              <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{level1MembersList[0].name}</div>
+                              <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>{level1MembersList[0].package}</div>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => handleOpenEnrollModal('Left Leg (Node 1)')}
+                              className="tree-node-card"
+                              style={{ border: '2px dashed #059669', background: '#ecfdf5', cursor: 'pointer' }}
+                            >
+                              <PlusCircle size={24} color="#059669" style={{ margin: '0 auto 4px auto', display: 'block' }} />
+                              <div style={{ fontSize: '13px', fontWeight: '800', color: '#059669' }}>+ Enroll Left Node</div>
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Empty Slot</div>
+                            </div>
+                          )}
+
                           <div className="tree-connector-line"></div>
 
-                          {/* LEVEL 2: UNDER SARAH (LEFT & RIGHT) */}
+                          {/* LEVEL 2: UNDER LEFT NODE (LEFT & RIGHT) */}
                           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', position: 'relative', width: '100%' }}>
                             <div style={{ position: 'absolute', top: '-16px', left: '20%', right: '20%', height: '2px', background: '#cbd5e1' }}></div>
 
                             {/* L2 Node 1 */}
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                              <div className="tree-node-card level2-card">
-                                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
-                                  LEFT-LEFT
-                                </span>
-                                <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>Kevin Flynn</div>
-                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sponsor: Sarah</div>
-                              </div>
+                              {level2MembersList[0] ? (
+                                <div className="tree-node-card level2-card">
+                                  <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
+                                    LEFT-LEFT
+                                  </span>
+                                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[0].name}</div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[0].package}</div>
+                                </div>
+                              ) : (
+                                <div
+                                  onClick={() => handleOpenEnrollModal('Left-Left Leg (L2 Node 1)')}
+                                  className="tree-node-card"
+                                  style={{ border: '2px dashed #8b5cf6', background: '#faf5ff', cursor: 'pointer', minWidth: '140px', padding: '12px' }}
+                                >
+                                  <PlusCircle size={18} color="#8b5cf6" style={{ margin: '0 auto 4px auto', display: 'block' }} />
+                                  <div style={{ fontSize: '12px', fontWeight: '800', color: '#8b5cf6' }}>+ Add Downline</div>
+                                </div>
+                              )}
                             </div>
 
                             {/* L2 Node 2 */}
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                              <div className="tree-node-card level2-card">
-                                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
-                                  LEFT-RIGHT
-                                </span>
-                                <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>Claire Bennet</div>
-                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sponsor: Sarah</div>
-                              </div>
+                              {level2MembersList[1] ? (
+                                <div className="tree-node-card level2-card">
+                                  <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
+                                    LEFT-RIGHT
+                                  </span>
+                                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[1].name}</div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[1].package}</div>
+                                </div>
+                              ) : (
+                                <div
+                                  onClick={() => handleOpenEnrollModal('Left-Right Leg (L2 Node 2)')}
+                                  className="tree-node-card"
+                                  style={{ border: '2px dashed #8b5cf6', background: '#faf5ff', cursor: 'pointer', minWidth: '140px', padding: '12px' }}
+                                >
+                                  <PlusCircle size={18} color="#8b5cf6" style={{ margin: '0 auto 4px auto', display: 'block' }} />
+                                  <div style={{ fontSize: '12px', fontWeight: '800', color: '#8b5cf6' }}>+ Add Downline</div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -947,42 +1113,77 @@ export const DashboardPage = () => {
                         {/* Level 1 - Right Child Node */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
                           <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                          <div className="tree-node-card level1-card">
-                            <span style={{ background: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
-                              RIGHT LEG (NODE 2)
-                            </span>
-                            <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>David Vance</div>
-                            <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>Pro Silver</div>
-                            <div style={{ fontSize: '11px', color: '#059669', fontWeight: '700', marginTop: '2px' }}>$1,000 Package</div>
-                          </div>
+
+                          {level1MembersList[1] ? (
+                            <div className="tree-node-card level1-card">
+                              <span style={{ background: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
+                                RIGHT LEG (NODE 2)
+                              </span>
+                              <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{level1MembersList[1].name}</div>
+                              <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>{level1MembersList[1].package}</div>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => handleOpenEnrollModal('Right Leg (Node 2)')}
+                              className="tree-node-card"
+                              style={{ border: '2px dashed #059669', background: '#ecfdf5', cursor: 'pointer' }}
+                            >
+                              <PlusCircle size={24} color="#059669" style={{ margin: '0 auto 4px auto', display: 'block' }} />
+                              <div style={{ fontSize: '13px', fontWeight: '800', color: '#059669' }}>+ Enroll Right Node</div>
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Empty Slot</div>
+                            </div>
+                          )}
+
                           <div className="tree-connector-line"></div>
 
-                          {/* LEVEL 2: UNDER DAVID (LEFT & RIGHT) */}
+                          {/* LEVEL 2: UNDER RIGHT NODE (LEFT & RIGHT) */}
                           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', position: 'relative', width: '100%' }}>
                             <div style={{ position: 'absolute', top: '-16px', left: '20%', right: '20%', height: '2px', background: '#cbd5e1' }}></div>
 
                             {/* L2 Node 3 */}
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                              <div className="tree-node-card level2-card">
-                                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
-                                  RIGHT-LEFT
-                                </span>
-                                <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>Arthur Pendelton</div>
-                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sponsor: David</div>
-                              </div>
+                              {level2MembersList[2] ? (
+                                <div className="tree-node-card level2-card">
+                                  <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
+                                    RIGHT-LEFT
+                                  </span>
+                                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[2].name}</div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[2].package}</div>
+                                </div>
+                              ) : (
+                                <div
+                                  onClick={() => handleOpenEnrollModal('Right-Left Leg (L2 Node 3)')}
+                                  className="tree-node-card"
+                                  style={{ border: '2px dashed #8b5cf6', background: '#faf5ff', cursor: 'pointer', minWidth: '140px', padding: '12px' }}
+                                >
+                                  <PlusCircle size={18} color="#8b5cf6" style={{ margin: '0 auto 4px auto', display: 'block' }} />
+                                  <div style={{ fontSize: '12px', fontWeight: '800', color: '#8b5cf6' }}>+ Add Downline</div>
+                                </div>
+                              )}
                             </div>
 
                             {/* L2 Node 4 */}
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                              <div className="tree-node-card level2-card">
-                                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
-                                  RIGHT-RIGHT
-                                </span>
-                                <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>Rachel Green</div>
-                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sponsor: David</div>
-                              </div>
+                              {level2MembersList[3] ? (
+                                <div className="tree-node-card level2-card">
+                                  <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
+                                    RIGHT-RIGHT
+                                  </span>
+                                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[3].name}</div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[3].package}</div>
+                                </div>
+                              ) : (
+                                <div
+                                  onClick={() => handleOpenEnrollModal('Right-Right Leg (L2 Node 4)')}
+                                  className="tree-node-card"
+                                  style={{ border: '2px dashed #8b5cf6', background: '#faf5ff', cursor: 'pointer', minWidth: '140px', padding: '12px' }}
+                                >
+                                  <PlusCircle size={18} color="#8b5cf6" style={{ margin: '0 auto 4px auto', display: 'block' }} />
+                                  <div style={{ fontSize: '12px', fontWeight: '800', color: '#8b5cf6' }}>+ Add Downline</div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1207,6 +1408,94 @@ export const DashboardPage = () => {
 
         </main>
       </div>
+
+      {/* ENROLL DOWNLINE MEMBER MODAL */}
+      {enrollModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div className="light-card" style={{ maxWidth: '480px', width: '100%', padding: '28px', background: '#ffffff', borderRadius: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Enroll New Downline Member</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Placing member into <strong style={{ color: '#059669' }}>{selectedSlotPosition}</strong></p>
+              </div>
+              <button onClick={() => setEnrollModalOpen(false)} style={{ background: 'transparent', padding: '4px' }}>
+                <X size={20} color="#64748b" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEnrollSubmit}>
+              <div style={{ marginBottom: '14px' }}>
+                <label className="form-label">Sponsor ID</label>
+                <input type="text" disabled value={referralCode} className="form-input" style={{ background: '#f1f5f9', cursor: 'not-allowed', color: '#4f46e5', fontWeight: '700' }} />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label className="form-label">Target Binary Leg Position</label>
+                <input type="text" disabled value={selectedSlotPosition} className="form-input" style={{ background: '#ecfdf5', cursor: 'not-allowed', color: '#059669', fontWeight: '700' }} />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label className="form-label">Member Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Michael Scott"
+                  className="form-input"
+                  value={enrollFormData.memberName}
+                  onChange={(e) => setEnrollFormData({ ...enrollFormData, memberName: e.target.value })}
+                />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label className="form-label">Member Email Address</label>
+                <input
+                  type="email"
+                  placeholder="michael.scott@example.com"
+                  className="form-input"
+                  value={enrollFormData.memberEmail}
+                  onChange={(e) => setEnrollFormData({ ...enrollFormData, memberEmail: e.target.value })}
+                />
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label className="form-label">Product Package Choice *</label>
+                <select
+                  className="form-input"
+                  value={enrollFormData.packageName}
+                  onChange={(e) => setEnrollFormData({ ...enrollFormData, packageName: e.target.value })}
+                >
+                  <option>Bronze Starter ($500) — 10% Level 1 Comm ($50)</option>
+                  <option>Silver Pro ($1,000) — 12% Level 1 Comm ($120)</option>
+                  <option>Gold Executive ($2,500) — 15% Level 1 Comm ($375)</option>
+                  <option>Diamond VIP ($5,000) — 18% Level 1 Comm ($900)</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button type="button" onClick={() => setEnrollModalOpen(false)} className="btn-outline" style={{ flex: 1 }}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-emerald" style={{ flex: 1 }}>
+                  Enroll & Place Member
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

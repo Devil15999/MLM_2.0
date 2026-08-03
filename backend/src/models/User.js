@@ -35,6 +35,15 @@ const userSchema = new mongoose.Schema(
       enum: ['Member', 'Silver', 'Gold', 'Platinum', 'Diamond'],
       default: 'Gold',
     },
+    selectedPackage: {
+      type: String,
+      default: 'None',
+    },
+    legPreference: {
+      type: String,
+      enum: ['Left Leg', 'Right Leg'],
+      default: 'Left Leg',
+    },
     walletBalance: {
       type: Number,
       default: 4850.00,
