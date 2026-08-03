@@ -35,6 +35,7 @@ export const DashboardPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [teamTab, setTeamTab] = useState('level1');
+  const [teamViewMode, setTeamViewMode] = useState('tree');
   const isFreshUser = user?.email === 'fresh@nexismlm.com' || user?.sponsorId === 'SP-2000';
   const [activePackage, setActivePackage] = useState(user?.selectedPackage || (isFreshUser ? 'None' : 'Gold Executive ($2,500)'));
   
