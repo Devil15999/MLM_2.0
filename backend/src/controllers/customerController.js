@@ -179,19 +179,14 @@ export const getCustomerPackages = async (req, res) => {
 // @route   GET /api/customer/team
 export const getCustomerTeamDetails = async (req, res) => {
   try {
-    // Exactly 2 nodes in Level 1 (Left Leg & Right Leg)
-    const level1Members = [
-      { nodePosition: 'Left Leg (Node 1)', name: 'Sarah Connor', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
-      { nodePosition: 'Right Leg (Node 2)', name: 'David Vance', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' }
-    ];
+    const userId = req.user?._id;
+    let downlines = [];
+    if (userId) {
+      downlines = await User.find({ sponsorId: userId });
+    }
 
-    // Max 4 nodes in Level 2 (2 under Left Leg, 2 under Right Leg)
-    const level2Members = [
-      { nodePosition: 'Left-Left Leg (L2 Node 1)', name: 'Kevin Flynn', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-      { nodePosition: 'Left-Right Leg (L2 Node 2)', name: 'Claire Bennet', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' },
-      { nodePosition: 'Right-Left Leg (L2 Node 3)', name: 'Arthur Pendelton', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-      { nodePosition: 'Right-Right Leg (L2 Node 4)', name: 'Rachel Green', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Bronze ($500)', level2Earned: '$50.00', status: 'Active' }
-    ];
+    const level1Members = downlines.filter(u => u.legPreference?.includes('Left') || u.legPreference?.includes('Right'));
+    const level2Members = downlines.filter(u => u.legPreference?.includes('L2'));
 
     res.json({
       maxLevels: 2,
@@ -383,23 +378,6 @@ export const getCustomerNotifications = async (req, res) => {
     }
 
     let notifications = await Approval.find(query).sort({ createdAt: -1 });
-
-    // Fallback if empty or for fresh user
-    if (notifications.length === 0) {
-      notifications = [
-        {
-          _id: 'notif-1',
-          type: 'Enrolled Downline Commission',
-          sponsorName: req.user?.name || 'You',
-          enrolledMemberName: 'Sarah Connor',
-          position: 'Left Leg (Node 1)',
-          packageName: 'Gold Executive ($2,500)',
-          commissionAmount: 375.00,
-          status: 'Approved',
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-        }
-      ];
-    }
 
     res.json({
       success: true,
