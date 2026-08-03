@@ -64,14 +64,18 @@ const userSchema = new mongoose.Schema(
       enum: ['active', 'suspended', 'pending'],
       default: 'active',
     },
-    // Customer Portal Metrics & Details
+    // Customer Portal Metrics & Details (2 Nodes Max Level 1, 2 Max Levels)
+    maxLevels: {
+      type: Number,
+      default: 2,
+    },
     level1MembersCount: {
       type: Number,
-      default: 12,
+      default: 2,
     },
     level2MembersCount: {
       type: Number,
-      default: 24,
+      default: 4,
     },
     level1AffiliateIncome: {
       type: Number,

@@ -115,13 +115,13 @@ export const DashboardPage = () => {
     }, 3000);
   };
 
-  // Metrics required by user
+  // Metrics required by user (2 Nodes Max Level 1, 2 Max Levels)
   const statsMetrics = [
     {
       id: 'total-team',
       title: 'Total Team (Includes Level 1 & 2)',
-      value: '36 Members',
-      sub: '12 Level 1 + 24 Level 2',
+      value: '6 Nodes',
+      sub: '2 Level 1 + 4 Level 2 (Max 2 Levels)',
       icon: Users,
       color: '#4f46e5',
       bg: '#eef2ff'
@@ -129,8 +129,8 @@ export const DashboardPage = () => {
     {
       id: 'level-1-members',
       title: 'Level 1 Members',
-      value: '12 Directs',
-      sub: 'Active Direct Referrals',
+      value: '2 Nodes',
+      sub: 'Max 2 Direct Child Nodes (Left & Right)',
       icon: Layers,
       color: '#059669',
       bg: '#ecfdf5'
@@ -138,8 +138,8 @@ export const DashboardPage = () => {
     {
       id: 'level-2-members',
       title: 'Level 2 Members',
-      value: '24 Indirects',
-      sub: 'Secondary Downline Team',
+      value: '4 Nodes',
+      sub: 'Secondary Downline Nodes (Max Level 2)',
       icon: Users,
       color: '#0284c7',
       bg: '#f0f9ff'
@@ -191,23 +191,17 @@ export const DashboardPage = () => {
     }
   ];
 
-  // Team Data
+  // Team Data (Exactly 2 Nodes Level 1, 4 Nodes Level 2)
   const level1MembersList = [
-    { name: 'Sarah Connor', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
-    { name: 'David Vance', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' },
-    { name: 'Elena Rostova', email: 'elena.r@yahoo.com', joined: 'July 21, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
-    { name: 'Marcus Brody', email: 'marcus.b@company.org', joined: 'July 26, 2026', package: 'Starter Bronze ($500)', level1Earned: '$250.00', status: 'Active' },
-    { name: 'Jessica Alba', email: 'jessica.a@studio.com', joined: 'Aug 01, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' },
-    { name: 'Michael Chang', email: 'mchang@horizon.net', joined: 'Aug 02, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,100.00', status: 'Active' }
+    { name: 'Sarah Connor', position: 'Left Leg (Node 1)', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
+    { name: 'David Vance', position: 'Right Leg (Node 2)', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' }
   ];
 
   const level2MembersList = [
-    { name: 'Kevin Flynn', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-    { name: 'Claire Bennet', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' },
-    { name: 'Arthur Pendelton', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-    { name: 'Rachel Green', sponsor: 'Elena Rostova', joined: 'July 28, 2026', package: 'Starter Bronze ($500)', level2Earned: '$50.00', status: 'Active' },
-    { name: 'Chandler Bing', sponsor: 'Marcus Brody', joined: 'July 29, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-    { name: 'Monica Geller', sponsor: 'Marcus Brody', joined: 'Aug 01, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' }
+    { name: 'Kevin Flynn', position: 'Left-Left Leg (L2 Node 1)', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
+    { name: 'Claire Bennet', position: 'Left-Right Leg (L2 Node 2)', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' },
+    { name: 'Arthur Pendelton', position: 'Right-Left Leg (L2 Node 3)', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
+    { name: 'Rachel Green', position: 'Right-Right Leg (L2 Node 4)', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Bronze ($500)', level2Earned: '$50.00', status: 'Active' }
   ];
 
   // Packages list
@@ -818,20 +812,20 @@ export const DashboardPage = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '28px' }}>
                 <div className="light-card" style={{ padding: '20px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Total Downline Team</div>
-                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#4f46e5', marginTop: '4px' }}>36 Members</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Level 1 & 2 Combined</div>
+                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#4f46e5', marginTop: '4px' }}>6 Nodes</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Level 1 & 2 (Max 2 Levels)</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '20px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Level 1 Members</div>
-                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#059669', marginTop: '4px' }}>12 Members</div>
-                  <div style={{ fontSize: '12px', color: '#059669', fontWeight: '600' }}>Direct Referrals</div>
+                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#059669', marginTop: '4px' }}>2 Nodes</div>
+                  <div style={{ fontSize: '12px', color: '#059669', fontWeight: '600' }}>Max 2 Child Nodes (Left & Right)</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '20px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Level 2 Members</div>
-                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#8b5cf6', marginTop: '4px' }}>24 Members</div>
-                  <div style={{ fontSize: '12px', color: '#8b5cf6', fontWeight: '600' }}>Secondary Downline</div>
+                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#8b5cf6', marginTop: '4px' }}>4 Nodes</div>
+                  <div style={{ fontSize: '12px', color: '#8b5cf6', fontWeight: '600' }}>Max Level 2 Depth</div>
                 </div>
               </div>
 
@@ -845,14 +839,14 @@ export const DashboardPage = () => {
                       className={teamTab === 'level1' ? 'btn-emerald' : 'btn-outline'}
                       style={{ padding: '8px 18px', fontSize: '13px' }}
                     >
-                      Level 1 Directs (12)
+                      Level 1 Directs (2 Nodes Max)
                     </button>
                     <button
                       onClick={() => setTeamTab('level2')}
                       className={teamTab === 'level2' ? 'btn-indigo' : 'btn-outline'}
                       style={{ padding: '8px 18px', fontSize: '13px' }}
                     >
-                      Level 2 Indirects (24)
+                      Level 2 Indirects (4 Nodes Max)
                     </button>
                   </div>
                 </div>
@@ -863,6 +857,7 @@ export const DashboardPage = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                          <th style={{ padding: '12px 16px' }}>Binary Leg Position</th>
                           <th style={{ padding: '12px 16px' }}>Member Name</th>
                           <th style={{ padding: '12px 16px' }}>Email Address</th>
                           <th style={{ padding: '12px 16px' }}>Enrollment Date</th>
@@ -874,6 +869,11 @@ export const DashboardPage = () => {
                       <tbody>
                         {level1MembersList.map((m, i) => (
                           <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                            <td style={{ padding: '16px' }}>
+                              <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                {m.position}
+                              </span>
+                            </td>
                             <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
                             <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.email}</td>
                             <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
@@ -897,6 +897,7 @@ export const DashboardPage = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                          <th style={{ padding: '12px 16px' }}>Binary Leg Position</th>
                           <th style={{ padding: '12px 16px' }}>Member Name</th>
                           <th style={{ padding: '12px 16px' }}>Direct Sponsor (Level 1)</th>
                           <th style={{ padding: '12px 16px' }}>Enrollment Date</th>
@@ -908,6 +909,11 @@ export const DashboardPage = () => {
                       <tbody>
                         {level2MembersList.map((m, i) => (
                           <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                            <td style={{ padding: '16px' }}>
+                              <span style={{ background: '#f3e8ff', color: '#6b21a8', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                {m.position}
+                              </span>
+                            </td>
                             <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
                             <td style={{ padding: '16px', fontWeight: '600', color: '#059669' }}>{m.sponsor}</td>
                             <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>

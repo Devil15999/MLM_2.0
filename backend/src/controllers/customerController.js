@@ -1,14 +1,15 @@
 import { User } from '../models/User.js';
 
-// @desc    Get Customer Dashboard Statistics (8 Core Metrics)
+// @desc    Get Customer Dashboard Statistics (8 Core Metrics - 2 Nodes, 2 Max Levels)
 // @route   GET /api/customer/dashboard
 export const getCustomerDashboard = async (req, res) => {
   try {
     const userId = req.user?._id;
     const user = userId ? await User.findById(userId) : null;
 
-    const level1Count = user?.level1MembersCount ?? 12;
-    const level2Count = user?.level2MembersCount ?? 24;
+    // Enforce 2 Nodes Max on Level 1, 2 Max Levels
+    const level1Count = user?.level1MembersCount ?? 2;
+    const level2Count = user?.level2MembersCount ?? 4;
     const totalTeam = level1Count + level2Count;
 
     const level1Income = user?.level1AffiliateIncome ?? 4850.00;
@@ -23,19 +24,19 @@ export const getCustomerDashboard = async (req, res) => {
           title: 'Total Team (Includes Level 1 & 2)',
           value: `${totalTeam} Members`,
           rawCount: totalTeam,
-          sub: `${level1Count} Level 1 + ${level2Count} Level 2`,
+          sub: `${level1Count} Level 1 (Max 2) + ${level2Count} Level 2 (Max 4)`,
         },
         level1Members: {
           title: 'Level 1 Members',
-          value: `${level1Count} Directs`,
+          value: `${level1Count} Nodes (Max 2)`,
           rawCount: level1Count,
-          sub: 'Direct Referral Downlines',
+          sub: 'Direct Child Nodes (Left & Right Leg)',
         },
         level2Members: {
           title: 'Level 2 Members',
-          value: `${level2Count} Indirects`,
+          value: `${level2Count} Nodes (Max 4)`,
           rawCount: level2Count,
-          sub: 'Secondary Team Downlines',
+          sub: 'Secondary Downline Nodes (Max Level 2)',
         },
         level1AffiliateIncome: {
           title: 'Level 1 Affiliate Income',
@@ -72,6 +73,8 @@ export const getCustomerDashboard = async (req, res) => {
         name: user?.name || 'Alex Rivera',
         rank: user?.rank || 'Gold Executive',
         sponsorId: user?.sponsorId || 'SP-1001',
+        maxLevels: 2,
+        maxDirectNodes: 2,
       },
     });
   } catch (error) {
@@ -170,29 +173,27 @@ export const getCustomerPackages = async (req, res) => {
   }
 };
 
-// @desc    Get Team Details (Level 1 & Level 2 Members)
+// @desc    Get Team Details (Level 1: 2 Nodes, Level 2: 4 Nodes, Max 2 Levels)
 // @route   GET /api/customer/team
 export const getCustomerTeamDetails = async (req, res) => {
   try {
+    // Exactly 2 nodes in Level 1 (Left Leg & Right Leg)
     const level1Members = [
-      { name: 'Sarah Connor', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
-      { name: 'David Vance', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' },
-      { name: 'Elena Rostova', email: 'elena.r@yahoo.com', joined: 'July 21, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
-      { name: 'Marcus Brody', email: 'marcus.b@company.org', joined: 'July 26, 2026', package: 'Starter Bronze ($500)', level1Earned: '$250.00', status: 'Active' },
-      { name: 'Jessica Alba', email: 'jessica.a@studio.com', joined: 'Aug 01, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' },
-      { name: 'Michael Chang', email: 'mchang@horizon.net', joined: 'Aug 02, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,100.00', status: 'Active' }
+      { nodePosition: 'Left Leg (Node 1)', name: 'Sarah Connor', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
+      { nodePosition: 'Right Leg (Node 2)', name: 'David Vance', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' }
     ];
 
+    // Max 4 nodes in Level 2 (2 under Left Leg, 2 under Right Leg)
     const level2Members = [
-      { name: 'Kevin Flynn', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-      { name: 'Claire Bennet', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' },
-      { name: 'Arthur Pendelton', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-      { name: 'Rachel Green', sponsor: 'Elena Rostova', joined: 'July 28, 2026', package: 'Starter Bronze ($500)', level2Earned: '$50.00', status: 'Active' },
-      { name: 'Chandler Bing', sponsor: 'Marcus Brody', joined: 'July 29, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-      { name: 'Monica Geller', sponsor: 'Marcus Brody', joined: 'Aug 01, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' }
+      { nodePosition: 'Left-Left Leg (L2 Node 1)', name: 'Kevin Flynn', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
+      { nodePosition: 'Left-Right Leg (L2 Node 2)', name: 'Claire Bennet', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' },
+      { nodePosition: 'Right-Left Leg (L2 Node 3)', name: 'Arthur Pendelton', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
+      { nodePosition: 'Right-Right Leg (L2 Node 4)', name: 'Rachel Green', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Bronze ($500)', level2Earned: '$50.00', status: 'Active' }
     ];
 
     res.json({
+      maxLevels: 2,
+      maxLevel1Nodes: 2,
       level1MembersCount: level1Members.length,
       level2MembersCount: level2Members.length,
       totalTeamCount: level1Members.length + level2Members.length,
