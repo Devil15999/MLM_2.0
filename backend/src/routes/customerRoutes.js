@@ -8,6 +8,7 @@ import {
   requestWalletWithdrawal,
   enrollDownlineMember,
   activateUserPackage,
+  getCustomerNotifications,
 } from '../controllers/customerController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -15,6 +16,7 @@ const router = express.Router();
 
 // Public / Demo accessible or Token protected endpoints
 router.get('/dashboard', getCustomerDashboard);
+router.get('/notifications', getCustomerNotifications);
 router.put('/profile', protect, updateCustomerProfile);
 router.post('/kyc', updateCustomerKYC);
 router.get('/packages', getCustomerPackages);

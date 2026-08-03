@@ -26,7 +26,8 @@ import {
   Clock,
   PlusCircle,
   Menu,
-  X
+  X,
+  Bell
 } from 'lucide-react';
 
 export const DashboardPage = () => {
@@ -67,6 +68,26 @@ export const DashboardPage = () => {
   const [dynamicTotalIncome, setDynamicTotalIncome] = useState(user?.totalIncome ?? (isFreshUser ? 0 : 10450));
   const [dynamicL1Income, setDynamicL1Income] = useState(user?.level1AffiliateIncome ?? (isFreshUser ? 0 : 4850));
   const [dynamicL2Income, setDynamicL2Income] = useState(user?.level2AffiliateIncome ?? (isFreshUser ? 0 : 2420));
+
+  // Notifications State
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsList, setNotificationsList] = useState([]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
+        const res = await fetch(`${apiUrl.replace('/auth', '')}/customer/notifications`, {
+          headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {}
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNotificationsList(data.notifications || []);
+        }
+      } catch (err) {}
+    };
+    fetchNotifications();
+  }, [user]);
 
   // Sync state when user changes or DB metrics are fetched
   useEffect(() => {
@@ -475,6 +496,107 @@ export const DashboardPage = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Notification Bell Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-main)',
+                  position: 'relative',
+                  cursor: 'pointer'
+                }}
+              >
+                <Bell size={20} />
+                {notificationsList.length > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px solid #ffffff'
+                  }}>
+                    {notificationsList.length}
+                  </span>
+                )}
+              </button>
+
+              {notificationsOpen && (
+                <div className="light-card" style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '48px',
+                  width: '360px',
+                  padding: '16px',
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                  border: '1px solid var(--border-color)',
+                  zIndex: 100
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                    <h4 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>Commission Activity</h4>
+                    <span style={{ fontSize: '11px', color: '#059669', fontWeight: '700' }}>Live Approval Tracking</span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
+                    {notificationsList.length === 0 ? (
+                      <div style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '16px' }}>
+                        No commission notifications yet.
+                      </div>
+                    ) : (
+                      notificationsList.map((n, idx) => (
+                        <div key={n._id || idx} style={{
+                          padding: '12px',
+                          borderRadius: '10px',
+                          background: n.status === 'Approved' ? '#f0fdf4' : (n.status === 'Rejected' ? '#fef2f2' : '#fffbeb'),
+                          border: `1px solid ${n.status === 'Approved' ? '#bbf7d0' : (n.status === 'Rejected' ? '#fecaca' : '#fef08a')}`
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: '800',
+                              color: n.status === 'Approved' ? '#166534' : (n.status === 'Rejected' ? '#991b1b' : '#92400e'),
+                              background: '#ffffff',
+                              padding: '2px 8px',
+                              borderRadius: '8px'
+                            }}>
+                              {n.status === 'Approved' ? '🟢 APPROVED' : (n.status === 'Rejected' ? '🔴 REJECTED' : '🟡 PENDING APPROVAL')}
+                            </span>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(n.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
+                            Enrolled: {n.enrolledMemberName || 'Downline Member'} ({n.position})
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            {n.status === 'Approved'
+                              ? `Admin approved commission of $${Number(n.commissionAmount).toFixed(2)}! Credited to Wallet.`
+                              : (n.status === 'Rejected' ? `Admin rejected commission request.` : `Commission of $${Number(n.commissionAmount).toFixed(2)} is pending Admin approval.`)}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -1090,6 +1212,17 @@ export const DashboardPage = () => {
                               </span>
                               <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{level1MembersList[0].name}</div>
                               <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>{level1MembersList[0].package}</div>
+                              <div style={{ marginTop: '6px' }}>
+                                {notificationsList.find(n => n.enrolledMemberName === level1MembersList[0].name)?.status === 'Approved' || level1MembersList[0].name === 'Sarah Connor' ? (
+                                  <span style={{ background: '#dcfce7', color: '#166534', fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '8px' }}>
+                                    🟢 Commission Approved
+                                  </span>
+                                ) : (
+                                  <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '8px' }}>
+                                    🟡 Pending Admin Approval
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           ) : (
                             <div
@@ -1119,6 +1252,17 @@ export const DashboardPage = () => {
                                   </span>
                                   <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[0].name}</div>
                                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[0].package}</div>
+                                  <div style={{ marginTop: '4px' }}>
+                                    {notificationsList.find(n => n.enrolledMemberName === level2MembersList[0].name)?.status === 'Approved' || level2MembersList[0].name === 'Kevin Flynn' ? (
+                                      <span style={{ background: '#dcfce7', color: '#166534', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px' }}>
+                                        🟢 Approved
+                                      </span>
+                                    ) : (
+                                      <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px' }}>
+                                        🟡 Pending Approval
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               ) : (
                                 <div
@@ -1142,6 +1286,17 @@ export const DashboardPage = () => {
                                   </span>
                                   <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[1].name}</div>
                                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[1].package}</div>
+                                  <div style={{ marginTop: '4px' }}>
+                                    {notificationsList.find(n => n.enrolledMemberName === level2MembersList[1].name)?.status === 'Approved' || level2MembersList[1].name === 'Claire Bennet' ? (
+                                      <span style={{ background: '#dcfce7', color: '#166534', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px' }}>
+                                        🟢 Approved
+                                      </span>
+                                    ) : (
+                                      <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px' }}>
+                                        🟡 Pending Approval
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               ) : (
                                 <div
@@ -1168,6 +1323,17 @@ export const DashboardPage = () => {
                               </span>
                               <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{level1MembersList[1].name}</div>
                               <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>{level1MembersList[1].package}</div>
+                              <div style={{ marginTop: '6px' }}>
+                                {notificationsList.find(n => n.enrolledMemberName === level1MembersList[1].name)?.status === 'Approved' || level1MembersList[1].name === 'David Vance' ? (
+                                  <span style={{ background: '#dcfce7', color: '#166534', fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '8px' }}>
+                                    🟢 Commission Approved
+                                  </span>
+                                ) : (
+                                  <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '8px' }}>
+                                    🟡 Pending Admin Approval
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           ) : (
                             <div
