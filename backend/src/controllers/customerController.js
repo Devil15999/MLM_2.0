@@ -246,6 +246,7 @@ export const enrollDownlineMember = async (req, res) => {
         email: emailToUse,
         password: dynamicOtp,
         isOneTimePassword: true,
+        accountStatus: 'Pending Admin Approval',
         sponsorId: req.user?.sponsorId || 'SP-2000',
         rank: packageName.includes('Gold') ? 'Gold' : (packageName.includes('Silver') ? 'Silver' : 'Member'),
         selectedPackage: packageName,
@@ -263,6 +264,7 @@ export const enrollDownlineMember = async (req, res) => {
     } else {
       newEnrolledUser.password = dynamicOtp;
       newEnrolledUser.isOneTimePassword = true;
+      newEnrolledUser.accountStatus = 'Pending Admin Approval';
       await newEnrolledUser.save();
     }
 

@@ -73,6 +73,18 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    if (user.accountStatus === 'Pending Admin Approval') {
+      return res.status(403).json({
+        message: 'Your account is pending Admin approval. You will be able to log in once the Admin approves your downline enrollment.',
+      });
+    }
+
+    if (user.accountStatus === 'Rejected') {
+      return res.status(403).json({
+        message: 'Your enrollment request was rejected by the Admin. Access denied.',
+      });
+    }
+
     const userResponse = {
       _id: user._id,
       name: user.name,

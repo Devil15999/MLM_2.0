@@ -55,9 +55,23 @@ export const approveCommissionRequest = async (req, res) => {
       await sponsorUser.save();
     }
 
+    // Activate Enrolled Member Account Status so they can log in
+    if (approval.enrolledMemberEmail || approval.enrolledMemberName) {
+      let enrolledUser = await User.findOne({
+        $or: [
+          { email: approval.enrolledMemberEmail },
+          { name: approval.enrolledMemberName }
+        ]
+      });
+      if (enrolledUser) {
+        enrolledUser.accountStatus = 'Approved';
+        await enrolledUser.save();
+      }
+    }
+
     res.json({
       success: true,
-      message: `Approved downline commission of $${approval.commissionAmount.toFixed(2)} and credited to ${approval.sponsorName}'s wallet!`,
+      message: `Approved downline commission of $${approval.commissionAmount.toFixed(2)} and activated account for ${approval.enrolledMemberName}!`,
       approval,
     });
   } catch (error) {
@@ -77,6 +91,19 @@ export const rejectCommissionRequest = async (req, res) => {
     approval.status = 'Rejected';
     approval.actionDate = new Date();
     await approval.save();
+
+    if (approval.enrolledMemberEmail || approval.enrolledMemberName) {
+      let enrolledUser = await User.findOne({
+        $or: [
+          { email: approval.enrolledMemberEmail },
+          { name: approval.enrolledMemberName }
+        ]
+      });
+      if (enrolledUser) {
+        enrolledUser.accountStatus = 'Rejected';
+        await enrolledUser.save();
+      }
+    }
 
     res.json({
       success: true,

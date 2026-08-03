@@ -127,6 +127,11 @@ const userSchema = new mongoose.Schema(
       enum: ['Not Submitted', 'Pending', 'Verified', 'Under Review', 'Rejected'],
       default: 'Verified',
     },
+    accountStatus: {
+      type: String,
+      enum: ['Pending Admin Approval', 'Approved', 'Rejected'],
+      default: 'Approved',
+    },
     kycData: {
       documentType: { type: String, default: 'Aadhaar Card / Govt ID' },
       documentNumber: { type: String, default: '8942-1049-5821' },

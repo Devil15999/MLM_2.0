@@ -1761,7 +1761,7 @@ export const DashboardPage = () => {
                 <div className="code-font" style={{ fontSize: '24px', fontWeight: '800', color: '#1d4ed8', margin: '4px 0', letterSpacing: '2px' }}>
                   {issuedCredentialModal.otp}
                 </div>
-                <div style={{ fontSize: '11px', color: '#64748b' }}>Provide this OTP to {issuedCredentialModal.name} for their initial login.</div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>Provide this OTP to {issuedCredentialModal.name}. <strong>Login will activate once Admin approves the request.</strong></div>
               </div>
             </div>
 
