@@ -242,16 +242,14 @@ export const enrollDownlineMember = async (req, res) => {
 
     // 1. Generate Dynamic One-Time Password (OTP)
     const dynamicOtp = `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(dynamicOtp, salt);
 
-    // 2. Create User Account in DB for the enrolled downline
+    // 2. Create or Update User Account in DB for the enrolled downline
     let newEnrolledUser = await User.findOne({ email: emailToUse });
     if (!newEnrolledUser) {
       newEnrolledUser = await User.create({
         name: memberName,
         email: emailToUse,
-        password: hashedPassword,
+        password: dynamicOtp,
         isOneTimePassword: true,
         sponsorId: req.user?.sponsorId || 'SP-2000',
         rank: packageName.includes('Gold') ? 'Gold' : (packageName.includes('Silver') ? 'Silver' : 'Member'),
@@ -267,6 +265,10 @@ export const enrollDownlineMember = async (req, res) => {
         investmentReturns: 0.00,
         totalIncome: 0.00,
       });
+    } else {
+      newEnrolledUser.password = dynamicOtp;
+      newEnrolledUser.isOneTimePassword = true;
+      await newEnrolledUser.save();
     }
 
     // 3. Determine package commission amount
