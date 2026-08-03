@@ -87,3 +87,39 @@ export const rejectCommissionRequest = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Reset Database (Clear all users and approvals except Admin and Fresh User)
+// @route   POST /api/admin/reset-database
+export const resetDatabaseEndpoint = async (req, res) => {
+  try {
+    const approvalDeleteResult = await Approval.deleteMany({});
+    const userDeleteResult = await User.deleteMany({
+      email: { $nin: ['admin@nexismlm.com', 'fresh@nexismlm.com'] }
+    });
+
+    let freshUser = await User.findOne({ email: 'fresh@nexismlm.com' });
+    if (freshUser) {
+      freshUser.rank = 'Member';
+      freshUser.selectedPackage = 'None';
+      freshUser.walletBalance = 0.00;
+      freshUser.totalEarnings = 0.00;
+      freshUser.downlineCount = 0;
+      freshUser.level1MembersCount = 0;
+      freshUser.level2MembersCount = 0;
+      freshUser.level1AffiliateIncome = 0.00;
+      freshUser.level2AffiliateIncome = 0.00;
+      freshUser.investmentReturns = 0.00;
+      freshUser.totalIncome = 0.00;
+      await freshUser.save();
+    }
+
+    res.json({
+      success: true,
+      message: 'Database reset successfully. Only Admin and Fresh User remain.',
+      deletedApprovals: approvalDeleteResult.deletedCount,
+      deletedTestUsers: userDeleteResult.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
