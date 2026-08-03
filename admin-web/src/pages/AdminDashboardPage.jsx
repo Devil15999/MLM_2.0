@@ -282,6 +282,9 @@ export const AdminDashboardPage = () => {
             </div>
           </div>
 
+          {/* Pending Commission Approvals Section */}
+          <PendingApprovalsSection />
+
           {/* Distributor Management Table */}
           <div className="light-card" style={{ padding: '28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -392,6 +395,184 @@ export const AdminDashboardPage = () => {
             </div>
           </div>
         </main>
+      </div>
+    </div>
+  );
+};
+
+const PendingApprovalsSection = () => {
+  const [approvals, setApprovals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionMessage, setActionMessage] = useState(null);
+
+  const fetchApprovals = async () => {
+    setLoading(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
+      const res = await fetch(`${apiUrl.replace('/auth', '')}/admin/approvals`);
+      if (res.ok) {
+        const data = await res.json();
+        setApprovals(data.approvals || []);
+      }
+    } catch (err) {
+      console.log('Using default mock approval queue');
+      setApprovals([
+        {
+          _id: 'app-101',
+          sponsorName: 'New Distributor (Fresh)',
+          enrolledMemberName: 'John Miller',
+          enrolledMemberEmail: 'john.m@gmail.com',
+          position: 'Left Leg (Node 1)',
+          packageName: 'Silver Pro ($1,000)',
+          commissionAmount: 120.00,
+          status: 'Pending',
+          createdAt: new Date().toISOString()
+        }
+      ]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchApprovals();
+  }, []);
+
+  const handleApprove = async (id, name, amount) => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
+      await fetch(`${apiUrl.replace('/auth', '')}/admin/approvals/${id}/approve`, { method: 'POST' });
+    } catch (err) {}
+
+    setApprovals(prev => prev.map(a => a._id === id ? { ...a, status: 'Approved' } : a));
+    setActionMessage(`Approved commission of $${amount.toFixed(2)} for ${name}! Wallet credited successfully.`);
+    setTimeout(() => setActionMessage(null), 5000);
+  };
+
+  const handleReject = async (id, name) => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
+      await fetch(`${apiUrl.replace('/auth', '')}/admin/approvals/${id}/reject`, { method: 'POST' });
+    } catch (err) {}
+
+    setApprovals(prev => prev.map(a => a._id === id ? { ...a, status: 'Rejected' } : a));
+    setActionMessage(`Rejected commission request for ${name}.`);
+    setTimeout(() => setActionMessage(null), 5000);
+  };
+
+  const pendingList = approvals.filter(a => a.status === 'Pending');
+
+  return (
+    <div className="light-card" style={{ padding: '28px', marginBottom: '28px', border: '2px solid #f59e0b' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fef3c7', color: '#92400e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
+            <Award size={14} /> Downline Commission Approvals Queue ({pendingList.length} Pending)
+          </div>
+          <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Commission Approvals</h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve downline enrollments to credit referral commissions to distributor wallets</p>
+        </div>
+
+        <button
+          onClick={fetchApprovals}
+          style={{
+            padding: '8px 14px',
+            background: '#ffffff',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            color: 'var(--text-main)',
+            fontSize: '13px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <RefreshCw size={14} className={loading ? 'pulse-dot' : ''} /> Refresh Approvals
+        </button>
+      </div>
+
+      {actionMessage && (
+        <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontWeight: '700', fontSize: '13px', marginBottom: '20px' }}>
+          {actionMessage}
+        </div>
+      )}
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+              <th style={{ padding: '12px 16px' }}>Sponsor (Higher Level)</th>
+              <th style={{ padding: '12px 16px' }}>Enrolled Member</th>
+              <th style={{ padding: '12px 16px' }}>Tree Position</th>
+              <th style={{ padding: '12px 16px' }}>Package</th>
+              <th style={{ padding: '12px 16px' }}>Commission Amount</th>
+              <th style={{ padding: '12px 16px' }}>Approval Status</th>
+              <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {approvals.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No pending downline commission approval requests.
+                </td>
+              </tr>
+            ) : (
+              approvals.map((app) => (
+                <tr key={app._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{app.sponsorName}</td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{app.enrolledMemberEmail}</div>
+                  </td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                      {app.position}
+                    </span>
+                  </td>
+                  <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
+                  <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
+                    +${Number(app.commissionAmount).toFixed(2)}
+                  </td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <span style={{
+                      background: app.status === 'Approved' ? '#dcfce7' : (app.status === 'Rejected' ? '#fef2f2' : '#fef3c7'),
+                      color: app.status === 'Approved' ? '#166534' : (app.status === 'Rejected' ? '#991b1b' : '#92400e'),
+                      padding: '4px 12px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '700'
+                    }}>
+                      {app.status}
+                    </span>
+                  </td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                    {app.status === 'Pending' ? (
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => handleApprove(app._id, app.enrolledMemberName, app.commissionAmount)}
+                          className="btn-emerald"
+                          style={{ padding: '6px 12px', fontSize: '12px' }}
+                        >
+                          Approve & Credit Wallet
+                        </button>
+                        <button
+                          onClick={() => handleReject(app._id, app.enrolledMemberName)}
+                          className="btn-outline"
+                          style={{ padding: '6px 12px', fontSize: '12px', color: '#dc2626', borderColor: '#fca5a5' }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Action Completed</span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

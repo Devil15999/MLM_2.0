@@ -1,4 +1,6 @@
 import { User } from '../models/User.js';
+import { Approval } from '../models/Approval.js';
+import bcrypt from 'bcryptjs';
 
 // @desc    Get Customer Dashboard Statistics (8 Core Metrics - 2 Nodes, 2 Max Levels)
 // @route   GET /api/customer/dashboard
@@ -236,7 +238,38 @@ export const enrollDownlineMember = async (req, res) => {
       return res.status(400).json({ message: 'Please provide member name, leg position, and package.' });
     }
 
-    // Determine package commission
+    const emailToUse = memberEmail || `${memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+
+    // 1. Generate Dynamic One-Time Password (OTP)
+    const dynamicOtp = `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(dynamicOtp, salt);
+
+    // 2. Create User Account in DB for the enrolled downline
+    let newEnrolledUser = await User.findOne({ email: emailToUse });
+    if (!newEnrolledUser) {
+      newEnrolledUser = await User.create({
+        name: memberName,
+        email: emailToUse,
+        password: hashedPassword,
+        isOneTimePassword: true,
+        sponsorId: req.user?.sponsorId || 'SP-2000',
+        rank: packageName.includes('Gold') ? 'Gold' : (packageName.includes('Silver') ? 'Silver' : 'Member'),
+        selectedPackage: packageName,
+        legPreference: position.includes('Left') ? 'Left Leg' : 'Right Leg',
+        walletBalance: 0.00,
+        totalEarnings: 0.00,
+        downlineCount: 0,
+        level1MembersCount: 0,
+        level2MembersCount: 0,
+        level1AffiliateIncome: 0.00,
+        level2AffiliateIncome: 0.00,
+        investmentReturns: 0.00,
+        totalIncome: 0.00,
+      });
+    }
+
+    // 3. Determine package commission amount
     const packagePrices = {
       'Bronze Starter ($500)': 500,
       'Silver Pro ($1,000)': 1000,
@@ -248,46 +281,54 @@ export const enrollDownlineMember = async (req, res) => {
     const commRate = isLevel1 ? 0.10 : 0.05;
     const commAmount = price * commRate;
 
-    let updatedUser = null;
+    // 4. Update sponsor's tree count (wallet remains pending until Admin Approval)
+    let sponsorUser = null;
     if (userId) {
-      const user = await User.findById(userId);
-      if (user) {
+      sponsorUser = await User.findById(userId);
+      if (sponsorUser) {
         if (isLevel1) {
-          user.level1MembersCount = (user.level1MembersCount || 0) + 1;
-          user.level1AffiliateIncome = (user.level1AffiliateIncome || 0) + commAmount;
+          sponsorUser.level1MembersCount = (sponsorUser.level1MembersCount || 0) + 1;
         } else {
-          user.level2MembersCount = (user.level2MembersCount || 0) + 1;
-          user.level2AffiliateIncome = (user.level2AffiliateIncome || 0) + commAmount;
+          sponsorUser.level2MembersCount = (sponsorUser.level2MembersCount || 0) + 1;
         }
-        user.downlineCount = (user.level1MembersCount || 0) + (user.level2MembersCount || 0);
-        user.walletBalance = (user.walletBalance || 0) + commAmount;
-        user.totalIncome = (user.totalIncome || 0) + commAmount;
-        user.totalEarnings = (user.totalEarnings || 0) + commAmount;
-        await user.save();
-        updatedUser = user;
+        sponsorUser.downlineCount = (sponsorUser.level1MembersCount || 0) + (sponsorUser.level2MembersCount || 0);
+        await sponsorUser.save();
       }
     }
 
+    // 5. Create Pending Commission Approval Record for Admin Panel
+    const approval = await Approval.create({
+      type: 'Enrolled Downline Commission',
+      sponsorId: userId || sponsorUser?._id || newEnrolledUser._id,
+      sponsorName: sponsorUser?.name || 'Sponsor',
+      enrolledMemberName: memberName,
+      enrolledMemberEmail: emailToUse,
+      position,
+      packageName,
+      commissionAmount: commAmount,
+      status: 'Pending',
+    });
+
     res.json({
       success: true,
-      message: `Successfully enrolled ${memberName} into ${position} with ${packageName}!`,
-      commissionEarned: `$${commAmount.toFixed(2)}`,
+      message: `Successfully enrolled ${memberName} into ${position}. Commission of $${commAmount.toFixed(2)} sent to Admin Panel for approval!`,
+      dynamicOtp,
+      approvalId: approval._id,
+      approvalStatus: 'Pending Admin Approval',
+      commissionPending: `$${commAmount.toFixed(2)}`,
       newNode: {
         name: memberName,
-        email: memberEmail || `${memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+        email: emailToUse,
         position,
         package: packageName,
         status: 'Active',
         joined: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
       },
-      updatedStats: updatedUser ? {
-        level1MembersCount: updatedUser.level1MembersCount,
-        level2MembersCount: updatedUser.level2MembersCount,
-        totalTeamCount: updatedUser.downlineCount,
-        level1AffiliateIncome: updatedUser.level1AffiliateIncome,
-        level2AffiliateIncome: updatedUser.level2AffiliateIncome,
-        totalIncome: updatedUser.totalIncome,
-        walletBalance: updatedUser.walletBalance
+      updatedStats: sponsorUser ? {
+        level1MembersCount: sponsorUser.level1MembersCount,
+        level2MembersCount: sponsorUser.level2MembersCount,
+        totalTeamCount: sponsorUser.downlineCount,
+        walletBalance: sponsorUser.walletBalance
       } : null
     });
   } catch (error) {

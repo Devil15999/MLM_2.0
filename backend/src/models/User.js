@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema(
       enum: ['Left Leg', 'Right Leg'],
       default: 'Left Leg',
     },
+    isOneTimePassword: {
+      type: Boolean,
+      default: false,
+    },
     walletBalance: {
       type: Number,
       default: 4850.00,

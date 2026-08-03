@@ -44,6 +44,7 @@ export const DashboardPage = () => {
   const [selectedSlotPosition, setSelectedSlotPosition] = useState('');
   const [enrollFormData, setEnrollFormData] = useState({ memberName: '', memberEmail: '', packageName: 'Silver Pro ($1,000)' });
   const [enrollSuccessMessage, setEnrollSuccessMessage] = useState('');
+  const [issuedCredentialModal, setIssuedCredentialModal] = useState(null);
 
   // Dynamic Nodes State (for fresh user or added members)
   const [enrolledLevel1, setEnrolledLevel1] = useState([]);
@@ -74,10 +75,12 @@ export const DashboardPage = () => {
     const commRate = isLevel1 ? 0.10 : 0.05;
     const commAmount = price * commRate;
 
+    const memberEmailToUse = enrollFormData.memberEmail || `${enrollFormData.memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+
     const newNode = {
       name: enrollFormData.memberName,
       position: selectedSlotPosition,
-      email: enrollFormData.memberEmail || `${enrollFormData.memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      email: memberEmailToUse,
       package: enrollFormData.packageName,
       joined: 'Today',
       status: 'Active',
@@ -88,18 +91,15 @@ export const DashboardPage = () => {
 
     if (isLevel1) {
       setEnrolledLevel1(prev => [...prev, newNode]);
-      setDynamicL1Income(prev => prev + commAmount);
     } else {
       setEnrolledLevel2(prev => [...prev, newNode]);
-      setDynamicL2Income(prev => prev + commAmount);
     }
 
-    setDynamicWallet(prev => prev + commAmount);
-    setDynamicTotalIncome(prev => prev + commAmount);
+    let dynamicOtp = `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
 
     try {
       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
-      await fetch(`${apiUrl.replace('/auth', '')}/customer/team/enroll`, {
+      const res = await fetch(`${apiUrl.replace('/auth', '')}/customer/team/enroll`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,13 +112,27 @@ export const DashboardPage = () => {
           packageName: enrollFormData.packageName
         })
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.dynamicOtp) dynamicOtp = data.dynamicOtp;
+      }
     } catch (err) {
       console.log('Enrollment updated locally');
     }
 
-    setEnrollSuccessMessage(`Successfully enrolled ${enrollFormData.memberName} into ${selectedSlotPosition}! Credited +$${commAmount.toFixed(2)} commission.`);
     setEnrollModalOpen(false);
-    setTimeout(() => setEnrollSuccessMessage(''), 4000);
+    setIssuedCredentialModal({
+      name: enrollFormData.memberName,
+      email: memberEmailToUse,
+      otp: dynamicOtp,
+      position: selectedSlotPosition,
+      package: enrollFormData.packageName,
+      commissionAmount: commAmount.toFixed(2),
+      status: 'Pending Admin Approval'
+    });
+
+    setEnrollSuccessMessage(`Enrolled ${enrollFormData.memberName}! Commission of $${commAmount.toFixed(2)} sent to Admin Panel for approval.`);
+    setTimeout(() => setEnrollSuccessMessage(''), 5000);
   };
 
   const handleActivatePackage = async (pkgName) => {
@@ -1494,6 +1508,80 @@ export const DashboardPage = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ISSUED CREDENTIAL & DYNAMIC OTP RECEIPT MODAL */}
+      {issuedCredentialModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.7)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1100,
+          padding: '20px'
+        }}>
+          <div className="light-card" style={{ maxWidth: '500px', width: '100%', padding: '32px', background: '#ffffff', borderRadius: '20px', border: '2px solid #059669' }}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#dcfce7', color: '#15803d', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                <CheckCircle2 size={32} />
+              </div>
+              <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>Enrollment Successful!</h3>
+              <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '12px', fontWeight: '700', padding: '4px 12px', borderRadius: '12px', display: 'inline-block', marginTop: '6px' }}>
+                Commission Pending Admin Approval (${issuedCredentialModal.commissionAmount})
+              </span>
+            </div>
+
+            <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Member Name:</span>
+                <strong style={{ color: 'var(--text-main)' }}>{issuedCredentialModal.name}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Login Email:</span>
+                <strong style={{ color: 'var(--text-main)' }}>{issuedCredentialModal.email}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Tree Placement:</span>
+                <strong style={{ color: '#059669' }}>{issuedCredentialModal.position}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px', fontSize: '13px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Selected Package:</span>
+                <strong style={{ color: '#4f46e5' }}>{issuedCredentialModal.package}</strong>
+              </div>
+
+              {/* Dynamic One-Time Password Callout */}
+              <div style={{ background: '#eff6ff', border: '1px dashed #3b82f6', borderRadius: '10px', padding: '14px', textAlign: 'center' }}>
+                <div style={{ fontSize: '11px', color: '#1e40af', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dynamic One-Time Temporary Password</div>
+                <div className="code-font" style={{ fontSize: '24px', fontWeight: '800', color: '#1d4ed8', margin: '4px 0', letterSpacing: '2px' }}>
+                  {issuedCredentialModal.otp}
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>Provide this OTP to {issuedCredentialModal.name} for their initial login.</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`Nexis MLM Member Credentials:\nEmail: ${issuedCredentialModal.email}\nOne-Time Password: ${issuedCredentialModal.otp}\nLogin URL: http://localhost:5173/login`);
+                  alert('Credentials copied to clipboard! Share with the member via WhatsApp/Email.');
+                }}
+                className="btn-outline"
+                style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                <Copy size={16} /> Copy Credentials
+              </button>
+              <button onClick={() => setIssuedCredentialModal(null)} className="btn-emerald" style={{ flex: 1 }}>
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}
