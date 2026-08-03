@@ -214,6 +214,17 @@ export const requestWalletWithdrawal = async (req, res) => {
       return res.status(400).json({ message: 'Minimum withdrawal amount is $50' });
     }
 
+    res.json({
+      success: true,
+      message: `Withdrawal request of $${Number(amount).toFixed(2)} via ${method || 'Bank Account'} submitted successfully!`,
+      transactionId: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Enroll a New Member into a Tree Node Slot
 // @route   POST /api/customer/team/enroll
 export const enrollDownlineMember = async (req, res) => {

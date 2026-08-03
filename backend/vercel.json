@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "nexis-mlm-backend",
   "builds": [
     {
       "src": "src/server.js",

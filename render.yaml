@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: mlm-backend
+    env: node
+    plan: free
+    buildCommand: npm install && cd backend && npm install
+    startCommand: node backend/src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        value: mongodb+srv://devbiz2025_db_user:1QCT5kCpAAJ9QVTk@cluster0.fjgzzqo.mongodb.net/pentest_db?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        value: pentest_super_secret_jwt_key_2026_x89a

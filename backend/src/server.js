@@ -107,21 +107,24 @@ const autoSeedUsers = async () => {
 
 // Start Server with Port Fallback
 const startServer = async () => {
-  await connectDB();
-  await autoSeedUsers();
-  
-  const server = app.listen(PORT, () => {
-    console.log(`[Nexis MLM Backend] Server running on http://localhost:${PORT}`);
+  const HOST = '0.0.0.0';
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`[Nexis MLM Backend] Server running on http://${HOST}:${PORT}`);
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       const ALT_PORT = Number(PORT) + 1;
-      console.log(`[Nexis MLM Backend] Port ${PORT} busy, starting on http://localhost:${ALT_PORT}`);
-      app.listen(ALT_PORT, () => {
-        console.log(`[Nexis MLM Backend] Server running on http://localhost:${ALT_PORT}`);
+      console.log(`[Nexis MLM Backend] Port ${PORT} busy, starting on http://${HOST}:${ALT_PORT}`);
+      app.listen(ALT_PORT, HOST, () => {
+        console.log(`[Nexis MLM Backend] Server running on http://${HOST}:${ALT_PORT}`);
       });
     }
+  });
+
+  // Asynchronously connect DB and seed initial users in background
+  connectDB().then(() => autoSeedUsers()).catch((err) => {
+    console.error('[Async DB/Seed Error]:', err.message);
   });
 };
 

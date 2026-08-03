@@ -1,0 +1,21 @@
+{
+  "name": "mlm-2.0-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root configuration for MLM 2.0 Backend & Frontend Web Applications",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "build": "cd backend && npm install",
+    "backend": "cd backend && npm start",
+    "customer": "cd customer-web && npm run dev",
+    "admin": "cd admin-web && npm run dev"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.4.1"
+  }
+}
