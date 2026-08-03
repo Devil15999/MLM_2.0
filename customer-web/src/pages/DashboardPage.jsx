@@ -39,6 +39,9 @@ export const DashboardPage = () => {
   const isFreshUser = user?.email === 'fresh@nexismlm.com' || user?.sponsorId === 'SP-2000';
   const [activePackage, setActivePackage] = useState(user?.selectedPackage || (isFreshUser ? 'None' : 'Gold Executive ($2,500)'));
   
+  // Storage key for local persistence
+  const userKey = user?._id || user?.email || 'fresh';
+
   // Tree Enrollment Modal State
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [selectedSlotPosition, setSelectedSlotPosition] = useState('');
@@ -46,13 +49,34 @@ export const DashboardPage = () => {
   const [enrollSuccessMessage, setEnrollSuccessMessage] = useState('');
   const [issuedCredentialModal, setIssuedCredentialModal] = useState(null);
 
-  // Dynamic Nodes State (for fresh user or added members)
-  const [enrolledLevel1, setEnrolledLevel1] = useState([]);
-  const [enrolledLevel2, setEnrolledLevel2] = useState([]);
-  const [dynamicWallet, setDynamicWallet] = useState(isFreshUser ? 0 : 6250);
-  const [dynamicTotalIncome, setDynamicTotalIncome] = useState(isFreshUser ? 0 : 10450);
-  const [dynamicL1Income, setDynamicL1Income] = useState(isFreshUser ? 0 : 4850);
-  const [dynamicL2Income, setDynamicL2Income] = useState(isFreshUser ? 0 : 2420);
+  // Dynamic Nodes State (Persistent across sessions/logins)
+  const [enrolledLevel1, setEnrolledLevel1] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`nexis_l1_${userKey}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
+  });
+  const [enrolledLevel2, setEnrolledLevel2] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`nexis_l2_${userKey}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
+  });
+
+  const [dynamicWallet, setDynamicWallet] = useState(user?.walletBalance ?? (isFreshUser ? 0 : 6250));
+  const [dynamicTotalIncome, setDynamicTotalIncome] = useState(user?.totalIncome ?? (isFreshUser ? 0 : 10450));
+  const [dynamicL1Income, setDynamicL1Income] = useState(user?.level1AffiliateIncome ?? (isFreshUser ? 0 : 4850));
+  const [dynamicL2Income, setDynamicL2Income] = useState(user?.level2AffiliateIncome ?? (isFreshUser ? 0 : 2420));
+
+  // Sync state when user changes or DB metrics are fetched
+  useEffect(() => {
+    if (user) {
+      if (typeof user.walletBalance === 'number') setDynamicWallet(user.walletBalance);
+      if (typeof user.totalIncome === 'number') setDynamicTotalIncome(user.totalIncome);
+      if (typeof user.level1AffiliateIncome === 'number') setDynamicL1Income(user.level1AffiliateIncome);
+      if (typeof user.level2AffiliateIncome === 'number') setDynamicL2Income(user.level2AffiliateIncome);
+    }
+  }, [user]);
 
   const handleOpenEnrollModal = (position) => {
     setSelectedSlotPosition(position);
@@ -90,9 +114,17 @@ export const DashboardPage = () => {
     };
 
     if (isLevel1) {
-      setEnrolledLevel1(prev => [...prev, newNode]);
+      setEnrolledLevel1(prev => {
+        const nextList = [...prev, newNode];
+        try { localStorage.setItem(`nexis_l1_${userKey}`, JSON.stringify(nextList)); } catch(e){}
+        return nextList;
+      });
     } else {
-      setEnrolledLevel2(prev => [...prev, newNode]);
+      setEnrolledLevel2(prev => {
+        const nextList = [...prev, newNode];
+        try { localStorage.setItem(`nexis_l2_${userKey}`, JSON.stringify(nextList)); } catch(e){}
+        return nextList;
+      });
     }
 
     let dynamicOtp = `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;

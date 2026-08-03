@@ -9,16 +9,16 @@ export const getCustomerDashboard = async (req, res) => {
     const userId = req.user?._id;
     const user = userId ? await User.findById(userId) : null;
 
-    // Enforce 2 Nodes Max on Level 1, 2 Max Levels
-    const level1Count = user?.level1MembersCount ?? 2;
-    const level2Count = user?.level2MembersCount ?? 4;
+    const isAlex = user?.email === 'alex@nexismlm.com';
+    const level1Count = user ? (user.level1MembersCount || 0) : (isAlex ? 2 : 0);
+    const level2Count = user ? (user.level2MembersCount || 0) : (isAlex ? 4 : 0);
     const totalTeam = level1Count + level2Count;
 
-    const level1Income = user?.level1AffiliateIncome ?? 4850.00;
-    const level2Income = user?.level2AffiliateIncome ?? 2420.00;
-    const investmentReturns = user?.investmentReturns ?? 3180.00;
-    const totalIncome = user?.totalIncome ?? (level1Income + level2Income + investmentReturns);
-    const walletBalance = user?.walletBalance ?? 6250.00;
+    const level1Income = user ? (user.level1AffiliateIncome || 0) : (isAlex ? 4850.00 : 0);
+    const level2Income = user ? (user.level2AffiliateIncome || 0) : (isAlex ? 2420.00 : 0);
+    const investmentReturns = user ? (user.investmentReturns || 0) : (isAlex ? 3180.00 : 0);
+    const totalIncome = user ? (user.totalIncome || 0) : (isAlex ? 10450.00 : 0);
+    const walletBalance = user ? (user.walletBalance || 0) : (isAlex ? 6250.00 : 0);
 
     res.json({
       metrics: {

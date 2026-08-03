@@ -31,7 +31,17 @@ export const approveCommissionRequest = async (req, res) => {
     await approval.save();
 
     // Credit Sponsor Wallet
-    let sponsorUser = await User.findById(approval.sponsorId);
+    let sponsorUser = null;
+    if (approval.sponsorId) {
+      sponsorUser = await User.findById(approval.sponsorId).catch(() => null);
+    }
+    if (!sponsorUser && approval.sponsorName) {
+      sponsorUser = await User.findOne({ name: approval.sponsorName });
+    }
+    if (!sponsorUser) {
+      sponsorUser = await User.findOne({ email: 'fresh@nexismlm.com' });
+    }
+
     if (sponsorUser) {
       const isLevel1 = approval.position.includes('Node 1') || approval.position === 'Left Leg' || approval.position === 'Right Leg' || !approval.position.includes('L2');
       if (isLevel1) {
