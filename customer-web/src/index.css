@@ -201,3 +201,70 @@ input {
   margin-bottom: 6px;
 }
 
+/* Binary Tree Diagram Styles */
+.tree-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 32px 16px;
+  overflow-x: auto;
+  min-width: 700px;
+}
+
+.tree-node-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 16px 20px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+  position: relative;
+  min-width: 180px;
+}
+
+.tree-node-card:hover {
+  transform: translateY(-4px);
+  border-color: #059669;
+  box-shadow: var(--shadow-lg);
+}
+
+.tree-node-card.root-card {
+  border: 2px solid #059669;
+  background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
+  min-width: 220px;
+}
+
+.tree-node-card.level1-card {
+  border-color: #93c5fd;
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+}
+
+.tree-node-card.level2-card {
+  border-color: #e9d5ff;
+  background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
+}
+
+.tree-connector-line {
+  height: 24px;
+  width: 2px;
+  background: #cbd5e1;
+  margin: 0 auto;
+}
+
+.tree-branch-container {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  position: relative;
+}
+
+.tree-branch-line {
+  position: absolute;
+  top: -16px;
+  height: 2px;
+  background: #cbd5e1;
+}
+
+

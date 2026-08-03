@@ -35,6 +35,7 @@ export const DashboardPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [teamTab, setTeamTab] = useState('level1');
+  const [teamViewMode, setTeamViewMode] = useState('tree');
   const [backendStats, setBackendStats] = useState(null);
 
   useEffect(() => {
@@ -829,105 +830,269 @@ export const DashboardPage = () => {
                 </div>
               </div>
 
-              {/* Team Table Box */}
+              {/* Team View Container */}
               <div className="light-card" style={{ padding: '28px' }}>
-                {/* Level Toggle Buttons */}
+                {/* Header View Mode Controls */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Binary Matrix Structure (Max 2 Levels)</h3>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Visual representation of your direct Level 1 & Level 2 downlines</p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', background: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
                     <button
-                      onClick={() => setTeamTab('level1')}
-                      className={teamTab === 'level1' ? 'btn-emerald' : 'btn-outline'}
-                      style={{ padding: '8px 18px', fontSize: '13px' }}
+                      onClick={() => setTeamViewMode('tree')}
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        borderRadius: '10px',
+                        background: teamViewMode === 'tree' ? '#ffffff' : 'transparent',
+                        color: teamViewMode === 'tree' ? '#059669' : '#64748b',
+                        boxShadow: teamViewMode === 'tree' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
                     >
-                      Level 1 Directs (2 Nodes Max)
+                      <Layers size={16} /> Visual Tree Diagram
                     </button>
+
                     <button
-                      onClick={() => setTeamTab('level2')}
-                      className={teamTab === 'level2' ? 'btn-indigo' : 'btn-outline'}
-                      style={{ padding: '8px 18px', fontSize: '13px' }}
+                      onClick={() => setTeamViewMode('table')}
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        borderRadius: '10px',
+                        background: teamViewMode === 'table' ? '#ffffff' : 'transparent',
+                        color: teamViewMode === 'table' ? '#059669' : '#64748b',
+                        boxShadow: teamViewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
                     >
-                      Level 2 Indirects (4 Nodes Max)
+                      <Users size={16} /> Member Table List
                     </button>
                   </div>
                 </div>
 
-                {/* Level 1 Table */}
-                {teamTab === 'level1' && (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                          <th style={{ padding: '12px 16px' }}>Binary Leg Position</th>
-                          <th style={{ padding: '12px 16px' }}>Member Name</th>
-                          <th style={{ padding: '12px 16px' }}>Email Address</th>
-                          <th style={{ padding: '12px 16px' }}>Enrollment Date</th>
-                          <th style={{ padding: '12px 16px' }}>Subscribed Package</th>
-                          <th style={{ padding: '12px 16px' }}>Level 1 Affiliate Income</th>
-                          <th style={{ padding: '12px 16px' }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {level1MembersList.map((m, i) => (
-                          <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
-                            <td style={{ padding: '16px' }}>
-                              <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                {m.position}
-                              </span>
-                            </td>
-                            <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
-                            <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.email}</td>
-                            <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
-                            <td style={{ padding: '16px', fontWeight: '600' }}>{m.package}</td>
-                            <td style={{ padding: '16px', fontWeight: '800', color: '#059669' }}>{m.level1Earned}</td>
-                            <td style={{ padding: '16px' }}>
-                              <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                {m.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                {/* VIEW 1: VISUAL BINARY TREE DIAGRAM */}
+                {teamViewMode === 'tree' && (
+                  <div style={{ background: '#f8fafc', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '32px 16px', overflowX: 'auto' }}>
+                    <div className="tree-container">
+                      {/* LEVEL 0: ROOT NODE */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div className="tree-node-card root-card">
+                          <span style={{ background: '#059669', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
+                            ROOT NODE (YOU)
+                          </span>
+                          <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-main)' }}>{user?.name || 'Alex Rivera'}</div>
+                          <div style={{ fontSize: '12px', color: '#059669', fontWeight: '700' }}>{user?.rank || 'Gold Executive'}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }} className="code-font">ID: {referralCode}</div>
+                        </div>
+
+                        <div className="tree-connector-line"></div>
+                      </div>
+
+                      {/* LEVEL 1: DIRECT CHILD NODES (MAX 2) */}
+                      <div style={{ width: '100%', maxWidth: '800px', display: 'flex', justifyContent: 'space-around', position: 'relative' }}>
+                        {/* Horizontal connecting line across Level 1 */}
+                        <div style={{ position: 'absolute', top: '-16px', left: '25%', right: '25%', height: '2px', background: '#cbd5e1' }}></div>
+
+                        {/* Level 1 - Left Child Node */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                          <div className="tree-connector-line" style={{ height: '16px' }}></div>
+                          <div className="tree-node-card level1-card">
+                            <span style={{ background: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
+                              LEFT LEG (NODE 1)
+                            </span>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>Sarah Connor</div>
+                            <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>Executive Gold</div>
+                            <div style={{ fontSize: '11px', color: '#059669', fontWeight: '700', marginTop: '2px' }}>$2,500 Package</div>
+                          </div>
+                          <div className="tree-connector-line"></div>
+
+                          {/* LEVEL 2: UNDER SARAH (LEFT & RIGHT) */}
+                          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', position: 'relative', width: '100%' }}>
+                            <div style={{ position: 'absolute', top: '-16px', left: '20%', right: '20%', height: '2px', background: '#cbd5e1' }}></div>
+
+                            {/* L2 Node 1 */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div className="tree-connector-line" style={{ height: '16px' }}></div>
+                              <div className="tree-node-card level2-card">
+                                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
+                                  LEFT-LEFT
+                                </span>
+                                <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>Kevin Flynn</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sponsor: Sarah</div>
+                              </div>
+                            </div>
+
+                            {/* L2 Node 2 */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div className="tree-connector-line" style={{ height: '16px' }}></div>
+                              <div className="tree-node-card level2-card">
+                                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
+                                  LEFT-RIGHT
+                                </span>
+                                <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>Claire Bennet</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sponsor: Sarah</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Level 1 - Right Child Node */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                          <div className="tree-connector-line" style={{ height: '16px' }}></div>
+                          <div className="tree-node-card level1-card">
+                            <span style={{ background: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
+                              RIGHT LEG (NODE 2)
+                            </span>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>David Vance</div>
+                            <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>Pro Silver</div>
+                            <div style={{ fontSize: '11px', color: '#059669', fontWeight: '700', marginTop: '2px' }}>$1,000 Package</div>
+                          </div>
+                          <div className="tree-connector-line"></div>
+
+                          {/* LEVEL 2: UNDER DAVID (LEFT & RIGHT) */}
+                          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', position: 'relative', width: '100%' }}>
+                            <div style={{ position: 'absolute', top: '-16px', left: '20%', right: '20%', height: '2px', background: '#cbd5e1' }}></div>
+
+                            {/* L2 Node 3 */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div className="tree-connector-line" style={{ height: '16px' }}></div>
+                              <div className="tree-node-card level2-card">
+                                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
+                                  RIGHT-LEFT
+                                </span>
+                                <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>Arthur Pendelton</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sponsor: David</div>
+                              </div>
+                            </div>
+
+                            {/* L2 Node 4 */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div className="tree-connector-line" style={{ height: '16px' }}></div>
+                              <div className="tree-node-card level2-card">
+                                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
+                                  RIGHT-RIGHT
+                                </span>
+                                <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>Rachel Green</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sponsor: David</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {/* Level 2 Table */}
-                {teamTab === 'level2' && (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                          <th style={{ padding: '12px 16px' }}>Binary Leg Position</th>
-                          <th style={{ padding: '12px 16px' }}>Member Name</th>
-                          <th style={{ padding: '12px 16px' }}>Direct Sponsor (Level 1)</th>
-                          <th style={{ padding: '12px 16px' }}>Enrollment Date</th>
-                          <th style={{ padding: '12px 16px' }}>Package</th>
-                          <th style={{ padding: '12px 16px' }}>Level 2 Affiliate Income</th>
-                          <th style={{ padding: '12px 16px' }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {level2MembersList.map((m, i) => (
-                          <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
-                            <td style={{ padding: '16px' }}>
-                              <span style={{ background: '#f3e8ff', color: '#6b21a8', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                {m.position}
-                              </span>
-                            </td>
-                            <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
-                            <td style={{ padding: '16px', fontWeight: '600', color: '#059669' }}>{m.sponsor}</td>
-                            <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
-                            <td style={{ padding: '16px', fontWeight: '600' }}>{m.package}</td>
-                            <td style={{ padding: '16px', fontWeight: '800', color: '#8b5cf6' }}>{m.level2Earned}</td>
-                            <td style={{ padding: '16px' }}>
-                              <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                {m.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                {/* VIEW 2: MEMBER TABLE LIST */}
+                {teamViewMode === 'table' && (
+                  <div>
+                    {/* Level Toggle Buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                          onClick={() => setTeamTab('level1')}
+                          className={teamTab === 'level1' ? 'btn-emerald' : 'btn-outline'}
+                          style={{ padding: '8px 18px', fontSize: '13px' }}
+                        >
+                          Level 1 Directs (2 Nodes Max)
+                        </button>
+                        <button
+                          onClick={() => setTeamTab('level2')}
+                          className={teamTab === 'level2' ? 'btn-indigo' : 'btn-outline'}
+                          style={{ padding: '8px 18px', fontSize: '13px' }}
+                        >
+                          Level 2 Indirects (4 Nodes Max)
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Level 1 Table */}
+                    {teamTab === 'level1' && (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                              <th style={{ padding: '12px 16px' }}>Binary Leg Position</th>
+                              <th style={{ padding: '12px 16px' }}>Member Name</th>
+                              <th style={{ padding: '12px 16px' }}>Email Address</th>
+                              <th style={{ padding: '12px 16px' }}>Enrollment Date</th>
+                              <th style={{ padding: '12px 16px' }}>Subscribed Package</th>
+                              <th style={{ padding: '12px 16px' }}>Level 1 Affiliate Income</th>
+                              <th style={{ padding: '12px 16px' }}>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {level1MembersList.map((m, i) => (
+                              <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                                <td style={{ padding: '16px' }}>
+                                  <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                    {m.position}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
+                                <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.email}</td>
+                                <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
+                                <td style={{ padding: '16px', fontWeight: '600' }}>{m.package}</td>
+                                <td style={{ padding: '16px', fontWeight: '800', color: '#059669' }}>{m.level1Earned}</td>
+                                <td style={{ padding: '16px' }}>
+                                  <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                    {m.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* Level 2 Table */}
+                    {teamTab === 'level2' && (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                              <th style={{ padding: '12px 16px' }}>Binary Leg Position</th>
+                              <th style={{ padding: '12px 16px' }}>Member Name</th>
+                              <th style={{ padding: '12px 16px' }}>Direct Sponsor (Level 1)</th>
+                              <th style={{ padding: '12px 16px' }}>Enrollment Date</th>
+                              <th style={{ padding: '12px 16px' }}>Package</th>
+                              <th style={{ padding: '12px 16px' }}>Level 2 Affiliate Income</th>
+                              <th style={{ padding: '12px 16px' }}>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {level2MembersList.map((m, i) => (
+                              <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                                <td style={{ padding: '16px' }}>
+                                  <span style={{ background: '#f3e8ff', color: '#6b21a8', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                    {m.position}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
+                                <td style={{ padding: '16px', fontWeight: '600', color: '#059669' }}>{m.sponsor}</td>
+                                <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
+                                <td style={{ padding: '16px', fontWeight: '600' }}>{m.package}</td>
+                                <td style={{ padding: '16px', fontWeight: '800', color: '#8b5cf6' }}>{m.level2Earned}</td>
+                                <td style={{ padding: '16px' }}>
+                                  <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                    {m.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
