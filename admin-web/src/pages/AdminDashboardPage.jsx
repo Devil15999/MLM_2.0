@@ -249,7 +249,9 @@ export const AdminDashboardPage = () => {
                   <TrendingUp size={18} />
                 </div>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)' }}>$1,485,000 GV</div>
+              <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)' }}>
+                ${(usersList.reduce((acc, u) => acc + (u.walletBalance || 0) * 10, 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })} GV
+              </div>
               <div style={{ fontSize: '12px', color: '#4f46e5', fontWeight: '700', marginTop: '4px' }}>
                 Group Volume across legs
               </div>
@@ -262,9 +264,11 @@ export const AdminDashboardPage = () => {
                   <DollarSign size={18} />
                 </div>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)' }}>$340,000.00</div>
+              <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)' }}>
+                ${(usersList.reduce((acc, u) => acc + (u.walletBalance || 0), 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </div>
               <div style={{ fontSize: '12px', color: '#d97706', fontWeight: '700', marginTop: '4px' }}>
-                Processed to wallets
+                Updates live on Admin approvals
               </div>
             </div>
 
@@ -379,10 +383,10 @@ export const AdminDashboardPage = () => {
                           </span>
                         </td>
                         <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
-                          ${(u.walletBalance || 4850).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          ${(typeof u.walletBalance === 'number' ? u.walletBalance : 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </td>
                         <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>
-                          {u.downlineCount || 28} Members
+                          {u.downlineCount ?? 0} Members
                         </td>
                         <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>
                           {new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
