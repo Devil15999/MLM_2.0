@@ -250,10 +250,17 @@ export const AdminDashboardPage = () => {
                 </div>
               </div>
               <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)' }}>
-                ${(usersList.reduce((acc, u) => acc + (u.walletBalance || 0) * 10, 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })} GV
+                ${(usersList.reduce((acc, u) => {
+                  const p = u.selectedPackage || '';
+                  if (p.includes('Diamond')) return acc + 5000;
+                  if (p.includes('Gold')) return acc + 2500;
+                  if (p.includes('Silver')) return acc + 1000;
+                  if (p.includes('Bronze')) return acc + 500;
+                  return acc;
+                }, 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })} GV
               </div>
               <div style={{ fontSize: '12px', color: '#4f46e5', fontWeight: '700', marginTop: '4px' }}>
-                Group Volume across legs
+                Accumulates on package purchases
               </div>
             </div>
 
