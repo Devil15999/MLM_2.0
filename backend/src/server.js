@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
+import customerRoutes from './routes/customerRoutes.js';
 import { User } from './models/User.js';
 
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/customer', customerRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -53,9 +55,20 @@ const autoSeedUsers = async () => {
         role: 'customer',
         sponsorId: 'SP-1001',
         rank: 'Gold',
-        walletBalance: 4850.00,
-        totalEarnings: 18450.00,
-        downlineCount: 32,
+        walletBalance: 6250.00,
+        totalEarnings: 10450.00,
+        downlineCount: 36,
+        level1MembersCount: 12,
+        level2MembersCount: 24,
+        level1AffiliateIncome: 4850.00,
+        level2AffiliateIncome: 2420.00,
+        investmentReturns: 3180.00,
+        totalIncome: 10450.00,
+        phone: '+1 (555) 234-5678',
+        address: '742 Evergreen Terrace',
+        city: 'Springfield',
+        country: 'United States',
+        kycStatus: 'Verified',
       });
       console.log('[Seed] Nexis Distributor created (alex@nexismlm.com / User@123456)');
     }

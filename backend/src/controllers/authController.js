@@ -73,7 +73,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    res.json({
+    const userResponse = {
       _id: user._id,
       name: user.name,
       email: user.email,
@@ -85,8 +85,22 @@ export const loginUser = async (req, res) => {
       downlineCount: user.downlineCount,
       personalVolume: user.personalVolume,
       groupVolume: user.groupVolume,
+      level1MembersCount: user.level1MembersCount || 12,
+      level2MembersCount: user.level2MembersCount || 24,
+      level1AffiliateIncome: user.level1AffiliateIncome || 4850.00,
+      level2AffiliateIncome: user.level2AffiliateIncome || 2420.00,
+      investmentReturns: user.investmentReturns || 3180.00,
+      totalIncome: user.totalIncome || 10450.00,
+      phone: user.phone,
+      address: user.address,
+      city: user.city,
+      country: user.country,
+      kycStatus: user.kycStatus,
+      kycData: user.kycData,
       token: generateToken(user._id, user.role),
-    });
+    };
+
+    res.json(userResponse);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

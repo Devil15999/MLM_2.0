@@ -64,6 +64,60 @@ const userSchema = new mongoose.Schema(
       enum: ['active', 'suspended', 'pending'],
       default: 'active',
     },
+    // Customer Portal Metrics & Details
+    level1MembersCount: {
+      type: Number,
+      default: 12,
+    },
+    level2MembersCount: {
+      type: Number,
+      default: 24,
+    },
+    level1AffiliateIncome: {
+      type: Number,
+      default: 4850.00,
+    },
+    level2AffiliateIncome: {
+      type: Number,
+      default: 2420.00,
+    },
+    investmentReturns: {
+      type: Number,
+      default: 3180.00,
+    },
+    totalIncome: {
+      type: Number,
+      default: 10450.00,
+    },
+    phone: {
+      type: String,
+      default: '+1 (555) 234-5678',
+    },
+    address: {
+      type: String,
+      default: '742 Evergreen Terrace',
+    },
+    city: {
+      type: String,
+      default: 'Springfield',
+    },
+    country: {
+      type: String,
+      default: 'United States',
+    },
+    kycStatus: {
+      type: String,
+      enum: ['Not Submitted', 'Pending', 'Verified', 'Under Review', 'Rejected'],
+      default: 'Verified',
+    },
+    kycData: {
+      documentType: { type: String, default: 'Aadhaar Card / Govt ID' },
+      documentNumber: { type: String, default: '8942-1049-5821' },
+      bankName: { type: String, default: 'Global Chase Bank' },
+      accountNumber: { type: String, default: '•••• •••• 4920' },
+      ifscCode: { type: String, default: 'CHAS0009182' },
+      upiId: { type: String, default: 'alexrivera@upi' },
+    },
   },
   {
     timestamps: true,
