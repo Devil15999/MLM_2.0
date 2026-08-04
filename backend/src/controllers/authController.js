@@ -52,8 +52,11 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: `Invalid Sponsor ID '${reqSponsorId}'. Sponsor code does not exist in network database.` });
     }
 
-    // Generate unique Sponsor ID for the new user
-    let userOwnSponsorId = `SP-${Math.floor(1000 + Math.random() * 9000)}`;
+    // Generate unique Sponsor ID for the new user (format: firstname-mid4aadhaar@nexismlm.com)
+    const namePrefix = name.trim().split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+    const mid4Aadhaar = cleanAadhaar.slice(4, 8) || '1234';
+    let userOwnSponsorId = `${namePrefix}-${mid4Aadhaar}@nexismlm.com`;
+
     let isUnique = false;
     let attempts = 0;
     while (!isUnique && attempts < 50) {
@@ -61,8 +64,8 @@ export const registerUser = async (req, res) => {
       if (!existing) {
         isUnique = true;
       } else {
-        userOwnSponsorId = `SP-${Math.floor(1000 + Math.random() * 9000)}`;
         attempts++;
+        userOwnSponsorId = `${namePrefix}-${mid4Aadhaar}${attempts}@nexismlm.com`;
       }
     }
 
