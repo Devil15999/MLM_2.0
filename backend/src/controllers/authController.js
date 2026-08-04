@@ -22,6 +22,18 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Distributor already registered with this email' });
     }
 
+    const trimmedAadhaar = aadhaarNumber.trim();
+    const cleanAadhaar = trimmedAadhaar.replace(/\s+/g, '');
+    const aadhaarExists = await User.findOne({
+      $or: [
+        { aadhaarNumber: trimmedAadhaar },
+        { aadhaarNumber: cleanAadhaar }
+      ]
+    });
+    if (aadhaarExists) {
+      return res.status(400).json({ message: 'Distributor already registered with this Aadhaar Number' });
+    }
+
     // Verify Sponsor ID exists in database
     const reqSponsorId = sponsorId.trim();
     let sponsor = await User.findOne({

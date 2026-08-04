@@ -143,6 +143,8 @@ const userSchema = new mongoose.Schema(
     },
     aadhaarNumber: {
       type: String,
+      unique: true,
+      sparse: true,
     },
     aadhaarPhoto: {
       type: String, // Base64
