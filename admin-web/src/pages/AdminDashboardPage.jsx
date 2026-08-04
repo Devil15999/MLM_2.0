@@ -250,14 +250,13 @@ export const AdminDashboardPage = () => {
                 </div>
               </div>
               <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)' }}>
-                ${(usersList.reduce((acc, u) => {
+                ₹{(usersList.reduce((acc, u) => {
                   const p = u.selectedPackage || '';
-                  if (p.includes('Diamond')) return acc + 5000;
-                  if (p.includes('Gold')) return acc + 2500;
-                  if (p.includes('Silver')) return acc + 1000;
-                  if (p.includes('Bronze')) return acc + 500;
+                  if (p.includes('Elite')) return acc + 30000;
+                  if (p.includes('Premium') || p.includes('Gold')) return acc + 20000;
+                  if (p.includes('Starter') || p.includes('Silver') || p.includes('Bronze')) return acc + 10000;
                   return acc;
-                }, 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })} GV
+                }, 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })} GV
               </div>
               <div style={{ fontSize: '12px', color: '#4f46e5', fontWeight: '700', marginTop: '4px' }}>
                 Accumulates on package purchases
@@ -434,8 +433,8 @@ const PendingApprovalsSection = () => {
           enrolledMemberName: 'John Miller',
           enrolledMemberEmail: 'john.m@gmail.com',
           position: 'Left Leg (Node 1)',
-          packageName: 'Silver Pro ($1,000)',
-          commissionAmount: 120.00,
+          packageName: 'Premium Package (₹20,000)',
+          commissionAmount: 2000.00,
           status: 'Pending',
           createdAt: new Date().toISOString()
         }

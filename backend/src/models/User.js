@@ -41,8 +41,7 @@ const userSchema = new mongoose.Schema(
     },
     legPreference: {
       type: String,
-      enum: ['Left Leg', 'Right Leg'],
-      default: 'Left Leg',
+      default: 'Direct Level 1',
     },
     isOneTimePassword: {
       type: Boolean,
@@ -77,7 +76,7 @@ const userSchema = new mongoose.Schema(
       enum: ['active', 'suspended', 'pending'],
       default: 'active',
     },
-    // Customer Portal Metrics & Details (2 Nodes Max Level 1, 2 Max Levels)
+    // Customer Portal Metrics & Details (Unilevel Network Model: N Level 1 Nodes, Max 2 Levels)
     maxLevels: {
       type: Number,
       default: 2,

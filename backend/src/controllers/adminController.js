@@ -71,7 +71,7 @@ export const approveCommissionRequest = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Approved downline commission of $${approval.commissionAmount.toFixed(2)} and activated account for ${approval.enrolledMemberName}!`,
+      message: `Approved downline commission of ₹${approval.commissionAmount.toFixed(2)} and activated account for ${approval.enrolledMemberName}!`,
       approval,
     });
   } catch (error) {

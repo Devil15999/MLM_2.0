@@ -23,52 +23,52 @@ export const getCustomerDashboard = async (req, res) => {
     res.json({
       metrics: {
         totalTeam: {
-          title: 'Total Team (Includes Level 1 & 2)',
+          title: 'Total Network Team',
           value: `${totalTeam} Members`,
           rawCount: totalTeam,
-          sub: `${level1Count} Level 1 (Max 2) + ${level2Count} Level 2 (Max 4)`,
+          sub: `${level1Count} Direct Level 1 + ${level2Count} Indirect Level 2`,
         },
         level1Members: {
-          title: 'Level 1 Members',
-          value: `${level1Count} Nodes (Max 2)`,
+          title: 'Direct Level 1 Members',
+          value: `${level1Count} Members (Unlimited)`,
           rawCount: level1Count,
-          sub: 'Direct Child Nodes (Left & Right Leg)',
+          sub: 'Directly Enrolled Downline Network',
         },
         level2Members: {
-          title: 'Level 2 Members',
-          value: `${level2Count} Nodes (Max 4)`,
+          title: 'Indirect Level 2 Members',
+          value: `${level2Count} Members`,
           rawCount: level2Count,
-          sub: 'Secondary Downline Nodes (Max Level 2)',
+          sub: 'Enrolled by your Direct Level 1 Downlines',
         },
         level1AffiliateIncome: {
-          title: 'Level 1 Affiliate Income',
-          value: `$${level1Income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          title: 'Level 1 Direct Bonus',
+          value: `₹${level1Income.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
           rawAmount: level1Income,
-          sub: 'Direct Referral Bonus',
+          sub: 'Direct Referral Commission (10%)',
         },
         level2AffiliateIncome: {
-          title: 'Level 2 Affiliate Income',
-          value: `$${level2Income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          title: 'Level 2 Override Bonus',
+          value: `₹${level2Income.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
           rawAmount: level2Income,
-          sub: 'Indirect Override Bonus',
+          sub: 'Indirect Override Commission (₹500)',
         },
         investmentReturns: {
           title: 'Investment Returns',
-          value: `$${investmentReturns.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          value: `₹${investmentReturns.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
           rawAmount: investmentReturns,
-          sub: 'Package Passive Yield ROI',
+          sub: 'Package Daily ROI Yield',
         },
         totalIncome: {
-          title: 'Total Income',
-          value: `$${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          title: 'Total Earnings',
+          value: `₹${totalIncome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
           rawAmount: totalIncome,
           sub: 'Cumulative Lifetime Earnings',
         },
         wallet: {
-          title: 'Wallet',
-          value: `$${walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          title: 'Wallet Balance',
+          value: `₹${walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
           rawAmount: walletBalance,
-          sub: 'Available Withdrawable Balance',
+          sub: 'Available Withdrawable Funds',
         },
       },
       userSummary: {
@@ -76,7 +76,7 @@ export const getCustomerDashboard = async (req, res) => {
         rank: user?.rank || 'Gold Executive',
         sponsorId: user?.sponsorId || 'SP-1001',
         maxLevels: 2,
-        maxDirectNodes: 2,
+        maxDirectNodes: 'Unlimited',
       },
     });
   } catch (error) {
@@ -163,10 +163,45 @@ export const updateCustomerKYC = async (req, res) => {
 export const getCustomerPackages = async (req, res) => {
   try {
     const packages = [
-      { id: 'pkg-1', name: 'Bronze Starter', price: '$500', dailyRoi: '0.8%', duration: '200 Days', level1Comm: '10%', level2Comm: '5%', totalReturn: '$800', status: 'Available' },
-      { id: 'pkg-2', name: 'Silver Pro', price: '$1,000', dailyRoi: '1.0%', duration: '200 Days', level1Comm: '12%', level2Comm: '6%', totalReturn: '$2,000', status: 'Active Package' },
-      { id: 'pkg-3', name: 'Gold Executive', price: '$2,500', dailyRoi: '1.25%', duration: '200 Days', level1Comm: '15%', level2Comm: '8%', totalReturn: '$6,250', status: 'Active Package' },
-      { id: 'pkg-4', name: 'Diamond VIP', price: '$5,000', dailyRoi: '1.5%', duration: '200 Days', level1Comm: '18%', level2Comm: '10%', totalReturn: '$15,000', status: 'Available' }
+      {
+        id: 'pkg-1',
+        name: 'Starter Package',
+        price: '₹10,000',
+        gst: '₹1,800 (18% GST)',
+        processingFee: '₹200 (2% Processing)',
+        totalPrice: '₹12,000',
+        dailyRoi: '1%',
+        level1Comm: '₹1,000 (10%)',
+        level2Comm: '₹500',
+        maxReturn: '40% (per month)',
+        status: 'Available'
+      },
+      {
+        id: 'pkg-2',
+        name: 'Premium Package',
+        price: '₹20,000',
+        gst: '₹3,600 (18% GST)',
+        processingFee: '₹400 (2% Processing)',
+        totalPrice: '₹24,000',
+        dailyRoi: '1%',
+        level1Comm: '₹2,000 (10%)',
+        level2Comm: '₹500',
+        maxReturn: '40% (per month)',
+        status: 'Active Package'
+      },
+      {
+        id: 'pkg-3',
+        name: 'Elite Package',
+        price: '₹30,000',
+        gst: '₹5,400 (18% GST)',
+        processingFee: '₹600 (2% Processing)',
+        totalPrice: '₹36,000',
+        dailyRoi: '1%',
+        level1Comm: '₹3,000 (10%)',
+        level2Comm: '₹500',
+        maxReturn: '40% (per month)',
+        status: 'Available'
+      }
     ];
 
     res.json(packages);
@@ -180,17 +215,29 @@ export const getCustomerPackages = async (req, res) => {
 export const getCustomerTeamDetails = async (req, res) => {
   try {
     const userId = req.user?._id;
-    let downlines = [];
-    if (userId) {
-      downlines = await User.find({ sponsorId: userId });
-    }
+    let level1Members = [];
+    let level2Members = [];
 
-    const level1Members = downlines.filter(u => u.legPreference?.includes('Left') || u.legPreference?.includes('Right'));
-    const level2Members = downlines.filter(u => u.legPreference?.includes('L2'));
+    if (userId) {
+      // Direct Level 1 downlines sponsored by this user
+      level1Members = await User.find({
+        $or: [{ sponsorId: userId }, { sponsorId: req.user?.email }, { sponsorId: 'SP-2000' }]
+      });
+
+      const l1Ids = level1Members.map(u => u._id);
+      const l1Emails = level1Members.map(u => u.email);
+
+      // Level 2 downlines sponsored by any Level 1 member
+      level2Members = await User.find({
+        $or: [
+          { sponsorId: { $in: l1Ids } },
+          { sponsorId: { $in: l1Emails } }
+        ]
+      });
+    }
 
     res.json({
       maxLevels: 2,
-      maxLevel1Nodes: 2,
       level1MembersCount: level1Members.length,
       level2MembersCount: level2Members.length,
       totalTeamCount: level1Members.length + level2Members.length,
@@ -247,10 +294,10 @@ export const enrollDownlineMember = async (req, res) => {
         password: dynamicOtp,
         isOneTimePassword: true,
         accountStatus: 'Pending Admin Approval',
-        sponsorId: req.user?.sponsorId || 'SP-2000',
-        rank: packageName.includes('Gold') ? 'Gold' : (packageName.includes('Silver') ? 'Silver' : 'Member'),
+        sponsorId: req.user?._id || req.user?.email || 'SP-2000',
+        rank: packageName.includes('Elite') ? 'Elite' : (packageName.includes('Premium') ? 'Premium' : 'Starter'),
         selectedPackage: packageName,
-        legPreference: position.includes('Left') ? 'Left Leg' : 'Right Leg',
+        legPreference: 'Direct Level 1',
         walletBalance: 0.00,
         totalEarnings: 0.00,
         downlineCount: 0,
@@ -270,15 +317,24 @@ export const enrollDownlineMember = async (req, res) => {
 
     // 3. Determine package commission amount
     const packagePrices = {
-      'Bronze Starter ($500)': 500,
-      'Silver Pro ($1,000)': 1000,
-      'Gold Executive ($2,500)': 2500,
-      'Diamond VIP ($5,000)': 5000,
+      'Starter Package (₹10,000)': 10000,
+      'Premium Package (₹20,000)': 20000,
+      'Elite Package (₹30,000)': 30000,
+      'Starter Package': 10000,
+      'Premium Package': 20000,
+      'Elite Package': 30000,
     };
-    const price = packagePrices[packageName] || 1000;
+    const price = packagePrices[packageName] || 20000;
     const isLevel1 = position.includes('Node 1') || position === 'Left Leg' || position === 'Right Leg' || !position.includes('L2');
-    const commRate = isLevel1 ? 0.10 : 0.05;
-    const commAmount = price * commRate;
+    const level1BonusMap = {
+      'Starter Package (₹10,000)': 1000,
+      'Premium Package (₹20,000)': 2000,
+      'Elite Package (₹30,000)': 3000,
+      'Starter Package': 1000,
+      'Premium Package': 2000,
+      'Elite Package': 3000,
+    };
+    const commAmount = isLevel1 ? (level1BonusMap[packageName] || (price * 0.10)) : 500;
 
     // 4. Update sponsor's tree count (wallet remains pending until Admin Approval)
     let sponsorUser = null;
@@ -350,9 +406,9 @@ export const activateUserPackage = async (req, res) => {
       const user = await User.findById(userId);
       if (user) {
         user.selectedPackage = packageName;
-        if (packageName.includes('Gold')) user.rank = 'Gold';
-        else if (packageName.includes('Silver')) user.rank = 'Silver';
-        else if (packageName.includes('Diamond')) user.rank = 'Diamond';
+        if (packageName.includes('Elite')) user.rank = 'Elite';
+        else if (packageName.includes('Premium')) user.rank = 'Premium';
+        else if (packageName.includes('Starter')) user.rank = 'Starter';
         else user.rank = 'Member';
         await user.save();
       }

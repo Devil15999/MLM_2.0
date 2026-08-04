@@ -38,7 +38,7 @@ export const DashboardPage = () => {
   const [teamTab, setTeamTab] = useState('level1');
   const [teamViewMode, setTeamViewMode] = useState('tree');
   const isFreshUser = user?.email === 'fresh@nexismlm.com' || user?.sponsorId === 'SP-2000';
-  const [activePackage, setActivePackage] = useState(user?.selectedPackage || (isFreshUser ? 'None' : 'Gold Executive ($2,500)'));
+  const [activePackage, setActivePackage] = useState(user?.selectedPackage || (isFreshUser ? 'None' : 'Premium Package (₹20,000)'));
   
   // Storage key for local persistence
   const userKey = user?._id || user?.email || 'fresh';
@@ -46,7 +46,7 @@ export const DashboardPage = () => {
   // Tree Enrollment Modal State
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [selectedSlotPosition, setSelectedSlotPosition] = useState('');
-  const [enrollFormData, setEnrollFormData] = useState({ memberName: '', memberEmail: '', packageName: 'Silver Pro ($1,000)' });
+  const [enrollFormData, setEnrollFormData] = useState({ memberName: '', memberEmail: '', packageName: 'Premium Package (₹20,000)' });
   const [enrollSuccessMessage, setEnrollSuccessMessage] = useState('');
   const [issuedCredentialModal, setIssuedCredentialModal] = useState(null);
 
@@ -110,15 +110,24 @@ export const DashboardPage = () => {
     if (!enrollFormData.memberName) return;
 
     const packagePrices = {
-      'Bronze Starter ($500)': 500,
-      'Silver Pro ($1,000)': 1000,
-      'Gold Executive ($2,500)': 2500,
-      'Diamond VIP ($5,000)': 5000,
+      'Starter Package (₹10,000)': 10000,
+      'Premium Package (₹20,000)': 20000,
+      'Elite Package (₹30,000)': 30000,
+      'Starter Package': 10000,
+      'Premium Package': 20000,
+      'Elite Package': 30000,
     };
-    const price = packagePrices[enrollFormData.packageName] || 1000;
+    const price = packagePrices[enrollFormData.packageName] || 20000;
     const isLevel1 = selectedSlotPosition.includes('Node 1') || selectedSlotPosition === 'Left Leg' || selectedSlotPosition === 'Right Leg' || !selectedSlotPosition.includes('L2');
-    const commRate = isLevel1 ? 0.10 : 0.05;
-    const commAmount = price * commRate;
+    const level1BonusMap = {
+      'Starter Package (₹10,000)': 1000,
+      'Premium Package (₹20,000)': 2000,
+      'Elite Package (₹30,000)': 3000,
+      'Starter Package': 1000,
+      'Premium Package': 2000,
+      'Elite Package': 3000,
+    };
+    const commAmount = isLevel1 ? (level1BonusMap[enrollFormData.packageName] || (price * 0.10)) : 500;
 
     const memberEmailToUse = enrollFormData.memberEmail || `${enrollFormData.memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
 
@@ -129,8 +138,8 @@ export const DashboardPage = () => {
       package: enrollFormData.packageName,
       joined: 'Today',
       status: 'Active',
-      level1Earned: isLevel1 ? `$${commAmount.toFixed(2)}` : '$0.00',
-      level2Earned: isLevel1 ? '$0.00' : `$${commAmount.toFixed(2)}`,
+      level1Earned: isLevel1 ? `₹${commAmount.toLocaleString('en-IN')}` : '₹0',
+      level2Earned: isLevel1 ? '₹0' : `₹${commAmount.toLocaleString('en-IN')}`,
       sponsor: isLevel1 ? (user?.name || 'You') : 'Sarah Connor'
     };
 
@@ -264,15 +273,15 @@ export const DashboardPage = () => {
   };
 
   const defaultL1 = [
-    { name: 'Sarah Connor', position: 'Left Leg (Node 1)', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Executive Gold ($2,500)', level1Earned: '$1,250.00', status: 'Active' },
-    { name: 'David Vance', position: 'Right Leg (Node 2)', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Pro Silver ($1,000)', level1Earned: '$500.00', status: 'Active' }
+    { name: 'Sarah Connor', position: 'Left Leg (Node 1)', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Elite Package (₹30,000)', level1Earned: '₹3,000', status: 'Active' },
+    { name: 'David Vance', position: 'Right Leg (Node 2)', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Premium Package (₹20,000)', level1Earned: '₹2,000', status: 'Active' }
   ];
 
   const defaultL2 = [
-    { name: 'Kevin Flynn', position: 'Left-Left Leg (L2 Node 1)', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-    { name: 'Claire Bennet', position: 'Left-Right Leg (L2 Node 2)', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Pro Silver ($1,000)', level2Earned: '$100.00', status: 'Active' },
-    { name: 'Arthur Pendelton', position: 'Right-Left Leg (L2 Node 3)', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Executive Gold ($2,500)', level2Earned: '$250.00', status: 'Active' },
-    { name: 'Rachel Green', position: 'Right-Right Leg (L2 Node 4)', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Bronze ($500)', level2Earned: '$50.00', status: 'Active' }
+    { name: 'Kevin Flynn', position: 'Left-Left Leg (L2 Node 1)', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Elite Package (₹30,000)', level2Earned: '₹500', status: 'Active' },
+    { name: 'Claire Bennet', position: 'Left-Right Leg (L2 Node 2)', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Premium Package (₹20,000)', level2Earned: '₹500', status: 'Active' },
+    { name: 'Arthur Pendelton', position: 'Right-Left Leg (L2 Node 3)', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Elite Package (₹30,000)', level2Earned: '₹500', status: 'Active' },
+    { name: 'Rachel Green', position: 'Right-Right Leg (L2 Node 4)', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Package (₹10,000)', level2Earned: '₹500', status: 'Active' }
   ];
 
   const level1MembersList = isFreshUser ? enrolledLevel1 : [...defaultL1, ...enrolledLevel1];
@@ -360,10 +369,45 @@ export const DashboardPage = () => {
 
   // Packages list
   const packagesList = [
-    { id: 'pkg-1', name: 'Bronze Starter', price: '$500', dailyRoi: '0.8%', duration: '200 Days', level1Comm: '10%', level2Comm: '5%', totalReturn: '$800', status: 'Available' },
-    { id: 'pkg-2', name: 'Silver Pro', price: '$1,000', dailyRoi: '1.0%', duration: '200 Days', level1Comm: '12%', level2Comm: '6%', totalReturn: '$2,000', status: 'Active Package' },
-    { id: 'pkg-3', name: 'Gold Executive', price: '$2,500', dailyRoi: '1.25%', duration: '200 Days', level1Comm: '15%', level2Comm: '8%', totalReturn: '$6,250', status: 'Active Package' },
-    { id: 'pkg-4', name: 'Diamond VIP', price: '$5,000', dailyRoi: '1.5%', duration: '200 Days', level1Comm: '18%', level2Comm: '10%', totalReturn: '$15,000', status: 'Available' }
+    {
+      id: 'pkg-1',
+      name: 'Starter Package',
+      price: '₹10,000',
+      gst: '₹1,800 (18%)',
+      processingFee: '₹200 (2%)',
+      totalPrice: '₹12,000',
+      dailyRoi: '1%',
+      level1Comm: '₹1,000 (10%)',
+      level2Comm: '₹500',
+      maxReturn: '40% (per month)',
+      status: activePackage.includes('Starter') ? 'Active Package' : 'Available'
+    },
+    {
+      id: 'pkg-2',
+      name: 'Premium Package',
+      price: '₹20,000',
+      gst: '₹3,600 (18%)',
+      processingFee: '₹400 (2%)',
+      totalPrice: '₹24,000',
+      dailyRoi: '1%',
+      level1Comm: '₹2,000 (10%)',
+      level2Comm: '₹500',
+      maxReturn: '40% (per month)',
+      status: activePackage.includes('Premium') || activePackage === 'Gold Executive ($2,500)' ? 'Active Package' : 'Available'
+    },
+    {
+      id: 'pkg-3',
+      name: 'Elite Package',
+      price: '₹30,000',
+      gst: '₹5,400 (18%)',
+      processingFee: '₹600 (2%)',
+      totalPrice: '₹36,000',
+      dailyRoi: '1%',
+      level1Comm: '₹3,000 (10%)',
+      level2Comm: '₹500',
+      maxReturn: '40% (per month)',
+      status: activePackage.includes('Elite') ? 'Active Package' : 'Available'
+    }
   ];
 
   // Side navigation menu items
@@ -659,14 +703,14 @@ export const DashboardPage = () => {
                   </div>
 
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={() => handleActivatePackage('Bronze Starter ($500)')} className="btn-outline" style={{ fontSize: '12px', padding: '8px 14px' }}>
-                      Activate Bronze ($500)
+                    <button onClick={() => handleActivatePackage('Starter Package (₹10,000)')} className="btn-outline" style={{ fontSize: '12px', padding: '8px 14px' }}>
+                      Activate Starter (₹10,000)
                     </button>
-                    <button onClick={() => handleActivatePackage('Silver Pro ($1,000)')} className="btn-outline" style={{ fontSize: '12px', padding: '8px 14px' }}>
-                      Activate Silver ($1,000)
+                    <button onClick={() => handleActivatePackage('Premium Package (₹20,000)')} className="btn-outline" style={{ fontSize: '12px', padding: '8px 14px' }}>
+                      Activate Premium (₹20,000)
                     </button>
-                    <button onClick={() => handleActivatePackage('Gold Executive ($2,500)')} className="btn-emerald" style={{ fontSize: '12px', padding: '8px 14px' }}>
-                      Activate Gold ($2,500)
+                    <button onClick={() => handleActivatePackage('Elite Package (₹30,000)')} className="btn-emerald" style={{ fontSize: '12px', padding: '8px 14px' }}>
+                      Activate Elite (₹30,000)
                     </button>
                   </div>
                 </div>
@@ -1053,7 +1097,7 @@ export const DashboardPage = () => {
                 <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Choose investment tiers to boost daily returns, Level 1, and Level 2 affiliate commissions.</p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                 {packagesList.map((pkg) => (
                   <div key={pkg.id} className="light-card" style={{
                     padding: '28px',
@@ -1067,17 +1111,22 @@ export const DashboardPage = () => {
                       </span>
                     )}
 
-                    <h4 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>{pkg.name}</h4>
-                    <div style={{ fontSize: '32px', fontWeight: '800', color: '#059669', marginBottom: '16px' }}>{pkg.price}</div>
+                    <h4 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>{pkg.name}</h4>
+                    
+                    <div style={{ marginBottom: '16px' }}>
+                      <div style={{ fontSize: '32px', fontWeight: '800', color: '#059669' }}>{pkg.price}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '2px' }}>
+                        + 18% GST ({pkg.gst}) + 2% Processing ({pkg.processingFee})
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#047857', fontWeight: '700', marginTop: '6px', background: '#ecfdf5', padding: '4px 10px', borderRadius: '8px', display: 'inline-block', border: '1px solid #a7f3d0' }}>
+                        Total Payable: {pkg.totalPrice}
+                      </div>
+                    </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px', borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginBottom: '24px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Daily ROI Yield:</span>
                         <span style={{ fontWeight: '700', color: '#d97706' }}>{pkg.dailyRoi}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Yield Duration:</span>
-                        <span style={{ fontWeight: '700' }}>{pkg.duration}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Level 1 Affiliate Bonus:</span>
@@ -1089,15 +1138,16 @@ export const DashboardPage = () => {
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--border-color)', paddingTop: '8px' }}>
                         <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Max Return:</span>
-                        <span style={{ fontWeight: '800', color: '#059669' }}>{pkg.totalReturn}</span>
+                        <span style={{ fontWeight: '800', color: '#059669' }}>{pkg.maxReturn}</span>
                       </div>
                     </div>
 
                     <button
+                      onClick={() => handleActivatePackage(pkg.name)}
                       className={pkg.status === 'Active Package' ? 'btn-indigo' : 'btn-emerald'}
                       style={{ width: '100%' }}
                     >
-                      {pkg.status === 'Active Package' ? 'Upgrade Tier' : 'Buy Package Now'}
+                      {pkg.status === 'Active Package' ? 'Active Tier' : 'Buy Package Now'}
                     </button>
                   </div>
                 ))}
@@ -1111,21 +1161,27 @@ export const DashboardPage = () => {
               {/* Summary Cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '28px' }}>
                 <div className="light-card" style={{ padding: '20px' }}>
-                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Total Downline Team</div>
-                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#4f46e5', marginTop: '4px' }}>6 Nodes</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Level 1 & 2 (Max 2 Levels)</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Total Network Team</div>
+                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#4f46e5', marginTop: '4px' }}>
+                    {level1MembersList.length + level2MembersList.length} Members
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Level 1 & Level 2 (2 Max Depth)</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '20px' }}>
-                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Level 1 Members</div>
-                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#059669', marginTop: '4px' }}>2 Nodes</div>
-                  <div style={{ fontSize: '12px', color: '#059669', fontWeight: '600' }}>Max 2 Child Nodes (Left & Right)</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Direct Level 1 Members</div>
+                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#059669', marginTop: '4px' }}>
+                    {level1MembersList.length} Members
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#059669', fontWeight: '600' }}>Unlimited Level 1 Width (N Nodes)</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '20px' }}>
-                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Level 2 Members</div>
-                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#8b5cf6', marginTop: '4px' }}>4 Nodes</div>
-                  <div style={{ fontSize: '12px', color: '#8b5cf6', fontWeight: '600' }}>Max Level 2 Depth</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Indirect Level 2 Members</div>
+                  <div style={{ fontSize: '26px', fontWeight: '800', color: '#8b5cf6', marginTop: '4px' }}>
+                    {level2MembersList.length} Members
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#8b5cf6', fontWeight: '600' }}>Enrolled by Level 1 Downlines</div>
                 </div>
               </div>
 
@@ -1134,46 +1190,56 @@ export const DashboardPage = () => {
                 {/* Header View Mode Controls */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
                   <div>
-                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Binary Matrix Structure (Max 2 Levels)</h3>
-                    <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Visual representation of your direct Level 1 & Level 2 downlines</p>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Unilevel Network Structure (N Level 1 Nodes)</h3>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Enroll unlimited Level 1 direct downlines. Level 2 downlines are enrolled by your Level 1 members.</p>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '10px', background: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <button
-                      onClick={() => setTeamViewMode('tree')}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        borderRadius: '10px',
-                        background: teamViewMode === 'tree' ? '#ffffff' : 'transparent',
-                        color: teamViewMode === 'tree' ? '#059669' : '#64748b',
-                        boxShadow: teamViewMode === 'tree' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
+                      onClick={() => handleOpenEnrollModal('Direct Level 1')}
+                      className="btn-emerald"
+                      style={{ fontSize: '13px', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
-                      <Layers size={16} /> Visual Tree Diagram
+                      <PlusCircle size={18} /> + Enroll New Level 1 Member
                     </button>
 
-                    <button
-                      onClick={() => setTeamViewMode('table')}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        borderRadius: '10px',
-                        background: teamViewMode === 'table' ? '#ffffff' : 'transparent',
-                        color: teamViewMode === 'table' ? '#059669' : '#64748b',
-                        boxShadow: teamViewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Users size={16} /> Member Table List
-                    </button>
+                    <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
+                      <button
+                        onClick={() => setTeamViewMode('tree')}
+                        style={{
+                          padding: '8px 16px',
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          borderRadius: '10px',
+                          background: teamViewMode === 'tree' ? '#ffffff' : 'transparent',
+                          color: teamViewMode === 'tree' ? '#059669' : '#64748b',
+                          boxShadow: teamViewMode === 'tree' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Layers size={16} /> Unilevel Network Tree
+                      </button>
+
+                      <button
+                        onClick={() => setTeamViewMode('table')}
+                        style={{
+                          padding: '8px 16px',
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          borderRadius: '10px',
+                          background: teamViewMode === 'table' ? '#ffffff' : 'transparent',
+                          color: teamViewMode === 'table' ? '#059669' : '#64748b',
+                          boxShadow: teamViewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Users size={16} /> Member Table List
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1690,10 +1756,9 @@ export const DashboardPage = () => {
                   value={enrollFormData.packageName}
                   onChange={(e) => setEnrollFormData({ ...enrollFormData, packageName: e.target.value })}
                 >
-                  <option>Bronze Starter ($500) — 10% Level 1 Comm ($50)</option>
-                  <option>Silver Pro ($1,000) — 12% Level 1 Comm ($120)</option>
-                  <option>Gold Executive ($2,500) — 15% Level 1 Comm ($375)</option>
-                  <option>Diamond VIP ($5,000) — 18% Level 1 Comm ($900)</option>
+                  <option value="Starter Package (₹10,000)">Starter Package (₹10,000) — Level 1: ₹1,000 (10%) | Level 2: ₹500</option>
+                  <option value="Premium Package (₹20,000)">Premium Package (₹20,000) — Level 1: ₹2,000 (10%) | Level 2: ₹500</option>
+                  <option value="Elite Package (₹30,000)">Elite Package (₹30,000) — Level 1: ₹3,000 (10%) | Level 2: ₹500</option>
                 </select>
               </div>
 
