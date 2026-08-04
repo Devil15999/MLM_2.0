@@ -22,11 +22,35 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Distributor already registered with this email' });
     }
 
+    // Verify Sponsor ID exists in database
+    const reqSponsorId = (sponsorId || 'SP-1001').trim();
+    let sponsor = await User.findOne({
+      $or: [{ sponsorId: reqSponsorId }, { _id: reqSponsorId.match(/^[0-9a-fA-F]{24}$/) ? reqSponsorId : null }, { email: reqSponsorId.toLowerCase() }]
+    }).catch(() => null);
+
+    if (!sponsor && reqSponsorId !== 'MASTER-HEAD' && reqSponsorId !== 'NEXIS-TOP') {
+      return res.status(400).json({ message: `Invalid Sponsor ID '${reqSponsorId}'. Sponsor code does not exist in network database.` });
+    }
+
+    // Generate unique Sponsor ID for the new user
+    let userOwnSponsorId = `SP-${Math.floor(1000 + Math.random() * 9000)}`;
+    let isUnique = false;
+    let attempts = 0;
+    while (!isUnique && attempts < 50) {
+      const existing = await User.findOne({ sponsorId: userOwnSponsorId });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        userOwnSponsorId = `SP-${Math.floor(1000 + Math.random() * 9000)}`;
+        attempts++;
+      }
+    }
+
     const user = await User.create({
       name,
       email,
       password,
-      sponsorId: sponsorId || 'NEXIS-TOP',
+      sponsorId: userOwnSponsorId,
       role: 'customer',
       rank: 'Member',
       accountStatus: 'Pending Admin Approval',
@@ -44,11 +68,6 @@ export const registerUser = async (req, res) => {
 
     // Create a Joining Request Approval
     const { Approval } = await import('../models/Approval.js');
-    
-    // Find sponsor to link
-    const sponsor = await User.findOne({ 
-      $or: [{ sponsorId }, { _id: sponsorId }] 
-    }).catch(() => null);
 
     await Approval.create({
       type: 'Joining Request',
@@ -67,6 +86,7 @@ export const registerUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      sponsorId: user.sponsorId,
       accountStatus: user.accountStatus
     });
   } catch (error) {

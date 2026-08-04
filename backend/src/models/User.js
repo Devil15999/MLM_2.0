@@ -28,7 +28,9 @@ const userSchema = new mongoose.Schema(
     },
     sponsorId: {
       type: String,
-      default: 'NEXIS-TOP',
+      unique: true,
+      sparse: true,
+      default: function() { return `SP-${Math.floor(1000 + Math.random() * 9000)}`; },
     },
     rank: {
       type: String,
