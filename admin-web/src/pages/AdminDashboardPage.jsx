@@ -41,7 +41,7 @@ export const AdminDashboardPage = () => {
     setPayoutMessage('Calculating binary matching bonuses & unilevel volume points across all downlines...');
     setTimeout(() => {
       setProcessingPayout(false);
-      setPayoutMessage('Weekly MLM Commission Payout Processed Successfully! $48,250.00 credited to distributor wallets.');
+      setPayoutMessage('Weekly MLM Commission Payout Processed Successfully! ₹38,60,000 credited to distributor wallets.');
       setTimeout(() => setPayoutMessage(null), 5000);
     }, 2500);
   };

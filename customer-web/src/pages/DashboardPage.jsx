@@ -101,7 +101,7 @@ export const DashboardPage = () => {
 
   const handleOpenEnrollModal = (position) => {
     setSelectedSlotPosition(position);
-    setEnrollFormData({ memberName: '', memberEmail: '', packageName: 'Silver Pro ($1,000)' });
+    setEnrollFormData({ memberName: '', memberEmail: '', packageName: 'Starter (₹10,000)' });
     setEnrollModalOpen(true);
   };
 
@@ -323,7 +323,7 @@ export const DashboardPage = () => {
     {
       id: 'level-1-income',
       title: 'Level 1 Affiliate Income',
-      value: `$${dynamicL1Income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      value: `₹${dynamicL1Income.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
       sub: 'Direct Referral Bonus',
       icon: DollarSign,
       color: '#10b981',
@@ -332,7 +332,7 @@ export const DashboardPage = () => {
     {
       id: 'level-2-income',
       title: 'Level 2 Affiliate Income',
-      value: `$${dynamicL2Income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      value: `₹${dynamicL2Income.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
       sub: 'Indirect Override Commission',
       icon: DollarSign,
       color: '#8b5cf6',
@@ -341,7 +341,7 @@ export const DashboardPage = () => {
     {
       id: 'investment-returns',
       title: 'Investment Returns',
-      value: isFreshUser ? '$0.00' : '$3,180.00',
+      value: isFreshUser ? '₹0.00' : '₹3,180.00',
       sub: 'Package Yield & Passive ROI',
       icon: TrendingUp,
       color: '#d97706',
@@ -350,7 +350,7 @@ export const DashboardPage = () => {
     {
       id: 'total-income',
       title: 'Total Income',
-      value: `$${dynamicTotalIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      value: `₹${dynamicTotalIncome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
       sub: 'Cumulative Lifetime Earnings',
       icon: Award,
       color: '#059669',
@@ -359,7 +359,7 @@ export const DashboardPage = () => {
     {
       id: 'wallet',
       title: 'Wallet',
-      value: `$${dynamicWallet.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      value: `₹${dynamicWallet.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
       sub: 'Available Withdrawable Balance',
       icon: Wallet,
       color: '#2563eb',
@@ -393,7 +393,7 @@ export const DashboardPage = () => {
       level1Comm: '₹2,000 (10%)',
       level2Comm: '₹500',
       maxReturn: '40% (per month)',
-      status: activePackage.includes('Premium') || activePackage === 'Gold Executive ($2,500)' ? 'Active Package' : 'Available'
+      status: activePackage.includes('Premium') || activePackage === 'Gold Executive (₹20,000)' ? 'Active Package' : 'Available'
     },
     {
       id: 'pkg-3',
@@ -630,8 +630,8 @@ export const DashboardPage = () => {
                           </div>
                           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
                             {n.status === 'Approved'
-                              ? `Admin approved commission of $${Number(n.commissionAmount).toFixed(2)}! Credited to Wallet.`
-                              : (n.status === 'Rejected' ? `Admin rejected commission request.` : `Commission of $${Number(n.commissionAmount).toFixed(2)} is pending Admin approval.`)}
+                              ? `Admin approved commission of ₹${Number(n.commissionAmount).toLocaleString('en-IN')}! Credited to Wallet.`
+                              : (n.status === 'Rejected' ? `Admin rejected commission request.` : `Commission of ₹${Number(n.commissionAmount).toLocaleString('en-IN')} is pending Admin approval.`)}
                           </div>
                         </div>
                       ))
@@ -667,7 +667,7 @@ export const DashboardPage = () => {
             }}>
               <Wallet size={16} color="#2563eb" />
               <span style={{ fontSize: '13px', color: '#1e40af', fontWeight: '700' }}>
-                Wallet: $6,250.00
+                Wallet: ₹{dynamicWallet.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>
@@ -1516,25 +1516,25 @@ export const DashboardPage = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '28px' }}>
                 <div className="light-card" style={{ padding: '24px', background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)', color: '#ffffff' }}>
                   <div style={{ fontSize: '13px', opacity: 0.9, fontWeight: '700' }}>Available Wallet Balance</div>
-                  <div style={{ fontSize: '32px', fontWeight: '800', marginTop: '6px' }}>$6,250.00</div>
+                  <div style={{ fontSize: '32px', fontWeight: '800', marginTop: '6px' }}>₹{dynamicWallet.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Ready for Instant Withdrawal</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '24px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Level 1 Affiliate Income</div>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#059669', marginTop: '6px' }}>$4,850.00</div>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#059669', marginTop: '6px' }}>₹{dynamicTotalEarned.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: '12px', color: '#059669' }}>Direct Referral Earnings</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '24px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Level 2 Affiliate Income</div>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#8b5cf6', marginTop: '6px' }}>$2,420.00</div>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#8b5cf6', marginTop: '6px' }}>₹{dynamicTeamBonus.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: '12px', color: '#8b5cf6' }}>Indirect Override Earnings</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '24px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Investment Returns</div>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#d97706', marginTop: '6px' }}>$3,180.00</div>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#d97706', marginTop: '6px' }}>₹{dynamicDirectBonus.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: '12px', color: '#d97706' }}>Daily Yield ROI</div>
                 </div>
               </div>
@@ -1558,7 +1558,7 @@ export const DashboardPage = () => {
                       <input
                         type="number"
                         className="form-input"
-                        placeholder="Enter amount (min $50)"
+                        placeholder="Enter amount (min ₹1000)"
                         value={withdrawAmount}
                         onChange={(e) => setWithdrawAmount(e.target.value)}
                       />
@@ -1591,7 +1591,7 @@ export const DashboardPage = () => {
                         <div style={{ fontWeight: '700', fontSize: '14px' }}>Level 1 Referral Commission</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>From Sarah Connor • Aug 01, 2026</div>
                       </div>
-                      <span style={{ color: '#059669', fontWeight: '800' }}>+$1,250.00</span>
+                      <span style={{ color: '#059669', fontWeight: '800' }}>+₹10,000.00</span>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
@@ -1599,7 +1599,7 @@ export const DashboardPage = () => {
                         <div style={{ fontWeight: '700', fontSize: '14px' }}>Daily Package Yield ROI</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Gold Package • Aug 02, 2026</div>
                       </div>
-                      <span style={{ color: '#d97706', fontWeight: '800' }}>+$31.25</span>
+                      <span style={{ color: '#d97706', fontWeight: '800' }}>+₹500.00</span>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
@@ -1607,7 +1607,7 @@ export const DashboardPage = () => {
                         <div style={{ fontWeight: '700', fontSize: '14px' }}>Level 2 Override Commission</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>From Kevin Flynn • July 29, 2026</div>
                       </div>
-                      <span style={{ color: '#8b5cf6', fontWeight: '800' }}>+$250.00</span>
+                      <span style={{ color: '#8b5cf6', fontWeight: '800' }}>+₹2,000.00</span>
                     </div>
                   </div>
                 </div>
