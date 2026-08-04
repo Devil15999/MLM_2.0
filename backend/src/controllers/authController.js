@@ -11,10 +11,10 @@ const generateToken = (id, role) => {
 // @route   POST /api/auth/register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, sponsorId } = req.body;
+    const { name, email, password, sponsorId, aadhaarNumber, aadhaarPhoto, panPhoto, transactionPhoto, selectedPackage } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
+    if (!name || !email || !password || !aadhaarNumber || !selectedPackage || !aadhaarPhoto || !transactionPhoto) {
+      return res.status(400).json({ message: 'Please provide all required fields (Name, Email, Password, Aadhaar Number, Package, Aadhaar Photo, Transaction Photo)' });
     }
 
     const userExists = await User.findOne({ email });
@@ -29,26 +29,45 @@ export const registerUser = async (req, res) => {
       sponsorId: sponsorId || 'NEXIS-TOP',
       role: 'customer',
       rank: 'Member',
-      walletBalance: 250.00,
-      totalEarnings: 250.00,
+      accountStatus: 'Pending Admin Approval',
+      aadhaarNumber,
+      aadhaarPhoto,
+      panPhoto,
+      transactionPhoto,
+      selectedPackage,
+      walletBalance: 0,
+      totalEarnings: 0,
       downlineCount: 0,
-      personalVolume: 100,
-      groupVolume: 100,
+      personalVolume: 0,
+      groupVolume: 0,
+    });
+
+    // Create a Joining Request Approval
+    const { Approval } = await import('../models/Approval.js');
+    
+    // Find sponsor to link
+    const sponsor = await User.findOne({ 
+      $or: [{ sponsorId }, { _id: sponsorId }] 
+    }).catch(() => null);
+
+    await Approval.create({
+      type: 'Joining Request',
+      userId: user._id,
+      sponsorId: sponsor ? sponsor._id : null,
+      sponsorName: sponsor ? sponsor.name : 'System Admin',
+      enrolledMemberName: user.name,
+      enrolledMemberEmail: user.email,
+      packageName: selectedPackage,
+      status: 'Pending'
     });
 
     res.status(201).json({
+      success: true,
+      message: 'Registration submitted successfully. Please wait for Admin approval to login.',
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
-      sponsorId: user.sponsorId,
-      rank: user.rank,
-      walletBalance: user.walletBalance,
-      totalEarnings: user.totalEarnings,
-      downlineCount: user.downlineCount,
-      personalVolume: user.personalVolume,
-      groupVolume: user.groupVolume,
-      token: generateToken(user._id, user.role),
+      accountStatus: user.accountStatus
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

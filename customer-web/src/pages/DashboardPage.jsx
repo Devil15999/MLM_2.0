@@ -1522,19 +1522,19 @@ export const DashboardPage = () => {
 
                 <div className="light-card" style={{ padding: '24px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Level 1 Affiliate Income</div>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#059669', marginTop: '6px' }}>₹{dynamicTotalEarned.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#059669', marginTop: '6px' }}>₹{dynamicL1Income.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: '12px', color: '#059669' }}>Direct Referral Earnings</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '24px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Level 2 Affiliate Income</div>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#8b5cf6', marginTop: '6px' }}>₹{dynamicTeamBonus.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#8b5cf6', marginTop: '6px' }}>₹{dynamicL2Income.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: '12px', color: '#8b5cf6' }}>Indirect Override Earnings</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '24px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Investment Returns</div>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#d97706', marginTop: '6px' }}>₹{dynamicDirectBonus.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#d97706', marginTop: '6px' }}>₹{Math.max(0, dynamicTotalIncome - dynamicL1Income - dynamicL2Income).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: '12px', color: '#d97706' }}>Daily Yield ROI</div>
                 </div>
               </div>

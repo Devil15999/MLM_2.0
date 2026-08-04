@@ -410,10 +410,35 @@ export const AdminDashboardPage = () => {
   );
 };
 
+const ImageModal = ({ isOpen, onClose, imageSrc, title }) => {
+  if (!isOpen) return null;
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.7)', zIndex: 9999,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
+    }}>
+      <div style={{ background: '#fff', borderRadius: '12px', maxWidth: '600px', width: '100%', padding: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '800' }}>{title}</h3>
+          <button onClick={onClose} style={{ fontSize: '24px', background: 'none', border: 'none', cursor: 'pointer' }}>&times;</button>
+        </div>
+        {imageSrc ? (
+          <img src={imageSrc} alt={title} style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '8px' }} />
+        ) : (
+          <p style={{ color: 'var(--text-muted)' }}>No image provided.</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const PendingApprovalsSection = () => {
   const [approvals, setApprovals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState(null);
+  const [modalImage, setModalImage] = useState(null);
+  const [modalTitle, setModalTitle] = useState('');
 
   const fetchApprovals = async () => {
     setLoading(true);
@@ -426,19 +451,7 @@ const PendingApprovalsSection = () => {
       }
     } catch (err) {
       console.log('Using default mock approval queue');
-      setApprovals([
-        {
-          _id: 'app-101',
-          sponsorName: 'New Distributor (Fresh)',
-          enrolledMemberName: 'John Miller',
-          enrolledMemberEmail: 'john.m@gmail.com',
-          position: 'Left Leg (Node 1)',
-          packageName: 'Premium Package (₹20,000)',
-          commissionAmount: 2000.00,
-          status: 'Pending',
-          createdAt: new Date().toISOString()
-        }
-      ]);
+      setApprovals([]);
     }
     setLoading(false);
   };
@@ -447,14 +460,14 @@ const PendingApprovalsSection = () => {
     fetchApprovals();
   }, []);
 
-  const handleApprove = async (id, name, amount) => {
+  const handleApprove = async (id, name) => {
     try {
       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
       await fetch(`${apiUrl.replace('/auth', '')}/admin/approvals/${id}/approve`, { method: 'POST' });
     } catch (err) {}
 
     setApprovals(prev => prev.map(a => a._id === id ? { ...a, status: 'Approved' } : a));
-    setActionMessage(`Approved commission of $${amount.toFixed(2)} for ${name}! Wallet credited successfully.`);
+    setActionMessage(`Approved request for ${name}! Wallet credited successfully.`);
     setTimeout(() => setActionMessage(null), 5000);
   };
 
@@ -465,125 +478,226 @@ const PendingApprovalsSection = () => {
     } catch (err) {}
 
     setApprovals(prev => prev.map(a => a._id === id ? { ...a, status: 'Rejected' } : a));
-    setActionMessage(`Rejected commission request for ${name}.`);
+    setActionMessage(`Rejected request for ${name}.`);
     setTimeout(() => setActionMessage(null), 5000);
   };
 
-  const pendingList = approvals.filter(a => a.status === 'Pending');
+  const openImageModal = (src, title) => {
+    setModalImage(src);
+    setModalTitle(title);
+  };
+
+  const joiningRequests = approvals.filter(a => a.type === 'Joining Request');
+  const commissionApprovals = approvals.filter(a => a.type !== 'Joining Request');
 
   return (
-    <div className="light-card" style={{ padding: '28px', marginBottom: '28px', border: '2px solid #f59e0b' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fef3c7', color: '#92400e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
-            <Award size={14} /> Downline Commission Approvals Queue ({pendingList.length} Pending)
+    <>
+      <ImageModal isOpen={!!modalImage} onClose={() => setModalImage(null)} imageSrc={modalImage} title={modalTitle} />
+
+      <div className="light-card" style={{ padding: '28px', marginBottom: '28px', border: '2px solid #3b82f6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', color: '#1e40af', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
+              <Users size={14} /> New Joining Requests ({joiningRequests.filter(a => a.status === 'Pending').length} Pending)
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Joining Requests</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve new distributor registrations and process initial package commissions</p>
           </div>
-          <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Commission Approvals</h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve downline enrollments to credit referral commissions to distributor wallets</p>
+
+          <button
+            onClick={fetchApprovals}
+            style={{
+              padding: '8px 14px',
+              background: '#ffffff',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              color: 'var(--text-main)',
+              fontSize: '13px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'pulse-dot' : ''} /> Refresh Requests
+          </button>
         </div>
 
-        <button
-          onClick={fetchApprovals}
-          style={{
-            padding: '8px 14px',
-            background: '#ffffff',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            color: 'var(--text-main)',
-            fontSize: '13px',
-            fontWeight: '600',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-        >
-          <RefreshCw size={14} className={loading ? 'pulse-dot' : ''} /> Refresh Approvals
-        </button>
-      </div>
+        {actionMessage && (
+          <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontWeight: '700', fontSize: '13px', marginBottom: '20px' }}>
+            {actionMessage}
+          </div>
+        )}
 
-      {actionMessage && (
-        <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontWeight: '700', fontSize: '13px', marginBottom: '20px' }}>
-          {actionMessage}
-        </div>
-      )}
-
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-              <th style={{ padding: '12px 16px' }}>Sponsor (Higher Level)</th>
-              <th style={{ padding: '12px 16px' }}>Enrolled Member</th>
-              <th style={{ padding: '12px 16px' }}>Tree Position</th>
-              <th style={{ padding: '12px 16px' }}>Package</th>
-              <th style={{ padding: '12px 16px' }}>Commission Amount</th>
-              <th style={{ padding: '12px 16px' }}>Approval Status</th>
-              <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {approvals.length === 0 ? (
-              <tr>
-                <td colSpan="7" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  No pending downline commission approval requests.
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                <th style={{ padding: '12px 16px' }}>Applicant Name</th>
+                <th style={{ padding: '12px 16px' }}>Package</th>
+                <th style={{ padding: '12px 16px' }}>Aadhaar Number</th>
+                <th style={{ padding: '12px 16px' }}>Documents</th>
+                <th style={{ padding: '12px 16px' }}>Status</th>
+                <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
               </tr>
-            ) : (
-              approvals.map((app) => (
-                <tr key={app._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
-                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{app.sponsorName}</td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{app.enrolledMemberEmail}</div>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                      {app.position}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
-                  <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
-                    +${Number(app.commissionAmount).toFixed(2)}
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      background: app.status === 'Approved' ? '#dcfce7' : (app.status === 'Rejected' ? '#fef2f2' : '#fef3c7'),
-                      color: app.status === 'Approved' ? '#166534' : (app.status === 'Rejected' ? '#991b1b' : '#92400e'),
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '700'
-                    }}>
-                      {app.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                    {app.status === 'Pending' ? (
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={() => handleApprove(app._id, app.enrolledMemberName, app.commissionAmount)}
-                          className="btn-emerald"
-                          style={{ padding: '6px 12px', fontSize: '12px' }}
-                        >
-                          Approve & Credit Wallet
-                        </button>
-                        <button
-                          onClick={() => handleReject(app._id, app.enrolledMemberName)}
-                          className="btn-outline"
-                          style={{ padding: '6px 12px', fontSize: '12px', color: '#dc2626', borderColor: '#fca5a5' }}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Action Completed</span>
-                    )}
+            </thead>
+            <tbody>
+              {joiningRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No pending joining requests.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                joiningRequests.map((app) => (
+                  <tr key={app._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{app.enrolledMemberEmail}</div>
+                      <div style={{ fontSize: '11px', color: '#059669', marginTop: '2px', fontWeight: '600' }}>Sponsor: {app.sponsorName}</div>
+                    </td>
+                    <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
+                    <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }}>
+                      {app.userId?.aadhaarNumber || 'N/A'}
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <button onClick={() => openImageModal(app.userId?.aadhaarPhoto, 'Aadhaar Photo')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                          Aadhaar
+                        </button>
+                        <button onClick={() => openImageModal(app.userId?.panPhoto, 'PAN Photo')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                          PAN
+                        </button>
+                        <button onClick={() => openImageModal(app.userId?.transactionPhoto, 'Transaction Proof')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                          Tx Proof
+                        </button>
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{
+                        background: app.status === 'Approved' ? '#dcfce7' : (app.status === 'Rejected' ? '#fef2f2' : '#fef3c7'),
+                        color: app.status === 'Approved' ? '#166534' : (app.status === 'Rejected' ? '#991b1b' : '#92400e'),
+                        padding: '4px 12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '700'
+                      }}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                      {app.status === 'Pending' ? (
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => handleApprove(app._id, app.enrolledMemberName)}
+                            className="btn-emerald"
+                            style={{ padding: '6px 12px', fontSize: '12px' }}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReject(app._id, app.enrolledMemberName)}
+                            className="btn-outline"
+                            style={{ padding: '6px 12px', fontSize: '12px', color: '#dc2626', borderColor: '#fca5a5' }}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Completed</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+
+      {commissionApprovals.length > 0 && (
+        <div className="light-card" style={{ padding: '28px', marginBottom: '28px', border: '2px solid #f59e0b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fef3c7', color: '#92400e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
+                <Award size={14} /> Downline Commission Approvals Queue ({commissionApprovals.filter(a => a.status === 'Pending').length} Pending)
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Commission Approvals</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve legacy downline enrollments to credit referral commissions</p>
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '12px 16px' }}>Sponsor (Higher Level)</th>
+                  <th style={{ padding: '12px 16px' }}>Enrolled Member</th>
+                  <th style={{ padding: '12px 16px' }}>Tree Position</th>
+                  <th style={{ padding: '12px 16px' }}>Package</th>
+                  <th style={{ padding: '12px 16px' }}>Commission Amount</th>
+                  <th style={{ padding: '12px 16px' }}>Status</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {commissionApprovals.map((app) => (
+                  <tr key={app._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                    <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{app.sponsorName}</td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{app.enrolledMemberEmail}</div>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                        {app.position}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
+                    <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
+                      +₹{Number(app.commissionAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{
+                        background: app.status === 'Approved' ? '#dcfce7' : (app.status === 'Rejected' ? '#fef2f2' : '#fef3c7'),
+                        color: app.status === 'Approved' ? '#166534' : (app.status === 'Rejected' ? '#991b1b' : '#92400e'),
+                        padding: '4px 12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '700'
+                      }}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                      {app.status === 'Pending' ? (
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => handleApprove(app._id, app.enrolledMemberName)}
+                            className="btn-emerald"
+                            style={{ padding: '6px 12px', fontSize: '12px' }}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReject(app._id, app.enrolledMemberName)}
+                            className="btn-outline"
+                            style={{ padding: '6px 12px', fontSize: '12px', color: '#dc2626', borderColor: '#fca5a5' }}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Completed</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

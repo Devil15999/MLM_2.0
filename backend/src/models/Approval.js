@@ -4,37 +4,41 @@ const approvalSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ['Enrolled Downline Commission', 'KYC Verification', 'Wallet Withdrawal'],
+      enum: ['Enrolled Downline Commission', 'KYC Verification', 'Wallet Withdrawal', 'Joining Request'],
       default: 'Enrolled Downline Commission',
     },
     sponsorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
     },
     sponsorName: {
       type: String,
-      required: true,
+      required: false,
     },
     enrolledMemberName: {
       type: String,
-      required: true,
+      required: false,
     },
     enrolledMemberEmail: {
       type: String,
-      required: true,
+      required: false,
     },
     position: {
       type: String,
-      required: true,
+      required: false,
     },
     packageName: {
       type: String,
-      required: true,
+      required: false,
     },
     commissionAmount: {
       type: Number,
-      required: true,
+      required: false,
     },
     status: {
       type: String,

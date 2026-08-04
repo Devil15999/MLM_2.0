@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Network, Lock, Mail, User, Share2, ArrowRight, AlertCircle, Sparkles, TrendingUp } from 'lucide-react';
+import { Network, Lock, Mail, User, Share2, ArrowRight, AlertCircle, Sparkles, Image as ImageIcon, CheckCircle } from 'lucide-react';
 
 export const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,7 +10,13 @@ export const AuthPage = () => {
     email: '',
     password: '',
     sponsorId: 'SP-1001',
+    aadhaarNumber: '',
+    selectedPackage: 'Starter (₹10,000)',
+    aadhaarPhoto: '',
+    panPhoto: '',
+    transactionPhoto: ''
   });
+  const [registrationMessage, setRegistrationMessage] = useState(null);
 
   const { login, register, loading, error, setError } = useAuth();
   const navigate = useNavigate();
@@ -20,28 +26,44 @@ export const AuthPage = () => {
     if (error) setError(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    let result;
-    if (isLogin) {
-      result = await login(formData.email, formData.password);
-    } else {
-      result = await register(formData.name, formData.email, formData.password, formData.sponsorId);
-    }
-    if (result.success) {
-      navigate('/dashboard');
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, [name]: reader.result }));
+      };
+      reader.readAsDataURL(files[0]);
     }
   };
 
-  const handleDemoFill = () => {
-    setFormData({
-      name: 'Alex Rivera',
-      email: 'alex@nexismlm.com',
-      password: 'User@123456',
-      sponsorId: 'SP-1001',
-    });
-    setIsLogin(true);
-    if (error) setError(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    let result;
+    setRegistrationMessage(null);
+
+    if (isLogin) {
+      result = await login(formData.email, formData.password);
+      if (result.success) {
+        navigate('/dashboard');
+      }
+    } else {
+      result = await register(
+        formData.name,
+        formData.email,
+        formData.password,
+        formData.sponsorId,
+        formData.aadhaarNumber,
+        formData.selectedPackage,
+        formData.aadhaarPhoto,
+        formData.panPhoto,
+        formData.transactionPhoto
+      );
+      if (result.success) {
+        setRegistrationMessage(result.message);
+        setIsLogin(true);
+      }
+    }
   };
 
   return (
@@ -53,7 +75,7 @@ export const AuthPage = () => {
       padding: '24px',
       background: 'var(--bg-main)'
     }}>
-      <div style={{ maxWidth: '460px', width: '100%', margin: '0 auto' }}>
+      <div style={{ maxWidth: '480px', width: '100%', margin: '0 auto' }}>
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{
@@ -89,7 +111,7 @@ export const AuthPage = () => {
             marginBottom: '24px'
           }}>
             <button
-              onClick={() => { setIsLogin(true); setError(null); }}
+              onClick={() => { setIsLogin(true); setError(null); setRegistrationMessage(null); }}
               style={{
                 flex: 1,
                 padding: '10px',
@@ -104,7 +126,7 @@ export const AuthPage = () => {
               Distributor Login
             </button>
             <button
-              onClick={() => { setIsLogin(false); setError(null); }}
+              onClick={() => { setIsLogin(false); setError(null); setRegistrationMessage(null); }}
               style={{
                 flex: 1,
                 padding: '10px',
@@ -119,6 +141,24 @@ export const AuthPage = () => {
               Join Network
             </button>
           </div>
+
+          {registrationMessage && (
+            <div style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              color: '#166534',
+              fontSize: '13px'
+            }}>
+              <CheckCircle size={18} />
+              <span>{registrationMessage}</span>
+            </div>
+          )}
 
           {error && (
             <div style={{
@@ -191,6 +231,134 @@ export const AuthPage = () => {
                     />
                   </div>
                 </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
+                      Aadhaar Number
+                    </label>
+                    <input
+                      type="text"
+                      name="aadhaarNumber"
+                      required
+                      placeholder="e.g. 1234 5678 9012"
+                      value={formData.aadhaarNumber}
+                      onChange={handleChange}
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px',
+                        background: 'var(--bg-subtle)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '10px',
+                        color: 'var(--text-main)',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
+                      Select Package
+                    </label>
+                    <select
+                      name="selectedPackage"
+                      required
+                      value={formData.selectedPackage}
+                      onChange={handleChange}
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px',
+                        background: 'var(--bg-subtle)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '10px',
+                        color: 'var(--text-main)',
+                        fontSize: '14px'
+                      }}
+                    >
+                      <option value="Starter (₹10,000)">Starter (₹10,000)</option>
+                      <option value="Premium (₹20,000)">Premium (₹20,000)</option>
+                      <option value="Elite (₹30,000)">Elite (₹30,000)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
+                      <span>Aadhaar Photo</span>
+                      <span style={{ color: '#ef4444' }}>* Required</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <ImageIcon size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        name="aadhaarPhoto"
+                        required
+                        onChange={handleFileChange}
+                        style={{
+                          width: '100%',
+                          padding: '8px 14px 8px 42px',
+                          background: 'var(--bg-subtle)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '10px',
+                          color: 'var(--text-main)',
+                          fontSize: '13px'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
+                      <span>PAN Photo</span>
+                      <span style={{ color: 'var(--text-muted)' }}>Optional</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <ImageIcon size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        name="panPhoto"
+                        onChange={handleFileChange}
+                        style={{
+                          width: '100%',
+                          padding: '8px 14px 8px 42px',
+                          background: 'var(--bg-subtle)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '10px',
+                          color: 'var(--text-main)',
+                          fontSize: '13px'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
+                      <span>Transaction Proof</span>
+                      <span style={{ color: '#ef4444' }}>* Required</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <ImageIcon size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        name="transactionPhoto"
+                        required
+                        onChange={handleFileChange}
+                        style={{
+                          width: '100%',
+                          padding: '8px 14px 8px 42px',
+                          background: 'var(--bg-subtle)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '10px',
+                          color: 'var(--text-main)',
+                          fontSize: '13px'
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </>
             )}
 
@@ -247,71 +415,43 @@ export const AuthPage = () => {
             </div>
 
             <button type="submit" disabled={loading} className="btn-emerald" style={{ marginTop: '8px', width: '100%' }}>
-              {loading ? 'Authenticating...' : (isLogin ? 'Enter Member Portal' : 'Register Distributor Account')}
+              {loading ? 'Processing...' : (isLogin ? 'Enter Member Portal' : 'Submit Joining Request')}
               <ArrowRight size={18} />
             </button>
           </form>
 
           {/* Quick Demo Fill buttons */}
-          <div style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-            <button
-              onClick={() => {
-                setFormData({
-                  name: 'Alex Rivera',
-                  email: 'alex@nexismlm.com',
-                  password: 'User@123456',
-                  sponsorId: 'SP-1001',
-                });
-                setIsLogin(true);
-                if (error) setError(null);
-              }}
-              style={{
-                background: '#ecfdf5',
-                color: '#059669',
-                border: '1px solid #a7f3d0',
-                borderRadius: '8px',
-                padding: '8px 14px',
-                fontSize: '13px',
-                fontWeight: '700',
-                width: '100%',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}
-            >
-              <Sparkles size={16} /> Demo Account: Alex Rivera (Existing Network Stats)
-            </button>
-
-            <button
-              onClick={() => {
-                setFormData({
-                  name: 'New Distributor (Fresh)',
-                  email: 'fresh@nexismlm.com',
-                  password: 'User@123456',
-                  sponsorId: 'SP-2000',
-                });
-                setIsLogin(true);
-                if (error) setError(null);
-              }}
-              style={{
-                background: '#eff6ff',
-                color: '#2563eb',
-                border: '1px solid #bfdbfe',
-                borderRadius: '8px',
-                padding: '8px 14px',
-                fontSize: '13px',
-                fontWeight: '700',
-                width: '100%',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}
-            >
-              <Sparkles size={16} /> Demo Account: Fresh User (Everything 0)
-            </button>
-          </div>
+          {isLogin && (
+            <div style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    email: 'alex@nexismlm.com',
+                    password: 'User@123456',
+                  }));
+                  setIsLogin(true);
+                  if (error) setError(null);
+                }}
+                style={{
+                  background: '#ecfdf5',
+                  color: '#059669',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: '8px',
+                  padding: '8px 14px',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Sparkles size={16} /> Demo Login: Alex Rivera
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

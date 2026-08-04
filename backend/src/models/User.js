@@ -139,6 +139,18 @@ const userSchema = new mongoose.Schema(
       ifscCode: { type: String, default: 'CHAS0009182' },
       upiId: { type: String, default: 'alexrivera@upi' },
     },
+    aadhaarNumber: {
+      type: String,
+    },
+    aadhaarPhoto: {
+      type: String, // Base64
+    },
+    panPhoto: {
+      type: String, // Base64
+    },
+    transactionPhoto: {
+      type: String, // Base64
+    },
   },
   {
     timestamps: true,

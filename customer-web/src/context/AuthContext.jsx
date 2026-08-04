@@ -40,14 +40,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, sponsorId) => {
+  const register = async (name, email, password, sponsorId, aadhaarNumber, selectedPackage, aadhaarPhoto, panPhoto, transactionPhoto) => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${getApiBaseUrl()}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, sponsorId }),
+        body: JSON.stringify({ name, email, password, sponsorId, aadhaarNumber, selectedPackage, aadhaarPhoto, panPhoto, transactionPhoto }),
       });
 
       const data = await response.json();
@@ -55,9 +55,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Registration failed');
       }
 
-      setUser(data);
-      localStorage.setItem('customer_user', JSON.stringify(data));
-      return { success: true };
+      // Do NOT setUser or set localStorage because they are pending approval
+      return { success: true, message: data.message };
     } catch (err) {
       setError(err.message);
       return { success: false, message: err.message };

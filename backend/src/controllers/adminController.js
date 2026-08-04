@@ -5,14 +5,14 @@ import { Approval } from '../models/Approval.js';
 // @route   GET /api/admin/approvals
 export const getPendingApprovals = async (req, res) => {
   try {
-    const approvals = await Approval.find().sort({ createdAt: -1 });
+    const approvals = await Approval.find().populate('userId').sort({ createdAt: -1 });
     res.json({ success: true, count: approvals.length, approvals });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Approve Commission Request & Credit Sponsor Wallet
+// @desc    Approve Commission Request or Joining Request
 // @route   POST /api/admin/approvals/:id/approve
 export const approveCommissionRequest = async (req, res) => {
   try {
@@ -30,48 +30,102 @@ export const approveCommissionRequest = async (req, res) => {
     approval.actionDate = new Date();
     await approval.save();
 
-    // Credit Sponsor Wallet
-    let sponsorUser = null;
-    if (approval.sponsorId) {
-      sponsorUser = await User.findById(approval.sponsorId).catch(() => null);
-    }
-    if (!sponsorUser && approval.sponsorName) {
-      sponsorUser = await User.findOne({ name: approval.sponsorName });
-    }
-    if (!sponsorUser) {
-      sponsorUser = await User.findOne({ email: 'fresh@nexismlm.com' });
-    }
+    let message = 'Request approved.';
 
-    if (sponsorUser) {
-      const isLevel1 = approval.position.includes('Node 1') || approval.position === 'Left Leg' || approval.position === 'Right Leg' || !approval.position.includes('L2');
-      if (isLevel1) {
-        sponsorUser.level1AffiliateIncome = (sponsorUser.level1AffiliateIncome || 0) + approval.commissionAmount;
-      } else {
-        sponsorUser.level2AffiliateIncome = (sponsorUser.level2AffiliateIncome || 0) + approval.commissionAmount;
-      }
-      sponsorUser.walletBalance = (sponsorUser.walletBalance || 0) + approval.commissionAmount;
-      sponsorUser.totalIncome = (sponsorUser.totalIncome || 0) + approval.commissionAmount;
-      sponsorUser.totalEarnings = (sponsorUser.totalEarnings || 0) + approval.commissionAmount;
-      await sponsorUser.save();
-    }
-
-    // Activate Enrolled Member Account Status so they can log in
-    if (approval.enrolledMemberEmail || approval.enrolledMemberName) {
-      let enrolledUser = await User.findOne({
-        $or: [
-          { email: approval.enrolledMemberEmail },
-          { name: approval.enrolledMemberName }
-        ]
-      });
+    if (approval.type === 'Joining Request') {
+      // Find the new user and activate
+      const enrolledUser = await User.findById(approval.userId);
       if (enrolledUser) {
         enrolledUser.accountStatus = 'Approved';
         await enrolledUser.save();
       }
+
+      // Calculate commissions based on package
+      const packageString = approval.packageName || '';
+      let packageAmount = 0;
+      if (packageString.includes('10,000')) packageAmount = 10000;
+      else if (packageString.includes('20,000')) packageAmount = 20000;
+      else if (packageString.includes('30,000')) packageAmount = 30000;
+
+      const level1Commission = packageAmount * 0.10; // 10%
+      const level2Commission = 500; // Flat 500
+
+      // Find Level 1 Sponsor
+      let sponsorUser = null;
+      if (approval.sponsorId) {
+        sponsorUser = await User.findById(approval.sponsorId).catch(() => null);
+      }
+      
+      if (sponsorUser) {
+        sponsorUser.level1AffiliateIncome = (sponsorUser.level1AffiliateIncome || 0) + level1Commission;
+        sponsorUser.walletBalance = (sponsorUser.walletBalance || 0) + level1Commission;
+        sponsorUser.totalIncome = (sponsorUser.totalIncome || 0) + level1Commission;
+        sponsorUser.totalEarnings = (sponsorUser.totalEarnings || 0) + level1Commission;
+        sponsorUser.level1MembersCount = (sponsorUser.level1MembersCount || 0) + 1;
+        sponsorUser.downlineCount = (sponsorUser.downlineCount || 0) + 1;
+        await sponsorUser.save();
+
+        // Find Level 2 Sponsor
+        if (sponsorUser.sponsorId && sponsorUser.sponsorId !== 'NEXIS-TOP') {
+          const l2Sponsor = await User.findOne({ 
+            $or: [{ sponsorId: sponsorUser.sponsorId }, { _id: sponsorUser.sponsorId }] 
+          }).catch(() => null);
+
+          if (l2Sponsor) {
+            l2Sponsor.level2AffiliateIncome = (l2Sponsor.level2AffiliateIncome || 0) + level2Commission;
+            l2Sponsor.walletBalance = (l2Sponsor.walletBalance || 0) + level2Commission;
+            l2Sponsor.totalIncome = (l2Sponsor.totalIncome || 0) + level2Commission;
+            l2Sponsor.totalEarnings = (l2Sponsor.totalEarnings || 0) + level2Commission;
+            l2Sponsor.level2MembersCount = (l2Sponsor.level2MembersCount || 0) + 1;
+            l2Sponsor.downlineCount = (l2Sponsor.downlineCount || 0) + 1;
+            await l2Sponsor.save();
+          }
+        }
+      }
+
+      message = `Approved Joining Request for ${approval.enrolledMemberName}. Activated account and credited ₹${level1Commission} to L1 sponsor and ₹${level2Commission} to L2 sponsor.`;
+
+    } else {
+      // Legacy Enrolled Downline Commission Logic
+      let sponsorUser = null;
+      if (approval.sponsorId) {
+        sponsorUser = await User.findById(approval.sponsorId).catch(() => null);
+      }
+      if (!sponsorUser && approval.sponsorName) {
+        sponsorUser = await User.findOne({ name: approval.sponsorName });
+      }
+
+      if (sponsorUser) {
+        const isLevel1 = approval.position && (approval.position.includes('Node 1') || approval.position === 'Left Leg' || approval.position === 'Right Leg' || !approval.position.includes('L2'));
+        if (isLevel1) {
+          sponsorUser.level1AffiliateIncome = (sponsorUser.level1AffiliateIncome || 0) + (approval.commissionAmount || 0);
+        } else {
+          sponsorUser.level2AffiliateIncome = (sponsorUser.level2AffiliateIncome || 0) + (approval.commissionAmount || 0);
+        }
+        sponsorUser.walletBalance = (sponsorUser.walletBalance || 0) + (approval.commissionAmount || 0);
+        sponsorUser.totalIncome = (sponsorUser.totalIncome || 0) + (approval.commissionAmount || 0);
+        sponsorUser.totalEarnings = (sponsorUser.totalEarnings || 0) + (approval.commissionAmount || 0);
+        await sponsorUser.save();
+      }
+
+      if (approval.enrolledMemberEmail || approval.enrolledMemberName) {
+        let enrolledUser = await User.findOne({
+          $or: [
+            { email: approval.enrolledMemberEmail },
+            { name: approval.enrolledMemberName }
+          ]
+        });
+        if (enrolledUser) {
+          enrolledUser.accountStatus = 'Approved';
+          await enrolledUser.save();
+        }
+      }
+      message = `Approved downline commission of ₹${(approval.commissionAmount || 0).toFixed(2)} and activated account for ${approval.enrolledMemberName}!`;
     }
 
     res.json({
       success: true,
-      message: `Approved downline commission of ₹${approval.commissionAmount.toFixed(2)} and activated account for ${approval.enrolledMemberName}!`,
+      message,
       approval,
     });
   } catch (error) {
