@@ -1243,230 +1243,160 @@ export const DashboardPage = () => {
                   </div>
                 </div>
 
-                {/* VIEW 1: VISUAL BINARY TREE DIAGRAM */}
-                {teamViewMode === 'tree' && (
-                  <div style={{ background: '#f8fafc', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '32px 16px', overflowX: 'auto' }}>
-                    <div className="tree-container">
-                      {/* LEVEL 0: ROOT NODE */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div className="tree-node-card root-card">
-                          <span style={{ background: '#059669', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
-                            ROOT NODE (YOU)
-                          </span>
-                          <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-main)' }}>{user?.name || 'Alex Rivera'}</div>
-                          <div style={{ fontSize: '12px', color: '#059669', fontWeight: '700' }}>{user?.rank || 'Gold Executive'}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }} className="code-font">ID: {referralCode}</div>
-                        </div>
+                {/* LEVEL 1 & LEVEL 2 ROSTER TABS */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                    <button
+                      onClick={() => setTeamTab('level1')}
+                      className={teamTab === 'level1' ? 'btn-emerald' : 'btn-outline'}
+                      style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Users size={16} /> Level 1 Direct Members ({level1MembersList.length})
+                    </button>
+                    <button
+                      onClick={() => setTeamTab('level2')}
+                      className={teamTab === 'level2' ? 'btn-indigo' : 'btn-outline'}
+                      style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Layers size={16} /> Level 2 Indirect Members ({level2MembersList.length})
+                    </button>
+                  </div>
+                </div>
 
-                        <div className="tree-connector-line"></div>
-                      </div>
+                {/* TAB 1: LEVEL 1 DIRECT MEMBERS */}
+                {teamTab === 'level1' && (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>Direct Level 1 Downline Roster</h4>
+                      <button
+                        onClick={() => handleOpenEnrollModal('Direct Level 1')}
+                        className="btn-emerald"
+                        style={{ fontSize: '12px', padding: '6px 14px' }}
+                      >
+                        + Add Level 1 Member
+                      </button>
+                    </div>
 
-                      {/* LEVEL 1: DIRECT CHILD NODES (MAX 2) */}
-                      <div style={{ width: '100%', maxWidth: '800px', display: 'flex', justifyContent: 'space-around', position: 'relative' }}>
-                        {/* Horizontal connecting line across Level 1 */}
-                        <div style={{ position: 'absolute', top: '-16px', left: '25%', right: '25%', height: '2px', background: '#cbd5e1' }}></div>
-
-                        {/* Level 1 - Left Child Node */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                          <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                          
-                          {/* Node Card or Empty Slot */}
-                          {level1MembersList[0] ? (
-                            <div className="tree-node-card level1-card">
-                              <span style={{ background: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
-                                LEFT LEG (NODE 1)
-                              </span>
-                              <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{level1MembersList[0].name}</div>
-                              <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>{level1MembersList[0].package}</div>
-                              <div style={{ marginTop: '6px' }}>
-                                {notificationsList.find(n => n.enrolledMemberName === level1MembersList[0].name)?.status === 'Approved' || level1MembersList[0].name === 'Sarah Connor' ? (
-                                  <span style={{ background: '#dcfce7', color: '#166534', fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '8px' }}>
-                                    🟢 Commission Approved
-                                  </span>
-                                ) : (
-                                  <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '8px' }}>
-                                    🟡 Pending Admin Approval
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            <th style={{ padding: '12px 16px' }}>Member Name</th>
+                            <th style={{ padding: '12px 16px' }}>Email</th>
+                            <th style={{ padding: '12px 16px' }}>Package Tier</th>
+                            <th style={{ padding: '12px 16px' }}>Level 1 Bonus</th>
+                            <th style={{ padding: '12px 16px' }}>Approval Status</th>
+                            <th style={{ padding: '12px 16px' }}>Joined Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {level1MembersList.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                No Level 1 downline members added yet. Click <strong>+ Add Level 1 Member</strong> above to start building your team!
+                              </td>
+                            </tr>
                           ) : (
-                            <div
-                              onClick={() => handleOpenEnrollModal('Left Leg (Node 1)')}
-                              className="tree-node-card"
-                              style={{ border: '2px dashed #059669', background: '#ecfdf5', cursor: 'pointer' }}
-                            >
-                              <PlusCircle size={24} color="#059669" style={{ margin: '0 auto 4px auto', display: 'block' }} />
-                              <div style={{ fontSize: '13px', fontWeight: '800', color: '#059669' }}>+ Enroll Left Node</div>
-                              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Empty Slot</div>
-                            </div>
-                          )}
-
-                          <div className="tree-connector-line"></div>
-
-                          {/* LEVEL 2: UNDER LEFT NODE (LEFT & RIGHT) */}
-                          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', position: 'relative', width: '100%' }}>
-                            <div style={{ position: 'absolute', top: '-16px', left: '20%', right: '20%', height: '2px', background: '#cbd5e1' }}></div>
-
-                            {/* L2 Node 1 */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                              {level2MembersList[0] ? (
-                                <div className="tree-node-card level2-card">
-                                  <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
-                                    LEFT-LEFT
-                                  </span>
-                                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[0].name}</div>
-                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[0].package}</div>
-                                  <div style={{ marginTop: '4px' }}>
-                                    {notificationsList.find(n => n.enrolledMemberName === level2MembersList[0].name)?.status === 'Approved' || level2MembersList[0].name === 'Kevin Flynn' ? (
-                                      <span style={{ background: '#dcfce7', color: '#166534', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px' }}>
-                                        🟢 Approved
+                            level1MembersList.map((m, idx) => {
+                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name);
+                              const isApproved = notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance';
+                              return (
+                                <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
+                                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '13px' }} className="code-font">{m.email}</td>
+                                  <td style={{ padding: '14px 16px' }}>
+                                    <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', background: '#dcfce7', color: '#166534' }}>
+                                      {m.package || 'Starter Package (₹10,000)'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
+                                    {m.level1Earned || '₹1,000'}
+                                  </td>
+                                  <td style={{ padding: '14px 16px' }}>
+                                    {isApproved ? (
+                                      <span style={{ background: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
+                                        🟢 Commission Approved
                                       </span>
                                     ) : (
-                                      <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px' }}>
-                                        🟡 Pending Approval
+                                      <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
+                                        🟡 Pending Admin Approval
                                       </span>
                                     )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div
-                                  onClick={() => handleOpenEnrollModal('Left-Left Leg (L2 Node 1)')}
-                                  className="tree-node-card"
-                                  style={{ border: '2px dashed #8b5cf6', background: '#faf5ff', cursor: 'pointer', minWidth: '140px', padding: '12px' }}
-                                >
-                                  <PlusCircle size={18} color="#8b5cf6" style={{ margin: '0 auto 4px auto', display: 'block' }} />
-                                  <div style={{ fontSize: '12px', fontWeight: '800', color: '#8b5cf6' }}>+ Add Downline</div>
-                                </div>
-                              )}
-                            </div>
+                                  </td>
+                                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>{m.joined || 'Today'}</td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
-                            {/* L2 Node 2 */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                              {level2MembersList[1] ? (
-                                <div className="tree-node-card level2-card">
-                                  <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
-                                    LEFT-RIGHT
-                                  </span>
-                                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[1].name}</div>
-                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[1].package}</div>
-                                  <div style={{ marginTop: '4px' }}>
-                                    {notificationsList.find(n => n.enrolledMemberName === level2MembersList[1].name)?.status === 'Approved' || level2MembersList[1].name === 'Claire Bennet' ? (
-                                      <span style={{ background: '#dcfce7', color: '#166534', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px' }}>
-                                        🟢 Approved
+                {/* TAB 2: LEVEL 2 INDIRECT MEMBERS */}
+                {teamTab === 'level2' && (
+                  <div>
+                    <div style={{ marginBottom: '16px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>Indirect Level 2 Downline Roster</h4>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Members enrolled by your direct Level 1 downlines (earn ₹500 override bonus per approval)</p>
+                    </div>
+
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            <th style={{ padding: '12px 16px' }}>Member Name</th>
+                            <th style={{ padding: '12px 16px' }}>Direct Sponsor (Level 1)</th>
+                            <th style={{ padding: '12px 16px' }}>Email</th>
+                            <th style={{ padding: '12px 16px' }}>Package Tier</th>
+                            <th style={{ padding: '12px 16px' }}>Level 2 Override</th>
+                            <th style={{ padding: '12px 16px' }}>Approval Status</th>
+                            <th style={{ padding: '12px 16px' }}>Joined Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {level2MembersList.length === 0 ? (
+                            <tr>
+                              <td colSpan="7" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                No Level 2 indirect members yet. When your Level 1 downline members enroll team members from their accounts, they will automatically appear here!
+                              </td>
+                            </tr>
+                          ) : (
+                            level2MembersList.map((m, idx) => {
+                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name);
+                              const isApproved = notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet';
+                              return (
+                                <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
+                                  <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }}>{m.sponsor || 'Sarah Connor'}</td>
+                                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '13px' }} className="code-font">{m.email}</td>
+                                  <td style={{ padding: '14px 16px' }}>
+                                    <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', background: '#f3e8ff', color: '#6b21a8' }}>
+                                      {m.package || 'Premium Package (₹20,000)'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '14px 16px', fontWeight: '800', color: '#8b5cf6' }}>
+                                    {m.level2Earned || '₹500'}
+                                  </td>
+                                  <td style={{ padding: '14px 16px' }}>
+                                    {isApproved ? (
+                                      <span style={{ background: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
+                                        🟢 Approved (₹500 Override)
                                       </span>
                                     ) : (
-                                      <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px' }}>
-                                        🟡 Pending Approval
+                                      <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
+                                        🟡 Pending Admin Approval
                                       </span>
                                     )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div
-                                  onClick={() => handleOpenEnrollModal('Left-Right Leg (L2 Node 2)')}
-                                  className="tree-node-card"
-                                  style={{ border: '2px dashed #8b5cf6', background: '#faf5ff', cursor: 'pointer', minWidth: '140px', padding: '12px' }}
-                                >
-                                  <PlusCircle size={18} color="#8b5cf6" style={{ margin: '0 auto 4px auto', display: 'block' }} />
-                                  <div style={{ fontSize: '12px', fontWeight: '800', color: '#8b5cf6' }}>+ Add Downline</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Level 1 - Right Child Node */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                          <div className="tree-connector-line" style={{ height: '16px' }}></div>
-
-                          {level1MembersList[1] ? (
-                            <div className="tree-node-card level1-card">
-                              <span style={{ background: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '6px' }}>
-                                RIGHT LEG (NODE 2)
-                              </span>
-                              <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{level1MembersList[1].name}</div>
-                              <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700' }}>{level1MembersList[1].package}</div>
-                              <div style={{ marginTop: '6px' }}>
-                                {notificationsList.find(n => n.enrolledMemberName === level1MembersList[1].name)?.status === 'Approved' || level1MembersList[1].name === 'David Vance' ? (
-                                  <span style={{ background: '#dcfce7', color: '#166534', fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '8px' }}>
-                                    🟢 Commission Approved
-                                  </span>
-                                ) : (
-                                  <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '8px' }}>
-                                    🟡 Pending Admin Approval
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              onClick={() => handleOpenEnrollModal('Right Leg (Node 2)')}
-                              className="tree-node-card"
-                              style={{ border: '2px dashed #059669', background: '#ecfdf5', cursor: 'pointer' }}
-                            >
-                              <PlusCircle size={24} color="#059669" style={{ margin: '0 auto 4px auto', display: 'block' }} />
-                              <div style={{ fontSize: '13px', fontWeight: '800', color: '#059669' }}>+ Enroll Right Node</div>
-                              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Empty Slot</div>
-                            </div>
+                                  </td>
+                                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>{m.joined || 'Today'}</td>
+                                </tr>
+                              );
+                            })
                           )}
-
-                          <div className="tree-connector-line"></div>
-
-                          {/* LEVEL 2: UNDER RIGHT NODE (LEFT & RIGHT) */}
-                          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', position: 'relative', width: '100%' }}>
-                            <div style={{ position: 'absolute', top: '-16px', left: '20%', right: '20%', height: '2px', background: '#cbd5e1' }}></div>
-
-                            {/* L2 Node 3 */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                              {level2MembersList[2] ? (
-                                <div className="tree-node-card level2-card">
-                                  <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
-                                    RIGHT-LEFT
-                                  </span>
-                                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[2].name}</div>
-                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[2].package}</div>
-                                </div>
-                              ) : (
-                                <div
-                                  onClick={() => handleOpenEnrollModal('Right-Left Leg (L2 Node 3)')}
-                                  className="tree-node-card"
-                                  style={{ border: '2px dashed #8b5cf6', background: '#faf5ff', cursor: 'pointer', minWidth: '140px', padding: '12px' }}
-                                >
-                                  <PlusCircle size={18} color="#8b5cf6" style={{ margin: '0 auto 4px auto', display: 'block' }} />
-                                  <div style={{ fontSize: '12px', fontWeight: '800', color: '#8b5cf6' }}>+ Add Downline</div>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* L2 Node 4 */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              <div className="tree-connector-line" style={{ height: '16px' }}></div>
-                              {level2MembersList[3] ? (
-                                <div className="tree-node-card level2-card">
-                                  <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px', display: 'inline-block', marginBottom: '4px' }}>
-                                    RIGHT-RIGHT
-                                  </span>
-                                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>{level2MembersList[3].name}</div>
-                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{level2MembersList[3].package}</div>
-                                </div>
-                              ) : (
-                                <div
-                                  onClick={() => handleOpenEnrollModal('Right-Right Leg (L2 Node 4)')}
-                                  className="tree-node-card"
-                                  style={{ border: '2px dashed #8b5cf6', background: '#faf5ff', cursor: 'pointer', minWidth: '140px', padding: '12px' }}
-                                >
-                                  <PlusCircle size={18} color="#8b5cf6" style={{ margin: '0 auto 4px auto', display: 'block' }} />
-                                  <div style={{ fontSize: '12px', fontWeight: '800', color: '#8b5cf6' }}>+ Add Downline</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
