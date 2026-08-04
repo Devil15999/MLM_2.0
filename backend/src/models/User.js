@@ -51,23 +51,23 @@ const userSchema = new mongoose.Schema(
     },
     walletBalance: {
       type: Number,
-      default: 4850.00,
+      default: 0.00,
     },
     totalEarnings: {
       type: Number,
-      default: 12450.00,
+      default: 0.00,
     },
     downlineCount: {
       type: Number,
-      default: 28,
+      default: 0,
     },
     personalVolume: {
       type: Number,
-      default: 1200,
+      default: 0,
     },
     groupVolume: {
       type: Number,
-      default: 45800,
+      default: 0,
     },
     avatar: {
       type: String,
@@ -85,27 +85,27 @@ const userSchema = new mongoose.Schema(
     },
     level1MembersCount: {
       type: Number,
-      default: 2,
+      default: 0,
     },
     level2MembersCount: {
       type: Number,
-      default: 4,
+      default: 0,
     },
     level1AffiliateIncome: {
       type: Number,
-      default: 4850.00,
+      default: 0.00,
     },
     level2AffiliateIncome: {
       type: Number,
-      default: 2420.00,
+      default: 0.00,
     },
     investmentReturns: {
       type: Number,
-      default: 3180.00,
+      default: 0.00,
     },
     totalIncome: {
       type: Number,
-      default: 10450.00,
+      default: 0.00,
     },
     phone: {
       type: String,
