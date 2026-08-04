@@ -13,8 +13,8 @@ export const registerUser = async (req, res) => {
   try {
     const { name, email, password, sponsorId, aadhaarNumber, aadhaarPhoto, panPhoto, transactionPhoto, selectedPackage } = req.body;
 
-    if (!name || !email || !password || !aadhaarNumber || !selectedPackage || !aadhaarPhoto || !transactionPhoto) {
-      return res.status(400).json({ message: 'Please provide all required fields (Name, Email, Password, Aadhaar Number, Package, Aadhaar Photo, Transaction Photo)' });
+    if (!name || !email || !password || !sponsorId || !aadhaarNumber || !selectedPackage || !aadhaarPhoto || !transactionPhoto) {
+      return res.status(400).json({ message: 'Please provide all required fields (Name, Email, Password, Sponsor ID, Aadhaar Number, Package, Aadhaar Photo, Transaction Photo)' });
     }
 
     const userExists = await User.findOne({ email });
@@ -23,7 +23,7 @@ export const registerUser = async (req, res) => {
     }
 
     // Verify Sponsor ID exists in database
-    const reqSponsorId = (sponsorId || 'SP-1001').trim();
+    const reqSponsorId = sponsorId.trim();
     let sponsor = await User.findOne({
       $or: [{ sponsorId: reqSponsorId }, { _id: reqSponsorId.match(/^[0-9a-fA-F]{24}$/) ? reqSponsorId : null }, { email: reqSponsorId.toLowerCase() }]
     }).catch(() => null);
