@@ -23,7 +23,15 @@ export const registerUser = async (req, res) => {
     }
 
     const trimmedAadhaar = aadhaarNumber.trim();
-    const cleanAadhaar = trimmedAadhaar.replace(/\s+/g, '');
+    const cleanAadhaar = trimmedAadhaar.replace(/[\s-]/g, '');
+
+    // Validate 12-digit Aadhaar format (must be 12 digits, cannot start with 0 or 1)
+    if (!/^[2-9]\d{11}$/.test(cleanAadhaar)) {
+      return res.status(400).json({
+        message: 'Invalid Aadhaar Number. Must be a valid 12-digit number (e.g. 2345 6789 0123).'
+      });
+    }
+
     const aadhaarExists = await User.findOne({
       $or: [
         { aadhaarNumber: trimmedAadhaar },
