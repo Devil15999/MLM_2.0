@@ -210,30 +210,38 @@ export const getCustomerPackages = async (req, res) => {
   }
 };
 
-// @desc    Get Team Details (Level 1: 2 Nodes, Level 2: 4 Nodes, Max 2 Levels)
+// @desc    Get Team Details (Level 1: Direct, Level 2: Indirect)
 // @route   GET /api/customer/team
 export const getCustomerTeamDetails = async (req, res) => {
   try {
-    const userId = req.user?._id;
+    const user = req.user;
     let level1Members = [];
     let level2Members = [];
 
-    if (userId) {
+    if (user) {
       // Direct Level 1 downlines sponsored by this user
       level1Members = await User.find({
-        $or: [{ sponsorId: userId }, { sponsorId: req.user?.email }, { sponsorId: 'SP-2000' }]
-      });
-
-      const l1Ids = level1Members.map(u => u._id);
-      const l1Emails = level1Members.map(u => u.email);
-
-      // Level 2 downlines sponsored by any Level 1 member
-      level2Members = await User.find({
         $or: [
-          { sponsorId: { $in: l1Ids } },
-          { sponsorId: { $in: l1Emails } }
+          { sponsorId: user._id.toString() },
+          { sponsorId: user.sponsorId },
+          { sponsorId: user.email }
         ]
       });
+
+      const l1UserIds = level1Members.map(u => u._id.toString());
+      const l1SponsorCodes = level1Members.map(u => u.sponsorId).filter(Boolean);
+      const l1Emails = level1Members.map(u => u.email).filter(Boolean);
+
+      if (l1UserIds.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0) {
+        // Level 2 downlines sponsored by any Level 1 member
+        level2Members = await User.find({
+          $or: [
+            { sponsorId: { $in: l1UserIds } },
+            { sponsorId: { $in: l1SponsorCodes } },
+            { sponsorId: { $in: l1Emails } }
+          ]
+        });
+      }
     }
 
     res.json({
