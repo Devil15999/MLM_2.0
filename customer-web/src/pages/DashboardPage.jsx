@@ -1123,63 +1123,83 @@ export const DashboardPage = () => {
             <div>
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>Product & Investment Packages</h3>
-                <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Choose investment tiers to boost daily returns, Level 1, and Level 2 affiliate commissions.</p>
+                <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Your current active product package tier selected for your account.</p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-                {packagesList.map((pkg) => (
-                  <div key={pkg.id} className="light-card" style={{
-                    padding: '28px',
-                    position: 'relative',
-                    border: pkg.status === 'Active Package' ? '2px solid #059669' : '1px solid var(--border-color)',
-                    background: pkg.status === 'Active Package' ? '#f0fdf4' : '#ffffff'
-                  }}>
-                    {pkg.status === 'Active Package' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', maxWidth: '520px', margin: '0 auto' }}>
+                {packagesList
+                  .filter((pkg) => {
+                    const actStr = String(user?.selectedPackage || activePackage || 'Starter').toLowerCase();
+                    const pkgStr = pkg.name.toLowerCase();
+                    if (actStr.includes('elite') || actStr.includes('30,000') || actStr.includes('30000')) {
+                      return pkgStr.includes('elite');
+                    }
+                    if (actStr.includes('premium') || actStr.includes('20,000') || actStr.includes('20000')) {
+                      return pkgStr.includes('premium');
+                    }
+                    return pkgStr.includes('starter');
+                  })
+                  .map((pkg) => (
+                    <div key={pkg.id} className="light-card" style={{
+                      padding: '28px',
+                      position: 'relative',
+                      border: '2px solid #059669',
+                      background: '#f0fdf4'
+                    }}>
                       <span style={{ position: 'absolute', top: '16px', right: '16px', background: '#059669', color: '#fff', fontSize: '11px', fontWeight: '800', padding: '4px 10px', borderRadius: '12px' }}>
-                        ACTIVE
+                        CURRENT ACTIVE TIER
                       </span>
-                    )}
 
-                    <h4 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>{pkg.name}</h4>
-                    
-                    <div style={{ marginBottom: '16px' }}>
-                      <div style={{ fontSize: '32px', fontWeight: '800', color: '#059669' }}>{pkg.price}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '2px' }}>
-                        + 18% GST ({pkg.gst}) + 2% Processing ({pkg.processingFee})
+                      <h4 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>{pkg.name}</h4>
+                      
+                      <div style={{ marginBottom: '16px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '800', color: '#059669' }}>{pkg.price}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '2px' }}>
+                          + 18% GST ({pkg.gst}) + 2% Processing ({pkg.processingFee})
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#047857', fontWeight: '700', marginTop: '6px', background: '#ecfdf5', padding: '4px 10px', borderRadius: '8px', display: 'inline-block', border: '1px solid #a7f3d0' }}>
+                          Total Payable: {pkg.totalPrice}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '13px', color: '#047857', fontWeight: '700', marginTop: '6px', background: '#ecfdf5', padding: '4px 10px', borderRadius: '8px', display: 'inline-block', border: '1px solid #a7f3d0' }}>
-                        Total Payable: {pkg.totalPrice}
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px', borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Daily ROI Yield:</span>
+                          <span style={{ fontWeight: '700', color: '#d97706' }}>{pkg.dailyRoi}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Level 1 Affiliate Bonus:</span>
+                          <span style={{ fontWeight: '700', color: '#059669' }}>{pkg.level1Comm}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Level 2 Affiliate Bonus:</span>
+                          <span style={{ fontWeight: '700', color: '#8b5cf6' }}>{pkg.level2Comm}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--border-color)', paddingTop: '8px' }}>
+                          <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Max Return:</span>
+                          <span style={{ fontWeight: '800', color: '#059669' }}>{pkg.maxReturn}</span>
+                        </div>
                       </div>
+
+                      <button
+                        disabled={true}
+                        style={{
+                          width: '100%',
+                          padding: '12px 20px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          background: '#9ca3af',
+                          color: '#ffffff',
+                          fontWeight: '800',
+                          fontSize: '14px',
+                          cursor: 'not-allowed',
+                          opacity: 0.8
+                        }}
+                      >
+                        Active Tier Selected
+                      </button>
                     </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px', borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginBottom: '24px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Daily ROI Yield:</span>
-                        <span style={{ fontWeight: '700', color: '#d97706' }}>{pkg.dailyRoi}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Level 1 Affiliate Bonus:</span>
-                        <span style={{ fontWeight: '700', color: '#059669' }}>{pkg.level1Comm}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Level 2 Affiliate Bonus:</span>
-                        <span style={{ fontWeight: '700', color: '#8b5cf6' }}>{pkg.level2Comm}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--border-color)', paddingTop: '8px' }}>
-                        <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Max Return:</span>
-                        <span style={{ fontWeight: '800', color: '#059669' }}>{pkg.maxReturn}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleActivatePackage(pkg.name)}
-                      className={pkg.status === 'Active Package' ? 'btn-indigo' : 'btn-emerald'}
-                      style={{ width: '100%' }}
-                    >
-                      {pkg.status === 'Active Package' ? 'Active Tier' : 'Buy Package Now'}
-                    </button>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           )}
