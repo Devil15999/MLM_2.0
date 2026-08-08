@@ -293,7 +293,24 @@ export const enrollDownlineMember = async (req, res) => {
     // 1. Generate Dynamic One-Time Password (OTP)
     const dynamicOtp = `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 2. Create or Update User Account in DB for the enrolled downline
+    // 2. Generate unique Sponsor ID for the new downline member
+    const namePrefix = memberName.trim().split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+    const randCode = Math.floor(1000 + Math.random() * 9000);
+    let ownSponsorId = `SP-${namePrefix}-${randCode}`;
+
+    let isUnique = false;
+    let attempts = 0;
+    while (!isUnique && attempts < 30) {
+      const existing = await User.findOne({ sponsorId: ownSponsorId });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        attempts++;
+        ownSponsorId = `SP-${namePrefix}-${randCode + attempts}`;
+      }
+    }
+
+    // 3. Create or Update User Account in DB for the enrolled downline
     let newEnrolledUser = await User.findOne({ email: emailToUse });
     if (!newEnrolledUser) {
       newEnrolledUser = await User.create({
@@ -302,7 +319,7 @@ export const enrollDownlineMember = async (req, res) => {
         password: dynamicOtp,
         isOneTimePassword: true,
         accountStatus: 'Pending Admin Approval',
-        sponsorId: req.user?._id || req.user?.email || 'SP-2000',
+        sponsorId: ownSponsorId,
         rank: packageName.includes('Elite') ? 'Platinum' : (packageName.includes('Premium') ? 'Silver' : 'Member'),
         selectedPackage: packageName,
         legPreference: 'Direct Level 1',
