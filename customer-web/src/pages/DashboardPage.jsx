@@ -224,31 +224,31 @@ export const DashboardPage = () => {
         })
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (res.ok) {
-        const data = await res.json();
-        if (data.dynamicOtp) dynamicOtp = data.dynamicOtp;
+        const serverOtp = data.dynamicOtp || `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
         fetchTeamData();
+        setEnrollModalOpen(false);
+        setIssuedCredentialModal({
+          name: enrollFormData.memberName,
+          email: memberEmailToUse,
+          otp: serverOtp,
+          position: selectedSlotPosition,
+          package: enrollFormData.packageName,
+          commissionAmount: commAmount.toFixed(2),
+          status: 'Pending Admin Approval'
+        });
+
+        setEnrollSuccessMessage(`Enrolled ${enrollFormData.memberName}! Commission request of ₹${commAmount.toLocaleString('en-IN')} sent to Admin Panel for approval.`);
+        setTimeout(() => setEnrollSuccessMessage(''), 5000);
       } else {
-        const errorData = await res.json().catch(() => ({}));
-        console.warn('Backend enrollment warning:', errorData.message);
+        alert(`Enrollment failed: ${data.message || 'Server error occurred. Please try again.'}`);
       }
     } catch (err) {
       console.error('Enrollment API error:', err);
+      alert('Network error connecting to API server. Please try again.');
     }
-
-    setEnrollModalOpen(false);
-    setIssuedCredentialModal({
-      name: enrollFormData.memberName,
-      email: memberEmailToUse,
-      otp: dynamicOtp,
-      position: selectedSlotPosition,
-      package: enrollFormData.packageName,
-      commissionAmount: commAmount.toFixed(2),
-      status: 'Pending Admin Approval'
-    });
-
-    setEnrollSuccessMessage(`Enrolled ${enrollFormData.memberName}! Commission request of ₹${commAmount.toLocaleString('en-IN')} sent to Admin Panel for approval.`);
-    setTimeout(() => setEnrollSuccessMessage(''), 5000);
   };
 
   const handleActivatePackage = async (pkgName) => {
