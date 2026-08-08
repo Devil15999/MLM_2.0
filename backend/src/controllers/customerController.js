@@ -380,13 +380,13 @@ export const getCustomerTeamDetails = async (req, res) => {
 export const requestWalletWithdrawal = async (req, res) => {
   try {
     const { amount, method } = req.body;
-    if (!amount || Number(amount) < 50) {
-      return res.status(400).json({ message: 'Minimum withdrawal amount is $50' });
+    if (!amount || Number(amount) < 500) {
+      return res.status(400).json({ message: 'Minimum withdrawal amount is ₹500' });
     }
 
     res.json({
       success: true,
-      message: `Withdrawal request of $${Number(amount).toFixed(2)} via ${method || 'Bank Account'} submitted successfully!`,
+      message: `Withdrawal request of ₹${Number(amount).toLocaleString('en-IN')} via ${method || 'Bank Account'} submitted successfully!`,
       transactionId: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
       timestamp: new Date().toISOString(),
     });
@@ -520,11 +520,11 @@ export const enrollDownlineMember = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Successfully enrolled ${memberName} into ${position}. Commission of $${commAmount.toFixed(2)} sent to Admin Panel for approval!`,
+      message: `Successfully enrolled ${memberName} into ${position}. Commission of ₹${commAmount.toLocaleString('en-IN')} sent to Admin Panel for approval!`,
       dynamicOtp,
       approvalId: approval._id,
       approvalStatus: 'Pending Admin Approval',
-      commissionPending: `$${commAmount.toFixed(2)}`,
+      commissionPending: `₹${commAmount.toLocaleString('en-IN')}`,
       newNode: {
         name: memberName,
         email: emailToUse,

@@ -271,7 +271,7 @@ export const AdminDashboardPage = () => {
                 </div>
               </div>
               <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)' }}>
-                ${(usersList.reduce((acc, u) => acc + (u.walletBalance || 0), 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ₹{(usersList.reduce((acc, u) => acc + (u.walletBalance || 0), 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <div style={{ fontSize: '12px', color: '#d97706', fontWeight: '700', marginTop: '4px' }}>
                 Updates live on Admin approvals
@@ -389,7 +389,7 @@ export const AdminDashboardPage = () => {
                           </span>
                         </td>
                         <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
-                          ${(typeof u.walletBalance === 'number' ? u.walletBalance : 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          ₹{(typeof u.walletBalance === 'number' ? u.walletBalance : 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
                         <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>
                           {u.downlineCount ?? 0} Members
