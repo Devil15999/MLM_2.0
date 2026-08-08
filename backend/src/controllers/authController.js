@@ -179,6 +179,8 @@ export const loginUser = async (req, res) => {
       role: user.role,
       sponsorId: user.sponsorId,
       rank: user.rank,
+      selectedPackage: user.selectedPackage || 'Starter Package (₹10,000)',
+      accountStatus: user.accountStatus,
       walletBalance: typeof user.walletBalance === 'number' ? user.walletBalance : (user.email === 'alex@nexismlm.com' ? 6250.00 : 0),
       totalEarnings: typeof user.totalEarnings === 'number' ? user.totalEarnings : (user.email === 'alex@nexismlm.com' ? 10450.00 : 0),
       downlineCount: typeof user.downlineCount === 'number' ? user.downlineCount : (user.email === 'alex@nexismlm.com' ? 36 : 0),

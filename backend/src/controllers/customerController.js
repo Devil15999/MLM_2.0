@@ -455,43 +455,37 @@ export const enrollDownlineMember = async (req, res) => {
       userRank = 'Silver';
     }
 
-    // 3. Create or Update User Account in DB for the enrolled downline
-    let newEnrolledUser = await User.findOne({ email: emailToUse });
-    let issuedPassword = dynamicOtp;
-
-    if (!newEnrolledUser) {
-      newEnrolledUser = await User.create({
-        name: memberName,
-        email: emailToUse,
-        password: dynamicOtp,
-        isOneTimePassword: true,
-        accountStatus: 'Pending Admin Approval',
-        sponsorId: ownSponsorId,
-        parentSponsorId: resolvedParentId,
-        parentSponsorCode: resolvedParentCode,
-        parentSponsorEmail: resolvedParentEmail,
-        rank: userRank,
-        selectedPackage: normalizedPackageName,
-        legPreference: 'Direct Level 1',
-        walletBalance: 0.00,
-        totalEarnings: 0.00,
-        downlineCount: 0,
-        level1MembersCount: 0,
-        level2MembersCount: 0,
-        level1AffiliateIncome: 0.00,
-        level2AffiliateIncome: 0.00,
-        investmentReturns: 0.00,
-        totalIncome: 0.00,
+    // 3. Email Uniqueness Validation
+    const existingUser = await User.findOne({ email: emailToUse });
+    if (existingUser) {
+      return res.status(400).json({
+        message: `Member email '${emailToUse}' is already registered in the system. Downline members must have a unique email address.`
       });
-    } else {
-      // Preserve existing user's password so login OTP remains valid!
-      newEnrolledUser.selectedPackage = normalizedPackageName;
-      newEnrolledUser.rank = userRank;
-      newEnrolledUser.parentSponsorId = resolvedParentId;
-      newEnrolledUser.parentSponsorCode = resolvedParentCode;
-      newEnrolledUser.parentSponsorEmail = resolvedParentEmail;
-      await newEnrolledUser.save();
     }
+
+    const newEnrolledUser = await User.create({
+      name: memberName,
+      email: emailToUse,
+      password: dynamicOtp,
+      isOneTimePassword: true,
+      accountStatus: 'Pending Admin Approval',
+      sponsorId: ownSponsorId,
+      parentSponsorId: resolvedParentId,
+      parentSponsorCode: resolvedParentCode,
+      parentSponsorEmail: resolvedParentEmail,
+      rank: userRank,
+      selectedPackage: normalizedPackageName,
+      legPreference: 'Direct Level 1',
+      walletBalance: 0.00,
+      totalEarnings: 0.00,
+      downlineCount: 0,
+      level1MembersCount: 0,
+      level2MembersCount: 0,
+      level1AffiliateIncome: 0.00,
+      level2AffiliateIncome: 0.00,
+      investmentReturns: 0.00,
+      totalIncome: 0.00,
+    });
 
     const isLevel1 = position.includes('Node 1') || position === 'Left Leg' || position === 'Right Leg' || !position.includes('L2');
     const commAmount = isLevel1 ? l1Bonus : 500;

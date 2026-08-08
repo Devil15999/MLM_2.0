@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -38,7 +38,7 @@ export const DashboardPage = () => {
   const [teamTab, setTeamTab] = useState('level1');
   const [teamViewMode, setTeamViewMode] = useState('tree');
   const isFreshUser = user?.email === 'fresh@nexismlm.com' || user?.sponsorId === 'SP-2000';
-  const [activePackage, setActivePackage] = useState(user?.selectedPackage || (isFreshUser ? 'None' : 'Premium Package (₹20,000)'));
+  const [activePackage, setActivePackage] = useState(user?.selectedPackage || 'Starter Package (₹10,000)');
   
   // Storage key for local persistence
   const userKey = user?._id || user?.email || 'fresh';
@@ -74,11 +74,53 @@ export const DashboardPage = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState([]);
 
+  const fetchTeamData = useCallback(async () => {
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api/auth').replace('/auth', '');
+      const res = await fetch(`${baseUrl}/customer/team`, {
+        headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.level1Members)) {
+          const mappedL1 = data.level1Members.map((m) => ({
+            name: m.name,
+            email: m.email,
+            position: m.legPreference || 'Direct Level 1',
+            package: m.selectedPackage || 'Starter Package (₹10,000)',
+            joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
+            status: m.accountStatus || 'Active',
+            accountStatus: m.accountStatus,
+            level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
+            level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
+            sponsor: user?.name || 'You'
+          }));
+          setEnrolledLevel1(mappedL1);
+        }
+        if (Array.isArray(data.level2Members)) {
+          const mappedL2 = data.level2Members.map((m) => ({
+            name: m.name,
+            email: m.email,
+            position: m.legPreference || 'Level 2 Node',
+            package: m.selectedPackage || 'Starter Package (₹10,000)',
+            joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
+            status: m.accountStatus || 'Active',
+            accountStatus: m.accountStatus,
+            level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
+            level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
+            sponsor: 'Level 1 Member'
+          }));
+          setEnrolledLevel2(mappedL2);
+        }
+      }
+    } catch (err) {}
+  }, [user]);
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
-        const res = await fetch(`${apiUrl.replace('/auth', '')}/customer/notifications`, {
+        const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api/auth').replace('/auth', '');
+        const res = await fetch(`${baseUrl}/customer/notifications`, {
           headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {}
         });
         if (res.ok) {
@@ -88,49 +130,9 @@ export const DashboardPage = () => {
       } catch (err) {}
     };
 
-    const fetchTeamData = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
-        const res = await fetch(`${apiUrl.replace('/auth', '')}/customer/team`, {
-          headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {}
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.level1Members)) {
-            const mappedL1 = data.level1Members.map((m) => ({
-              name: m.name,
-              email: m.email,
-              position: m.legPreference || 'Direct Level 1',
-              package: m.selectedPackage || 'Starter Package (₹10,000)',
-              joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
-              status: m.accountStatus || 'Active',
-              level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
-              level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
-              sponsor: user?.name || 'You'
-            }));
-            setEnrolledLevel1(mappedL1);
-          }
-          if (Array.isArray(data.level2Members)) {
-            const mappedL2 = data.level2Members.map((m) => ({
-              name: m.name,
-              email: m.email,
-              position: m.legPreference || 'Level 2 Node',
-              package: m.selectedPackage || 'Starter Package (₹10,000)',
-              joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
-              status: m.accountStatus || 'Active',
-              level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
-              level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
-              sponsor: 'Level 1 Member'
-            }));
-            setEnrolledLevel2(mappedL2);
-          }
-        }
-      } catch (err) {}
-    };
-
     fetchNotifications();
     fetchTeamData();
-  }, [user, activeTab]);
+  }, [user, activeTab, fetchTeamData]);
 
   // Sync state when user changes or DB metrics are fetched
   useEffect(() => {
@@ -150,62 +152,19 @@ export const DashboardPage = () => {
 
   const handleEnrollSubmit = async (e) => {
     e.preventDefault();
-    if (!enrollFormData.memberName) return;
 
-    const packagePrices = {
-      'Starter Package (₹10,000)': 10000,
-      'Premium Package (₹20,000)': 20000,
-      'Elite Package (₹30,000)': 30000,
-      'Starter Package': 10000,
-      'Premium Package': 20000,
-      'Elite Package': 30000,
-    };
-    const price = packagePrices[enrollFormData.packageName] || 20000;
     const isLevel1 = selectedSlotPosition.includes('Node 1') || selectedSlotPosition === 'Left Leg' || selectedSlotPosition === 'Right Leg' || !selectedSlotPosition.includes('L2');
     const level1BonusMap = {
       'Starter Package (₹10,000)': 1000,
       'Premium Package (₹20,000)': 2000,
       'Elite Package (₹30,000)': 3000,
-      'Starter Package': 1000,
-      'Premium Package': 2000,
-      'Elite Package': 3000,
     };
-    const commAmount = isLevel1 ? (level1BonusMap[enrollFormData.packageName] || (price * 0.10)) : 500;
-
+    const commAmount = isLevel1 ? (level1BonusMap[enrollFormData.packageName] || 1000) : 500;
     const memberEmailToUse = enrollFormData.memberEmail || `${enrollFormData.memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
 
-    const newNode = {
-      name: enrollFormData.memberName,
-      position: selectedSlotPosition,
-      email: memberEmailToUse,
-      package: enrollFormData.packageName,
-      joined: 'Today',
-      status: 'Pending Admin Approval',
-      accountStatus: 'Pending Admin Approval',
-      level1Earned: isLevel1 ? `₹${commAmount.toLocaleString('en-IN')}` : '₹0',
-      level2Earned: isLevel1 ? '₹0' : `₹${commAmount.toLocaleString('en-IN')}`,
-      sponsor: isLevel1 ? (user?.name || 'You') : 'Level 1 Member'
-    };
-
-    if (isLevel1) {
-      setEnrolledLevel1(prev => {
-        const nextList = [...prev, newNode];
-        try { localStorage.setItem(`nexis_l1_${userKey}`, JSON.stringify(nextList)); } catch(e){}
-        return nextList;
-      });
-    } else {
-      setEnrolledLevel2(prev => {
-        const nextList = [...prev, newNode];
-        try { localStorage.setItem(`nexis_l2_${userKey}`, JSON.stringify(nextList)); } catch(e){}
-        return nextList;
-      });
-    }
-
-    let dynamicOtp = `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
-
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
-      const res = await fetch(`${apiUrl.replace('/auth', '')}/customer/team/enroll`, {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api/auth').replace('/auth', '');
+      const res = await fetch(`${baseUrl}/customer/team/enroll`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -246,8 +205,8 @@ export const DashboardPage = () => {
         alert(`Enrollment failed: ${data.message || 'Server error occurred. Please try again.'}`);
       }
     } catch (err) {
-      console.error('Enrollment API error:', err);
-      alert('Network error connecting to API server. Please try again.');
+      console.error('Enrollment error:', err);
+      alert(`Enrollment error: ${err.message || 'Error occurred. Please try again.'}`);
     }
   };
 
