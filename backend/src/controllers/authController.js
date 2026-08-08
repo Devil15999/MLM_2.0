@@ -25,10 +25,10 @@ export const registerUser = async (req, res) => {
     const trimmedAadhaar = aadhaarNumber.trim();
     const cleanAadhaar = trimmedAadhaar.replace(/[\s-]/g, '');
 
-    // Validate 12-digit Aadhaar format (must be 12 digits, cannot start with 0 or 1)
-    if (!/^[2-9]\d{11}$/.test(cleanAadhaar)) {
+    // Validate 12-digit Aadhaar format (must be a valid 12-digit number)
+    if (!/^\d{12}$/.test(cleanAadhaar)) {
       return res.status(400).json({
-        message: 'Invalid Aadhaar Number. Must be a valid 12-digit number (e.g. 2345 6789 0123).'
+        message: 'Invalid Aadhaar Number. Must be a valid 12-digit number (e.g. 0987 6543 2110).'
       });
     }
 
