@@ -487,21 +487,22 @@ const PendingApprovalsSection = () => {
     setModalTitle(title);
   };
 
-  const joiningRequests = approvals.filter(a => a.type === 'Joining Request' || a.type === 'Enrolled Downline Commission');
-  const commissionApprovals = approvals.filter(a => a.type !== 'Joining Request' && a.type !== 'Enrolled Downline Commission');
+  const joiningRequests = approvals.filter(a => a.type === 'Joining Request');
+  const downlineRequests = approvals.filter(a => a.type === 'Enrolled Downline Commission' || a.type !== 'Joining Request');
 
   return (
     <>
       <ImageModal isOpen={!!modalImage} onClose={() => setModalImage(null)} imageSrc={modalImage} title={modalTitle} />
 
+      {/* Block 1: Pending Joining Requests (Public Registrations) */}
       <div className="light-card" style={{ padding: '28px', marginBottom: '28px', border: '2px solid #3b82f6' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', color: '#1e40af', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
-              <Users size={14} /> New Joining & Downline Member Requests ({joiningRequests.filter(a => a.status === 'Pending').length} Pending)
+              <Users size={14} /> New Joining Requests ({joiningRequests.filter(a => a.status === 'Pending').length} Pending)
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Joining & Downline Requests</h3>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve new distributor registrations & downline member additions (Level 1 / Level 2)</p>
+            <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Joining Requests</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve new direct distributor registrations submitted from the portal</p>
           </div>
 
           <button
@@ -533,8 +534,8 @@ const PendingApprovalsSection = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                <th style={{ padding: '12px 16px' }}>Applicant / Member Name</th>
-                <th style={{ padding: '12px 16px' }}>Package / Level</th>
+                <th style={{ padding: '12px 16px' }}>Applicant Name</th>
+                <th style={{ padding: '12px 16px' }}>Package</th>
                 <th style={{ padding: '12px 16px' }}>Aadhaar Number</th>
                 <th style={{ padding: '12px 16px' }}>Documents</th>
                 <th style={{ padding: '12px 16px' }}>Status</th>
@@ -545,7 +546,7 @@ const PendingApprovalsSection = () => {
               {joiningRequests.length === 0 ? (
                 <tr>
                   <td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No pending joining or downline member requests.
+                    No pending public joining requests.
                   </td>
                 </tr>
               ) : (
@@ -558,14 +559,7 @@ const PendingApprovalsSection = () => {
                         Sponsor: {app.sponsorName || 'System Admin'}
                       </div>
                     </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ fontWeight: '600' }}>{app.packageName}</div>
-                      {app.position && (
-                        <span style={{ background: '#ecfdf5', color: '#059669', padding: '2px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', display: 'inline-block', marginTop: '4px' }}>
-                          {app.position}
-                        </span>
-                      )}
-                    </td>
+                    <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
                     <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }}>
                       {app.userId?.aadhaarNumber || 'N/A'}
                     </td>
@@ -633,47 +627,72 @@ const PendingApprovalsSection = () => {
         </div>
       </div>
 
-      {commissionApprovals.length > 0 && (
-        <div className="light-card" style={{ padding: '28px', marginBottom: '28px', border: '2px solid #f59e0b' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fef3c7', color: '#92400e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
-                <Award size={14} /> Downline Commission Approvals Queue ({commissionApprovals.filter(a => a.status === 'Pending').length} Pending)
-              </div>
-              <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Commission Approvals</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve legacy downline enrollments to credit referral commissions</p>
+      {/* Block 2: Pending Downline Member Approvals (Enrolled by Distributors) */}
+      <div className="light-card" style={{ padding: '28px', marginBottom: '28px', border: '2px solid #10b981' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ecfdf5', color: '#047857', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
+              <Award size={14} /> Downline Member Additions Queue ({downlineRequests.filter(a => a.status === 'Pending').length} Pending)
             </div>
+            <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Downline Member Approvals</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve new downline members added by distributors into Level 1 or Level 2 slots</p>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                  <th style={{ padding: '12px 16px' }}>Sponsor (Higher Level)</th>
-                  <th style={{ padding: '12px 16px' }}>Enrolled Member</th>
-                  <th style={{ padding: '12px 16px' }}>Tree Position</th>
-                  <th style={{ padding: '12px 16px' }}>Package</th>
-                  <th style={{ padding: '12px 16px' }}>Commission Amount</th>
-                  <th style={{ padding: '12px 16px' }}>Status</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
+          <button
+            onClick={fetchApprovals}
+            style={{
+              padding: '8px 14px',
+              background: '#ffffff',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              color: 'var(--text-main)',
+              fontSize: '13px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'pulse-dot' : ''} /> Refresh Requests
+          </button>
+        </div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                <th style={{ padding: '12px 16px' }}>Sponsor (Enrolling User)</th>
+                <th style={{ padding: '12px 16px' }}>Enrolled Member</th>
+                <th style={{ padding: '12px 16px' }}>Tree Position</th>
+                <th style={{ padding: '12px 16px' }}>Package</th>
+                <th style={{ padding: '12px 16px' }}>Commission</th>
+                <th style={{ padding: '12px 16px' }}>Status</th>
+                <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {downlineRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No pending downline member requests.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {commissionApprovals.map((app) => (
+              ) : (
+                downlineRequests.map((app) => (
                   <tr key={app._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
-                    <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{app.sponsorName}</td>
+                    <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{app.sponsorName || 'System Admin'}</td>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName}</div>
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{app.enrolledMemberEmail}</div>
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                        {app.position}
+                        {app.position || 'Direct Level 1'}
                       </span>
                     </td>
                     <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
                     <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
-                      +₹{Number(app.commissionAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      +₹{Number(app.commissionAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <span style={{
@@ -710,12 +729,12 @@ const PendingApprovalsSection = () => {
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </>
   );
 };

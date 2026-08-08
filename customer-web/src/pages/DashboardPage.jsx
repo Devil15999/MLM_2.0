@@ -170,17 +170,21 @@ export const DashboardPage = () => {
         },
         body: JSON.stringify({
           memberName: enrollFormData.memberName,
-          memberEmail: enrollFormData.memberEmail,
+          memberEmail: memberEmailToUse,
           position: selectedSlotPosition,
           packageName: enrollFormData.packageName
         })
       });
+
       if (res.ok) {
         const data = await res.json();
         if (data.dynamicOtp) dynamicOtp = data.dynamicOtp;
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        console.warn('Backend enrollment warning:', errorData.message);
       }
     } catch (err) {
-      console.log('Enrollment updated locally');
+      console.error('Enrollment API error:', err);
     }
 
     setEnrollModalOpen(false);
@@ -194,7 +198,7 @@ export const DashboardPage = () => {
       status: 'Pending Admin Approval'
     });
 
-    setEnrollSuccessMessage(`Enrolled ${enrollFormData.memberName}! Commission of $${commAmount.toFixed(2)} sent to Admin Panel for approval.`);
+    setEnrollSuccessMessage(`Enrolled ${enrollFormData.memberName}! Commission request of ₹${commAmount.toLocaleString('en-IN')} sent to Admin Panel for approval.`);
     setTimeout(() => setEnrollSuccessMessage(''), 5000);
   };
 

@@ -359,9 +359,9 @@ export const enrollDownlineMember = async (req, res) => {
       }
     }
 
-    // 5. Create Pending Joining Request Approval Record for Admin Panel
+    // 5. Create Pending Downline Enrollment Approval Record for Admin Panel
     const approval = await Approval.create({
-      type: 'Joining Request',
+      type: 'Enrolled Downline Commission',
       userId: newEnrolledUser._id,
       sponsorId: userId || sponsorUser?._id,
       sponsorName: sponsorUser?.name || 'Sponsor',
