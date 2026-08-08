@@ -231,7 +231,7 @@ export const getCustomerTeamDetails = async (req, res) => {
       // 1. Direct Level 1 downlines sponsored by this user
       level1Members = await User.find({
         $or: [
-          ...(uId ? [{ parentSponsorId: uId }, { sponsorId: uId }] : []),
+          ...(user._id ? [{ parentSponsorId: user._id }, { parentSponsorId: uId }, { sponsorId: uId }] : []),
           ...(uSponsorId ? [{ parentSponsorCode: uSponsorId }, { sponsorId: uSponsorId }] : []),
           ...(uEmail ? [{ parentSponsorEmail: uEmail }, { sponsorId: uEmail }] : [])
         ]
@@ -266,16 +266,19 @@ export const getCustomerTeamDetails = async (req, res) => {
       }
 
       // Collect identifiers for all Level 1 members
-      const l1UserIds = level1Members.map(u => u._id.toString());
+      const l1ObjectIds = level1Members.map(u => u._id);
+      const l1UserStrIds = level1Members.map(u => u._id.toString());
       const l1SponsorCodes = level1Members.map(u => u.sponsorId).filter(Boolean);
       const l1Emails = level1Members.map(u => u.email).filter(Boolean);
       const l1Names = level1Members.map(u => u.name).filter(Boolean);
 
-      if (l1UserIds.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0 || l1Names.length > 0) {
+      const allL1IdMatches = [...l1ObjectIds, ...l1UserStrIds];
+
+      if (allL1IdMatches.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0 || l1Names.length > 0) {
         // 2. Level 2 downlines sponsored by any Level 1 member
         level2Members = await User.find({
           $or: [
-            ...(l1UserIds.length > 0 ? [{ parentSponsorId: { $in: l1UserIds } }, { sponsorId: { $in: l1UserIds } }] : []),
+            ...(allL1IdMatches.length > 0 ? [{ parentSponsorId: { $in: allL1IdMatches } }, { sponsorId: { $in: allL1IdMatches } }] : []),
             ...(l1SponsorCodes.length > 0 ? [{ parentSponsorCode: { $in: l1SponsorCodes } }, { sponsorId: { $in: l1SponsorCodes } }] : []),
             ...(l1Emails.length > 0 ? [{ parentSponsorEmail: { $in: l1Emails } }, { sponsorId: { $in: l1Emails } }] : [])
           ]
@@ -284,7 +287,7 @@ export const getCustomerTeamDetails = async (req, res) => {
         // Also check Approvals sponsored by any Level 1 member
         const l2Approvals = await Approval.find({
           $or: [
-            ...(l1UserIds.length > 0 ? [{ sponsorId: { $in: l1UserIds } }] : []),
+            ...(allL1IdMatches.length > 0 ? [{ sponsorId: { $in: allL1IdMatches } }] : []),
             ...(l1SponsorCodes.length > 0 ? [{ sponsorId: { $in: l1SponsorCodes } }] : []),
             ...(l1Emails.length > 0 ? [{ sponsorId: { $in: l1Emails } }] : []),
             ...(l1Names.length > 0 ? [{ sponsorName: { $in: l1Names } }] : [])
