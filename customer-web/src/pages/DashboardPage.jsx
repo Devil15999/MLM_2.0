@@ -87,8 +87,50 @@ export const DashboardPage = () => {
         }
       } catch (err) {}
     };
+
+    const fetchTeamData = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://mlm-2-0.onrender.com/api';
+        const res = await fetch(`${apiUrl.replace('/auth', '')}/customer/team`, {
+          headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {}
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.level1Members) && data.level1Members.length > 0) {
+            const mappedL1 = data.level1Members.map((m) => ({
+              name: m.name,
+              email: m.email,
+              position: m.legPreference || 'Direct Level 1',
+              package: m.selectedPackage || 'Starter Package',
+              joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
+              status: m.accountStatus || 'Active',
+              level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
+              level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
+              sponsor: user?.name || 'You'
+            }));
+            setEnrolledLevel1(mappedL1);
+          }
+          if (Array.isArray(data.level2Members) && data.level2Members.length > 0) {
+            const mappedL2 = data.level2Members.map((m) => ({
+              name: m.name,
+              email: m.email,
+              position: m.legPreference || 'Level 2 Node',
+              package: m.selectedPackage || 'Starter Package',
+              joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
+              status: m.accountStatus || 'Active',
+              level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
+              level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
+              sponsor: 'Level 1 Member'
+            }));
+            setEnrolledLevel2(mappedL2);
+          }
+        }
+      } catch (err) {}
+    };
+
     fetchNotifications();
-  }, [user]);
+    fetchTeamData();
+  }, [user, activeTab]);
 
   // Sync state when user changes or DB metrics are fetched
   useEffect(() => {

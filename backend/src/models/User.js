@@ -32,6 +32,19 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       default: function() { return `SP-${Math.floor(1000 + Math.random() * 9000)}`; },
     },
+    parentSponsorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false,
+    },
+    parentSponsorCode: {
+      type: String,
+      required: false,
+    },
+    parentSponsorEmail: {
+      type: String,
+      required: false,
+    },
     rank: {
       type: String,
       enum: ['Member', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Starter', 'Premium', 'Elite'],

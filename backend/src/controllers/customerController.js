@@ -212,6 +212,8 @@ export const getCustomerPackages = async (req, res) => {
 
 // @desc    Get Team Details (Level 1: Direct, Level 2: Indirect)
 // @route   GET /api/customer/team
+// @desc    Get Team Details (Level 1: Direct, Level 2: Indirect)
+// @route   GET /api/customer/team
 export const getCustomerTeamDetails = async (req, res) => {
   try {
     const user = req.user;
@@ -219,28 +221,73 @@ export const getCustomerTeamDetails = async (req, res) => {
     let level2Members = [];
 
     if (user) {
-      // Direct Level 1 downlines sponsored by this user
+      const uId = user._id ? user._id.toString() : null;
+      const uSponsorId = user.sponsorId || null;
+      const uEmail = user.email || null;
+
+      // 1. Direct Level 1 downlines sponsored by this user
       level1Members = await User.find({
         $or: [
-          { sponsorId: user._id.toString() },
-          { sponsorId: user.sponsorId },
-          { sponsorId: user.email }
+          ...(uId ? [{ parentSponsorId: uId }, { sponsorId: uId }] : []),
+          ...(uSponsorId ? [{ parentSponsorCode: uSponsorId }, { sponsorId: uSponsorId }] : []),
+          ...(uEmail ? [{ parentSponsorEmail: uEmail }, { sponsorId: uEmail }] : [])
+        ]
+      }).select('-password');
+
+      // Also check Approvals created by this user as sponsor
+      const l1Approvals = await Approval.find({
+        $or: [
+          ...(uId ? [{ sponsorId: uId }] : []),
+          ...(uEmail ? [{ sponsorName: user.name }] : [])
         ]
       });
 
+      const l1EmailsFromApprovals = l1Approvals.map(a => a.enrolledMemberEmail).filter(Boolean);
+      if (l1EmailsFromApprovals.length > 0) {
+        const extraL1Users = await User.find({ email: { $in: l1EmailsFromApprovals } }).select('-password');
+        const existingL1Ids = new Set(level1Members.map(m => m._id.toString()));
+        for (const extra of extraL1Users) {
+          if (!existingL1Ids.has(extra._id.toString())) {
+            level1Members.push(extra);
+          }
+        }
+      }
+
+      // Collect identifiers for all Level 1 members
       const l1UserIds = level1Members.map(u => u._id.toString());
       const l1SponsorCodes = level1Members.map(u => u.sponsorId).filter(Boolean);
       const l1Emails = level1Members.map(u => u.email).filter(Boolean);
 
       if (l1UserIds.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0) {
-        // Level 2 downlines sponsored by any Level 1 member
+        // 2. Level 2 downlines sponsored by any Level 1 member
         level2Members = await User.find({
           $or: [
+            { parentSponsorId: { $in: l1UserIds } },
+            { parentSponsorCode: { $in: l1SponsorCodes } },
+            { parentSponsorEmail: { $in: l1Emails } },
             { sponsorId: { $in: l1UserIds } },
             { sponsorId: { $in: l1SponsorCodes } },
             { sponsorId: { $in: l1Emails } }
           ]
+        }).select('-password');
+
+        // Also check Approvals sponsored by any Level 1 member
+        const l2Approvals = await Approval.find({
+          $or: [
+            { sponsorId: { $in: l1UserIds } }
+          ]
         });
+
+        const l2EmailsFromApprovals = l2Approvals.map(a => a.enrolledMemberEmail).filter(Boolean);
+        if (l2EmailsFromApprovals.length > 0) {
+          const extraL2Users = await User.find({ email: { $in: l2EmailsFromApprovals } }).select('-password');
+          const existingL2Ids = new Set(level2Members.map(m => m._id.toString()));
+          for (const extra of extraL2Users) {
+            if (!existingL2Ids.has(extra._id.toString())) {
+              level2Members.push(extra);
+            }
+          }
+        }
       }
     }
 
@@ -320,6 +367,9 @@ export const enrollDownlineMember = async (req, res) => {
         isOneTimePassword: true,
         accountStatus: 'Pending Admin Approval',
         sponsorId: ownSponsorId,
+        parentSponsorId: req.user?._id,
+        parentSponsorCode: req.user?.sponsorId,
+        parentSponsorEmail: req.user?.email,
         rank: packageName.includes('Elite') ? 'Platinum' : (packageName.includes('Premium') ? 'Silver' : 'Member'),
         selectedPackage: packageName,
         legPreference: 'Direct Level 1',
@@ -337,6 +387,9 @@ export const enrollDownlineMember = async (req, res) => {
       newEnrolledUser.password = dynamicOtp;
       newEnrolledUser.isOneTimePassword = true;
       newEnrolledUser.accountStatus = 'Pending Admin Approval';
+      newEnrolledUser.parentSponsorId = req.user?._id;
+      newEnrolledUser.parentSponsorCode = req.user?.sponsorId;
+      newEnrolledUser.parentSponsorEmail = req.user?.email;
       await newEnrolledUser.save();
     }
 
