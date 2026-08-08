@@ -180,10 +180,11 @@ export const DashboardPage = () => {
       email: memberEmailToUse,
       package: enrollFormData.packageName,
       joined: 'Today',
-      status: 'Active',
+      status: 'Pending Admin Approval',
+      accountStatus: 'Pending Admin Approval',
       level1Earned: isLevel1 ? `₹${commAmount.toLocaleString('en-IN')}` : '₹0',
       level2Earned: isLevel1 ? '₹0' : `₹${commAmount.toLocaleString('en-IN')}`,
-      sponsor: isLevel1 ? (user?.name || 'You') : 'Sarah Connor'
+      sponsor: isLevel1 ? (user?.name || 'You') : 'Level 1 Member'
     };
 
     if (isLevel1) {
@@ -226,6 +227,7 @@ export const DashboardPage = () => {
       if (res.ok) {
         const data = await res.json();
         if (data.dynamicOtp) dynamicOtp = data.dynamicOtp;
+        fetchTeamData();
       } else {
         const errorData = await res.json().catch(() => ({}));
         console.warn('Backend enrollment warning:', errorData.message);
