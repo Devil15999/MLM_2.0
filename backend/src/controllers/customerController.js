@@ -214,6 +214,8 @@ export const getCustomerPackages = async (req, res) => {
 // @route   GET /api/customer/team
 // @desc    Get Team Details (Level 1: Direct, Level 2: Indirect)
 // @route   GET /api/customer/team
+// @desc    Get Team Details (Level 1: Direct, Level 2: Indirect)
+// @route   GET /api/customer/team
 export const getCustomerTeamDetails = async (req, res) => {
   try {
     const user = req.user;
@@ -224,6 +226,7 @@ export const getCustomerTeamDetails = async (req, res) => {
       const uId = user._id ? user._id.toString() : null;
       const uSponsorId = user.sponsorId || null;
       const uEmail = user.email || null;
+      const uName = user.name || null;
 
       // 1. Direct Level 1 downlines sponsored by this user
       level1Members = await User.find({
@@ -238,7 +241,9 @@ export const getCustomerTeamDetails = async (req, res) => {
       const l1Approvals = await Approval.find({
         $or: [
           ...(uId ? [{ sponsorId: uId }] : []),
-          ...(uEmail ? [{ sponsorName: user.name }] : [])
+          ...(uSponsorId ? [{ sponsorId: uSponsorId }] : []),
+          ...(uEmail ? [{ sponsorId: uEmail }] : []),
+          ...(uName ? [{ sponsorName: uName }] : [])
         ]
       });
 
@@ -249,6 +254,13 @@ export const getCustomerTeamDetails = async (req, res) => {
         for (const extra of extraL1Users) {
           if (!existingL1Ids.has(extra._id.toString())) {
             level1Members.push(extra);
+            // Auto-heal missing parentSponsor references
+            if (!extra.parentSponsorId && user._id) {
+              extra.parentSponsorId = user._id;
+              extra.parentSponsorCode = user.sponsorId;
+              extra.parentSponsorEmail = user.email;
+              await extra.save().catch(() => null);
+            }
           }
         }
       }
@@ -257,24 +269,25 @@ export const getCustomerTeamDetails = async (req, res) => {
       const l1UserIds = level1Members.map(u => u._id.toString());
       const l1SponsorCodes = level1Members.map(u => u.sponsorId).filter(Boolean);
       const l1Emails = level1Members.map(u => u.email).filter(Boolean);
+      const l1Names = level1Members.map(u => u.name).filter(Boolean);
 
-      if (l1UserIds.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0) {
+      if (l1UserIds.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0 || l1Names.length > 0) {
         // 2. Level 2 downlines sponsored by any Level 1 member
         level2Members = await User.find({
           $or: [
-            { parentSponsorId: { $in: l1UserIds } },
-            { parentSponsorCode: { $in: l1SponsorCodes } },
-            { parentSponsorEmail: { $in: l1Emails } },
-            { sponsorId: { $in: l1UserIds } },
-            { sponsorId: { $in: l1SponsorCodes } },
-            { sponsorId: { $in: l1Emails } }
+            ...(l1UserIds.length > 0 ? [{ parentSponsorId: { $in: l1UserIds } }, { sponsorId: { $in: l1UserIds } }] : []),
+            ...(l1SponsorCodes.length > 0 ? [{ parentSponsorCode: { $in: l1SponsorCodes } }, { sponsorId: { $in: l1SponsorCodes } }] : []),
+            ...(l1Emails.length > 0 ? [{ parentSponsorEmail: { $in: l1Emails } }, { sponsorId: { $in: l1Emails } }] : [])
           ]
         }).select('-password');
 
         // Also check Approvals sponsored by any Level 1 member
         const l2Approvals = await Approval.find({
           $or: [
-            { sponsorId: { $in: l1UserIds } }
+            ...(l1UserIds.length > 0 ? [{ sponsorId: { $in: l1UserIds } }] : []),
+            ...(l1SponsorCodes.length > 0 ? [{ sponsorId: { $in: l1SponsorCodes } }] : []),
+            ...(l1Emails.length > 0 ? [{ sponsorId: { $in: l1Emails } }] : []),
+            ...(l1Names.length > 0 ? [{ sponsorName: { $in: l1Names } }] : [])
           ]
         });
 
@@ -288,6 +301,14 @@ export const getCustomerTeamDetails = async (req, res) => {
             }
           }
         }
+      }
+
+      // Sync member counts on user document if updated
+      if (user.level1MembersCount !== level1Members.length || user.level2MembersCount !== level2Members.length) {
+        user.level1MembersCount = level1Members.length;
+        user.level2MembersCount = level2Members.length;
+        user.downlineCount = level1Members.length + level2Members.length;
+        await user.save().catch(() => null);
       }
     }
 

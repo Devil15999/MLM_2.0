@@ -96,7 +96,7 @@ export const DashboardPage = () => {
         });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.level1Members) && data.level1Members.length > 0) {
+          if (Array.isArray(data.level1Members)) {
             const mappedL1 = data.level1Members.map((m) => ({
               name: m.name,
               email: m.email,
@@ -110,7 +110,7 @@ export const DashboardPage = () => {
             }));
             setEnrolledLevel1(mappedL1);
           }
-          if (Array.isArray(data.level2Members) && data.level2Members.length > 0) {
+          if (Array.isArray(data.level2Members)) {
             const mappedL2 = data.level2Members.map((m) => ({
               name: m.name,
               email: m.email,
