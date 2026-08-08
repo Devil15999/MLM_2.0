@@ -84,18 +84,37 @@ export const approveCommissionRequest = async (req, res) => {
       await enrolledUser.save();
     }
 
-    // 3. Credit Level 1 Sponsor & Update Metrics
-    const commAmount = Number(approval.commissionAmount || 0) || 1000;
+    // 3. Calculate Level 1 Commission (10% of Enrolled Member's Package)
+    const packagePrices = {
+      'Starter Package (₹10,000)': 10000,
+      'Premium Package (₹20,000)': 20000,
+      'Elite Package (₹30,000)': 30000,
+      'Starter Package': 10000,
+      'Premium Package': 20000,
+      'Elite Package': 30000,
+    };
+
+    let packagePrice = packagePrices[approval.packageName] || 10000;
+    if (!packagePrices[approval.packageName] && approval.packageName) {
+      if (approval.packageName.includes('30,000') || approval.packageName.toLowerCase().includes('elite')) packagePrice = 30000;
+      else if (approval.packageName.includes('20,000') || approval.packageName.toLowerCase().includes('premium')) packagePrice = 20000;
+      else packagePrice = 10000;
+    }
+
+    const l1Commission = approval.commissionAmount || (packagePrice * 0.10); // Direct 10% of Package for Level 1 sponsor
+    const l2Commission = 500; // Flat ₹500 Override for Level 2 sponsor (irrespective of package)
+
     if (sponsorUser) {
-      sponsorUser.level1AffiliateIncome = (sponsorUser.level1AffiliateIncome || 0) + commAmount;
-      sponsorUser.walletBalance = (sponsorUser.walletBalance || 0) + commAmount;
-      sponsorUser.totalIncome = (sponsorUser.totalIncome || 0) + commAmount;
-      sponsorUser.totalEarnings = (sponsorUser.totalEarnings || 0) + commAmount;
+      // Credit Direct Level 1 Sponsor (10% of package)
+      sponsorUser.level1AffiliateIncome = (sponsorUser.level1AffiliateIncome || 0) + l1Commission;
+      sponsorUser.walletBalance = (sponsorUser.walletBalance || 0) + l1Commission;
+      sponsorUser.totalIncome = (sponsorUser.totalIncome || 0) + l1Commission;
+      sponsorUser.totalEarnings = (sponsorUser.totalEarnings || 0) + l1Commission;
       sponsorUser.level1MembersCount = (sponsorUser.level1MembersCount || 0) + 1;
       sponsorUser.downlineCount = (sponsorUser.level1MembersCount || 0) + (sponsorUser.level2MembersCount || 0);
       await sponsorUser.save();
 
-      // 4. Find Level 2 Sponsor and Credit Level 2 Metrics
+      // 4. Credit Indirect Level 2 Sponsor (Flat ₹500 override bonus)
       let l2Sponsor = null;
       if (sponsorUser.parentSponsorId) {
         l2Sponsor = await User.findById(sponsorUser.parentSponsorId).catch(() => null);
@@ -110,20 +129,20 @@ export const approveCommissionRequest = async (req, res) => {
       }
 
       if (l2Sponsor) {
-        const l2Comm = 500;
-        l2Sponsor.level2AffiliateIncome = (l2Sponsor.level2AffiliateIncome || 0) + l2Comm;
-        l2Sponsor.walletBalance = (l2Sponsor.walletBalance || 0) + l2Comm;
-        l2Sponsor.totalIncome = (l2Sponsor.totalIncome || 0) + l2Comm;
-        l2Sponsor.totalEarnings = (l2Sponsor.totalEarnings || 0) + l2Comm;
+        l2Sponsor.level2AffiliateIncome = (l2Sponsor.level2AffiliateIncome || 0) + l2Commission;
+        l2Sponsor.walletBalance = (l2Sponsor.walletBalance || 0) + l2Commission;
+        l2Sponsor.totalIncome = (l2Sponsor.totalIncome || 0) + l2Commission;
+        l2Sponsor.totalEarnings = (l2Sponsor.totalEarnings || 0) + l2Commission;
         l2Sponsor.level2MembersCount = (l2Sponsor.level2MembersCount || 0) + 1;
         l2Sponsor.downlineCount = (l2Sponsor.level1MembersCount || 0) + (l2Sponsor.level2MembersCount || 0);
         await l2Sponsor.save();
       }
+      // Note: Level 3+ sponsors (Great-Grandparent Upline and beyond) receive NOTHING (₹0). Max levels is 2.
     }
 
     res.json({
       success: true,
-      message: `Approved enrollment request for ${approval.enrolledMemberName}. Activated account and updated Level 1 & Level 2 team metrics!`,
+      message: `Approved enrollment for ${approval.enrolledMemberName}. Credited ₹${l1Commission} (10%) to Direct L1 sponsor and ₹${l2Commission} to Indirect L2 sponsor.`,
       approval,
     });
   } catch (error) {
