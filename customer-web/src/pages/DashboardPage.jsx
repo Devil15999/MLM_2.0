@@ -214,7 +214,12 @@ export const DashboardPage = () => {
           memberName: enrollFormData.memberName,
           memberEmail: memberEmailToUse,
           position: selectedSlotPosition,
-          packageName: enrollFormData.packageName
+          packageName: enrollFormData.packageName,
+          parentSponsorId: user?._id,
+          parentSponsorCode: user?.sponsorId,
+          parentSponsorEmail: user?.email,
+          sponsorId: user?.sponsorId || user?._id,
+          sponsorName: user?.name || user?.email
         })
       });
 

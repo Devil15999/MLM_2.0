@@ -240,13 +240,14 @@ export const getCustomerTeamDetails = async (req, res) => {
       // Also check Approvals created by this user as sponsor
       const l1Approvals = await Approval.find({
         $or: [
-          ...(uId ? [{ sponsorId: uId }] : []),
+          ...(user._id ? [{ sponsorId: user._id }, { sponsorId: uId }] : []),
           ...(uSponsorId ? [{ sponsorId: uSponsorId }] : []),
           ...(uEmail ? [{ sponsorId: uEmail }] : []),
           ...(uName ? [{ sponsorName: uName }] : [])
         ]
       });
 
+      const existingL1Emails = new Set(level1Members.map(m => m.email.toLowerCase()));
       const l1EmailsFromApprovals = l1Approvals.map(a => a.enrolledMemberEmail).filter(Boolean);
       if (l1EmailsFromApprovals.length > 0) {
         const extraL1Users = await User.find({ email: { $in: l1EmailsFromApprovals } }).select('-password');
@@ -254,6 +255,7 @@ export const getCustomerTeamDetails = async (req, res) => {
         for (const extra of extraL1Users) {
           if (!existingL1Ids.has(extra._id.toString())) {
             level1Members.push(extra);
+            existingL1Emails.add(extra.email.toLowerCase());
             // Auto-heal missing parentSponsor references
             if (!extra.parentSponsorId && user._id) {
               extra.parentSponsorId = user._id;
@@ -262,6 +264,22 @@ export const getCustomerTeamDetails = async (req, res) => {
               await extra.save().catch(() => null);
             }
           }
+        }
+      }
+
+      // Also include any pending approvals directly as level1 member objects if user doc is missing
+      for (const app of l1Approvals) {
+        if (app.enrolledMemberEmail && !existingL1Emails.has(app.enrolledMemberEmail.toLowerCase())) {
+          level1Members.push({
+            _id: app.userId || app._id,
+            name: app.enrolledMemberName,
+            email: app.enrolledMemberEmail,
+            selectedPackage: app.packageName || 'Starter Package',
+            legPreference: app.position || 'Direct Level 1',
+            accountStatus: app.status === 'Approved' ? 'Active' : 'Pending Admin Approval',
+            createdAt: app.createdAt
+          });
+          existingL1Emails.add(app.enrolledMemberEmail.toLowerCase());
         }
       }
 
@@ -352,14 +370,22 @@ export const requestWalletWithdrawal = async (req, res) => {
 // @route   POST /api/customer/team/enroll
 export const enrollDownlineMember = async (req, res) => {
   try {
-    const userId = req.user?._id;
-    const { memberName, memberEmail, position, packageName } = req.body;
+    const enrollingUser = req.user;
+    if (!enrollingUser) {
+      return res.status(401).json({ message: 'Authentication required to enroll downline members.' });
+    }
+    const userId = enrollingUser._id;
+    const { memberName, memberEmail, position, packageName, parentSponsorId, parentSponsorCode, parentSponsorEmail, sponsorId, sponsorName } = req.body;
 
     if (!memberName || !position || !packageName) {
       return res.status(400).json({ message: 'Please provide member name, leg position, and package.' });
     }
 
     const emailToUse = memberEmail || `${memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+    const resolvedParentId = parentSponsorId || enrollingUser._id;
+    const resolvedParentCode = parentSponsorCode || sponsorId || enrollingUser.sponsorId;
+    const resolvedParentEmail = parentSponsorEmail || enrollingUser.email;
+    const resolvedSponsorName = sponsorName || enrollingUser.name || enrollingUser.email || 'Sponsor';
 
     // 1. Generate Dynamic One-Time Password (OTP)
     const dynamicOtp = `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
@@ -391,9 +417,9 @@ export const enrollDownlineMember = async (req, res) => {
         isOneTimePassword: true,
         accountStatus: 'Pending Admin Approval',
         sponsorId: ownSponsorId,
-        parentSponsorId: req.user?._id,
-        parentSponsorCode: req.user?.sponsorId,
-        parentSponsorEmail: req.user?.email,
+        parentSponsorId: resolvedParentId,
+        parentSponsorCode: resolvedParentCode,
+        parentSponsorEmail: resolvedParentEmail,
         rank: packageName.includes('Elite') ? 'Platinum' : (packageName.includes('Premium') ? 'Silver' : 'Member'),
         selectedPackage: packageName,
         legPreference: 'Direct Level 1',
@@ -411,9 +437,9 @@ export const enrollDownlineMember = async (req, res) => {
       newEnrolledUser.password = dynamicOtp;
       newEnrolledUser.isOneTimePassword = true;
       newEnrolledUser.accountStatus = 'Pending Admin Approval';
-      newEnrolledUser.parentSponsorId = req.user?._id;
-      newEnrolledUser.parentSponsorCode = req.user?.sponsorId;
-      newEnrolledUser.parentSponsorEmail = req.user?.email;
+      newEnrolledUser.parentSponsorId = resolvedParentId;
+      newEnrolledUser.parentSponsorCode = resolvedParentCode;
+      newEnrolledUser.parentSponsorEmail = resolvedParentEmail;
       await newEnrolledUser.save();
     }
 
@@ -439,26 +465,20 @@ export const enrollDownlineMember = async (req, res) => {
     const commAmount = isLevel1 ? (level1BonusMap[packageName] || (price * 0.10)) : 500;
 
     // 4. Update sponsor's tree count (wallet remains pending until Admin Approval)
-    let sponsorUser = null;
-    if (userId) {
-      sponsorUser = await User.findById(userId);
-      if (sponsorUser) {
-        if (isLevel1) {
-          sponsorUser.level1MembersCount = (sponsorUser.level1MembersCount || 0) + 1;
-        } else {
-          sponsorUser.level2MembersCount = (sponsorUser.level2MembersCount || 0) + 1;
-        }
-        sponsorUser.downlineCount = (sponsorUser.level1MembersCount || 0) + (sponsorUser.level2MembersCount || 0);
-        await sponsorUser.save();
-      }
+    if (isLevel1) {
+      enrollingUser.level1MembersCount = (enrollingUser.level1MembersCount || 0) + 1;
+    } else {
+      enrollingUser.level2MembersCount = (enrollingUser.level2MembersCount || 0) + 1;
     }
+    enrollingUser.downlineCount = (enrollingUser.level1MembersCount || 0) + (enrollingUser.level2MembersCount || 0);
+    await enrollingUser.save();
 
     // 5. Create Pending Downline Enrollment Approval Record for Admin Panel
     const approval = await Approval.create({
       type: 'Enrolled Downline Commission',
       userId: newEnrolledUser._id,
-      sponsorId: userId || sponsorUser?._id,
-      sponsorName: sponsorUser?.name || 'Sponsor',
+      sponsorId: resolvedParentId,
+      sponsorName: resolvedSponsorName,
       enrolledMemberName: memberName,
       enrolledMemberEmail: emailToUse,
       position,
