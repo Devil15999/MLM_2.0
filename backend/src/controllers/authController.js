@@ -56,9 +56,16 @@ export const registerUser = async (req, res) => {
       }
     }
 
-    // If sponsor is empty or set to master head without explicit user record, default to System Admin user
+    // If sponsor is empty or set to master head without explicit user record, default to Top Most Head Admin Node (dev2)
     if (!sponsor) {
-      sponsor = await User.findOne({ role: 'admin' });
+      sponsor = await User.findOne({
+        $or: [
+          { email: 'dev2@gmail.com' },
+          { sponsorId: 'SP-dev2-3997' },
+          { role: 'admin' },
+          { sponsorId: 'MASTER-HEAD' }
+        ]
+      });
     }
 
     // Generate unique Sponsor ID for the new user (format: firstname-mid4aadhaar@nexismlm.com)
@@ -83,6 +90,9 @@ export const registerUser = async (req, res) => {
       email,
       password,
       sponsorId: userOwnSponsorId,
+      parentSponsorId: sponsor ? sponsor._id : null,
+      parentSponsorCode: sponsor ? sponsor.sponsorId : 'SP-dev2-3997',
+      parentSponsorEmail: sponsor ? sponsor.email : 'dev2@gmail.com',
       role: 'customer',
       rank: 'Member',
       accountStatus: 'Pending Admin Approval',
@@ -105,7 +115,7 @@ export const registerUser = async (req, res) => {
       type: 'Joining Request',
       userId: user._id,
       sponsorId: sponsor ? sponsor._id : null,
-      sponsorName: sponsor ? sponsor.name : 'System Admin',
+      sponsorName: sponsor ? sponsor.name : 'dev2',
       enrolledMemberName: user.name,
       enrolledMemberEmail: user.email,
       packageName: selectedPackage,
