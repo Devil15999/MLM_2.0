@@ -534,11 +534,11 @@ export const enrollDownlineMember = async (req, res) => {
         status: 'Active',
         joined: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
       },
-      updatedStats: sponsorUser ? {
-        level1MembersCount: sponsorUser.level1MembersCount,
-        level2MembersCount: sponsorUser.level2MembersCount,
-        totalTeamCount: sponsorUser.downlineCount,
-        walletBalance: sponsorUser.walletBalance
+      updatedStats: enrollingUser ? {
+        level1MembersCount: enrollingUser.level1MembersCount,
+        level2MembersCount: enrollingUser.level2MembersCount,
+        totalTeamCount: enrollingUser.downlineCount,
+        walletBalance: enrollingUser.walletBalance
       } : null
     });
   } catch (error) {

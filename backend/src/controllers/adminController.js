@@ -75,13 +75,13 @@ export const approveCommissionRequest = async (req, res) => {
     }
 
     if (enrolledUser) {
-      enrolledUser.accountStatus = 'Approved';
+      const updateFields = { accountStatus: 'Approved' };
       if (sponsorUser) {
-        enrolledUser.parentSponsorId = sponsorUser._id;
-        enrolledUser.parentSponsorCode = sponsorUser.sponsorId;
-        enrolledUser.parentSponsorEmail = sponsorUser.email;
+        updateFields.parentSponsorId = sponsorUser._id;
+        updateFields.parentSponsorCode = sponsorUser.sponsorId;
+        updateFields.parentSponsorEmail = sponsorUser.email;
       }
-      await enrolledUser.save();
+      await User.updateOne({ _id: enrolledUser._id }, { $set: updateFields });
     }
 
     // 3. Calculate Level 1 Commission (10% of Enrolled Member's Package)
