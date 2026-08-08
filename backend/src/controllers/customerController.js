@@ -229,25 +229,26 @@ export const getCustomerTeamDetails = async (req, res) => {
       const uEmail = user.email || null;
       const uName = user.name || null;
 
-      const validSponsorObjectIds = [
-        ...(user._id ? [user._id] : []),
-        ...(uId && typeof uId === 'string' && uId.match(/^[0-9a-fA-F]{24}$/) ? [uId] : []),
-        ...(uSponsorId && typeof uSponsorId === 'string' && uSponsorId.match(/^[0-9a-fA-F]{24}$/) ? [uSponsorId] : [])
-      ];
-
-      // 1. Direct Level 1 downlines sponsored by this user
+      // 1. Direct Level 1 downlines whose parent sponsor is THIS user
       level1Members = await User.find({
+        _id: { $ne: user._id },
         $or: [
-          ...(validSponsorObjectIds.length > 0 ? [{ parentSponsorId: { $in: validSponsorObjectIds } }, { sponsorId: { $in: validSponsorObjectIds } }] : []),
-          ...(uSponsorId ? [{ parentSponsorCode: uSponsorId }, { sponsorId: uSponsorId }] : []),
-          ...(uEmail ? [{ parentSponsorEmail: uEmail }, { sponsorId: uEmail }] : [])
+          ...(user._id ? [{ parentSponsorId: user._id }] : []),
+          ...(uId ? [{ parentSponsorId: uId }] : []),
+          ...(uSponsorId ? [{ parentSponsorCode: uSponsorId }] : []),
+          ...(uEmail ? [{ parentSponsorEmail: uEmail }] : [])
         ]
       }).select('-password');
 
-      // Also check Approvals created by this user as sponsor (only pass valid ObjectIds to sponsorId field)
+      // Also check Approvals where THIS user is the sponsor
+      const validSponsorObjectIds = [
+        ...(user._id ? [user._id] : []),
+        ...(uId && typeof uId === 'string' && uId.match(/^[0-9a-fA-F]{24}$/) ? [uId] : [])
+      ];
+
       const l1ApprovalOrQueries = [
         ...(validSponsorObjectIds.length > 0 ? [{ sponsorId: { $in: validSponsorObjectIds } }] : []),
-        ...(uName ? [{ sponsorName: uName }] : [])
+        ...(uName && uName !== 'Sponsor' ? [{ sponsorName: uName }] : [])
       ];
 
       const l1Approvals = l1ApprovalOrQueries.length > 0
@@ -257,10 +258,13 @@ export const getCustomerTeamDetails = async (req, res) => {
       const existingL1Emails = new Set(level1Members.map(m => m.email.toLowerCase()));
       const l1EmailsFromApprovals = l1Approvals.map(a => a.enrolledMemberEmail).filter(Boolean);
       if (l1EmailsFromApprovals.length > 0) {
-        const extraL1Users = await User.find({ email: { $in: l1EmailsFromApprovals } }).select('-password');
-        const existingL1Ids = new Set(level1Members.map(m => m._id.toString()));
+        const extraL1Users = await User.find({
+          _id: { $ne: user._id },
+          email: { $in: l1EmailsFromApprovals }
+        }).select('-password');
+
         for (const extra of extraL1Users) {
-          if (!existingL1Ids.has(extra._id.toString())) {
+          if (!existingL1Emails.has(extra.email.toLowerCase())) {
             level1Members.push(extra);
             existingL1Emails.add(extra.email.toLowerCase());
             // Auto-heal missing parentSponsor references
@@ -290,22 +294,24 @@ export const getCustomerTeamDetails = async (req, res) => {
         }
       }
 
-      // Collect identifiers for all Level 1 members
-      const l1ObjectIds = level1Members.map(u => u._id).filter(id => id && mongoose.Types.ObjectId.isValid(id));
-      const l1UserStrIds = level1Members.map(u => u._id ? u._id.toString() : null).filter(id => id && id.match(/^[0-9a-fA-F]{24}$/));
-      const l1SponsorCodes = level1Members.map(u => u.sponsorId).filter(Boolean);
-      const l1Emails = level1Members.map(u => u.email).filter(Boolean);
-      const l1Names = level1Members.map(u => u.name).filter(Boolean);
+      // Collect identifiers for all Level 1 members (excluding logged in user)
+      const l1ObjectIds = level1Members.map(u => u._id).filter(id => id && mongoose.Types.ObjectId.isValid(id) && id.toString() !== uId);
+      const l1UserStrIds = level1Members.map(u => u._id ? u._id.toString() : null).filter(id => id && id !== uId && id.match(/^[0-9a-fA-F]{24}$/));
+      const l1SponsorCodes = level1Members.map(u => u.sponsorId).filter(code => code && code !== uSponsorId);
+      const l1Emails = level1Members.map(u => u.email).filter(email => email && email !== uEmail);
+      const l1Names = level1Members.map(u => u.name).filter(name => name && name !== uName);
 
       const allValidL1ObjectIds = [...l1ObjectIds, ...l1UserStrIds];
+      const excludedIds = [user._id, ...l1ObjectIds];
 
-      if (allValidL1ObjectIds.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0 || l1Names.length > 0) {
-        // 2. Level 2 downlines sponsored by any Level 1 member
+      if (allValidL1ObjectIds.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0) {
+        // 2. Level 2 downlines whose parent sponsor is any Level 1 member
         level2Members = await User.find({
+          _id: { $nin: excludedIds },
           $or: [
-            ...(allValidL1ObjectIds.length > 0 ? [{ parentSponsorId: { $in: allValidL1ObjectIds } }, { sponsorId: { $in: allValidL1ObjectIds } }] : []),
-            ...(l1SponsorCodes.length > 0 ? [{ parentSponsorCode: { $in: l1SponsorCodes } }, { sponsorId: { $in: l1SponsorCodes } }] : []),
-            ...(l1Emails.length > 0 ? [{ parentSponsorEmail: { $in: l1Emails } }, { sponsorId: { $in: l1Emails } }] : [])
+            ...(allValidL1ObjectIds.length > 0 ? [{ parentSponsorId: { $in: allValidL1ObjectIds } }] : []),
+            ...(l1SponsorCodes.length > 0 ? [{ parentSponsorCode: { $in: l1SponsorCodes } }] : []),
+            ...(l1Emails.length > 0 ? [{ parentSponsorEmail: { $in: l1Emails } }] : [])
           ]
         }).select('-password');
 
@@ -319,13 +325,17 @@ export const getCustomerTeamDetails = async (req, res) => {
           ? await Approval.find({ $or: l2ApprovalOrQueries })
           : [];
 
+        const existingL2Emails = new Set(level2Members.map(m => m.email.toLowerCase()));
         const l2EmailsFromApprovals = l2Approvals.map(a => a.enrolledMemberEmail).filter(Boolean);
         if (l2EmailsFromApprovals.length > 0) {
-          const extraL2Users = await User.find({ email: { $in: l2EmailsFromApprovals } }).select('-password');
-          const existingL2Ids = new Set(level2Members.map(m => m._id.toString()));
+          const extraL2Users = await User.find({
+            _id: { $nin: excludedIds },
+            email: { $in: l2EmailsFromApprovals }
+          }).select('-password');
           for (const extra of extraL2Users) {
-            if (!existingL2Ids.has(extra._id.toString())) {
+            if (!existingL2Emails.has(extra.email.toLowerCase()) && !existingL1Emails.has(extra.email.toLowerCase())) {
               level2Members.push(extra);
+              existingL2Emails.add(extra.email.toLowerCase());
             }
           }
         }
