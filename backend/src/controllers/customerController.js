@@ -303,7 +303,7 @@ export const enrollDownlineMember = async (req, res) => {
         isOneTimePassword: true,
         accountStatus: 'Pending Admin Approval',
         sponsorId: req.user?._id || req.user?.email || 'SP-2000',
-        rank: packageName.includes('Elite') ? 'Elite' : (packageName.includes('Premium') ? 'Premium' : 'Starter'),
+        rank: packageName.includes('Elite') ? 'Platinum' : (packageName.includes('Premium') ? 'Silver' : 'Member'),
         selectedPackage: packageName,
         legPreference: 'Direct Level 1',
         walletBalance: 0.00,

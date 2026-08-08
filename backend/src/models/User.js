@@ -34,8 +34,8 @@ const userSchema = new mongoose.Schema(
     },
     rank: {
       type: String,
-      enum: ['Member', 'Silver', 'Gold', 'Platinum', 'Diamond'],
-      default: 'Gold',
+      enum: ['Member', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Starter', 'Premium', 'Elite'],
+      default: 'Member',
     },
     selectedPackage: {
       type: String,
