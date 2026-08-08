@@ -14,15 +14,15 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Public / Demo accessible or Token protected endpoints
-router.get('/dashboard', getCustomerDashboard);
-router.get('/notifications', getCustomerNotifications);
+// Token protected customer endpoints
+router.get('/dashboard', protect, getCustomerDashboard);
+router.get('/notifications', protect, getCustomerNotifications);
 router.put('/profile', protect, updateCustomerProfile);
-router.post('/kyc', updateCustomerKYC);
+router.post('/kyc', protect, updateCustomerKYC);
 router.get('/packages', getCustomerPackages);
-router.post('/packages/activate', activateUserPackage);
-router.get('/team', getCustomerTeamDetails);
-router.post('/team/enroll', enrollDownlineMember);
-router.post('/wallet/withdraw', requestWalletWithdrawal);
+router.post('/packages/activate', protect, activateUserPackage);
+router.get('/team', protect, getCustomerTeamDetails);
+router.post('/team/enroll', protect, enrollDownlineMember);
+router.post('/wallet/withdraw', protect, requestWalletWithdrawal);
 
 export default router;

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { Approval } from '../models/Approval.js';
 import bcrypt from 'bcryptjs';
@@ -219,7 +220,17 @@ export const getCustomerPackages = async (req, res) => {
 // @route   GET /api/customer/team
 export const getCustomerTeamDetails = async (req, res) => {
   try {
-    const user = req.user;
+    let user = req.user;
+    if (!user && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      try {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+        if (decoded?.id) {
+          user = await User.findById(decoded.id).select('-password');
+        }
+      } catch (err) {}
+    }
+    console.log('[getTeamDetails] Logged-in user:', user?._id, user?.email, user?.sponsorId);
     let level1Members = [];
     let level2Members = [];
 
@@ -239,6 +250,7 @@ export const getCustomerTeamDetails = async (req, res) => {
           ...(uEmail ? [{ parentSponsorEmail: uEmail }] : [])
         ]
       }).select('-password');
+      console.log('[getTeamDetails] Found L1 members directly from User collection:', level1Members.length, level1Members.map(m => m.email));
 
       // Also check Approvals where THIS user is the sponsor
       const validSponsorObjectIds = [
