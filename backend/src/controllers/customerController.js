@@ -463,9 +463,11 @@ export const enrollDownlineMember = async (req, res) => {
         totalIncome: 0.00,
       });
     } else {
-      newEnrolledUser.password = dynamicOtp;
-      newEnrolledUser.isOneTimePassword = true;
-      newEnrolledUser.accountStatus = 'Pending Admin Approval';
+      if (newEnrolledUser.accountStatus !== 'Approved') {
+        newEnrolledUser.password = dynamicOtp;
+        newEnrolledUser.isOneTimePassword = true;
+        newEnrolledUser.accountStatus = 'Pending Admin Approval';
+      }
       newEnrolledUser.parentSponsorId = resolvedParentId;
       newEnrolledUser.parentSponsorCode = resolvedParentCode;
       newEnrolledUser.parentSponsorEmail = resolvedParentEmail;
