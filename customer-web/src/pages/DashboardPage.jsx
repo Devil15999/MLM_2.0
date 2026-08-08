@@ -1123,32 +1123,34 @@ export const DashboardPage = () => {
             <div>
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>Product & Investment Packages</h3>
-                <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Your current active product package tier selected for your account.</p>
+                <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Overview of all investment tiers. Your active package tier is highlighted below.</p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', maxWidth: '520px', margin: '0 auto' }}>
-                {packagesList
-                  .filter((pkg) => {
-                    const actStr = String(user?.selectedPackage || activePackage || 'Starter').toLowerCase();
-                    const pkgStr = pkg.name.toLowerCase();
-                    if (actStr.includes('elite') || actStr.includes('30,000') || actStr.includes('30000')) {
-                      return pkgStr.includes('elite');
-                    }
-                    if (actStr.includes('premium') || actStr.includes('20,000') || actStr.includes('20000')) {
-                      return pkgStr.includes('premium');
-                    }
-                    return pkgStr.includes('starter');
-                  })
-                  .map((pkg) => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+                {packagesList.map((pkg) => {
+                  const actStr = String(user?.selectedPackage || activePackage || 'Starter').toLowerCase();
+                  const pkgStr = pkg.name.toLowerCase();
+                  let isActive = false;
+                  if (actStr.includes('elite') || actStr.includes('30,000') || actStr.includes('30000')) {
+                    isActive = pkgStr.includes('elite');
+                  } else if (actStr.includes('premium') || actStr.includes('20,000') || actStr.includes('20000')) {
+                    isActive = pkgStr.includes('premium');
+                  } else {
+                    isActive = pkgStr.includes('starter');
+                  }
+
+                  return (
                     <div key={pkg.id} className="light-card" style={{
                       padding: '28px',
                       position: 'relative',
-                      border: '2px solid #059669',
-                      background: '#f0fdf4'
+                      border: isActive ? '2px solid #059669' : '1px solid var(--border-color)',
+                      background: isActive ? '#f0fdf4' : '#ffffff'
                     }}>
-                      <span style={{ position: 'absolute', top: '16px', right: '16px', background: '#059669', color: '#fff', fontSize: '11px', fontWeight: '800', padding: '4px 10px', borderRadius: '12px' }}>
-                        CURRENT ACTIVE TIER
-                      </span>
+                      {isActive && (
+                        <span style={{ position: 'absolute', top: '16px', right: '16px', background: '#059669', color: '#fff', fontSize: '11px', fontWeight: '800', padding: '4px 10px', borderRadius: '12px' }}>
+                          CURRENT ACTIVE TIER
+                        </span>
+                      )}
 
                       <h4 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>{pkg.name}</h4>
                       
@@ -1188,18 +1190,19 @@ export const DashboardPage = () => {
                           padding: '12px 20px',
                           borderRadius: '10px',
                           border: 'none',
-                          background: '#9ca3af',
+                          background: isActive ? '#059669' : '#9ca3af',
                           color: '#ffffff',
                           fontWeight: '800',
                           fontSize: '14px',
                           cursor: 'not-allowed',
-                          opacity: 0.8
+                          opacity: isActive ? 1 : 0.7
                         }}
                       >
-                        Active Tier Selected
+                        {isActive ? 'Active Tier Selected' : 'Buy Package Now'}
                       </button>
                     </div>
-                  ))}
+                  );
+                })}
               </div>
             </div>
           )}
