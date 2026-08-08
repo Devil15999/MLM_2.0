@@ -141,11 +141,17 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password, requiredRole } = req.body;
+    const cleanEmail = String(email || '').toLowerCase().trim();
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: cleanEmail }).select('+password');
 
-    if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ message: 'Invalid email credentials' });
+    if (!user) {
+      return res.status(401).json({ message: `No account registered with email '${cleanEmail}'.` });
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: `Incorrect password / One-Time Password for '${cleanEmail}'. Please check your credentials.` });
     }
 
     if (requiredRole && user.role !== requiredRole) {
@@ -156,13 +162,13 @@ export const loginUser = async (req, res) => {
 
     if (user.accountStatus === 'Pending Admin Approval') {
       return res.status(403).json({
-        message: 'Your account is pending Admin approval. You will be able to log in once the Admin approves your downline enrollment.',
+        message: `Your account '${cleanEmail}' is pending Admin approval. You will be able to log in once the Admin approves your enrollment.`,
       });
     }
 
     if (user.accountStatus === 'Rejected') {
       return res.status(403).json({
-        message: 'Your enrollment request was rejected by the Admin. Access denied.',
+        message: `Your enrollment request for '${cleanEmail}' was rejected by the Admin. Access denied.`,
       });
     }
 

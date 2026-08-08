@@ -410,7 +410,7 @@ export const enrollDownlineMember = async (req, res) => {
       return res.status(400).json({ message: 'Please provide member name, leg position, and package.' });
     }
 
-    const emailToUse = memberEmail || `${memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+    const emailToUse = String(memberEmail || `${memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`).toLowerCase().trim();
     const resolvedParentId = parentSponsorId || enrollingUser._id;
     const resolvedParentCode = parentSponsorCode || sponsorId || enrollingUser.sponsorId;
     const resolvedParentEmail = parentSponsorEmail || enrollingUser.email;
@@ -457,6 +457,8 @@ export const enrollDownlineMember = async (req, res) => {
 
     // 3. Create or Update User Account in DB for the enrolled downline
     let newEnrolledUser = await User.findOne({ email: emailToUse });
+    let issuedPassword = dynamicOtp;
+
     if (!newEnrolledUser) {
       newEnrolledUser = await User.create({
         name: memberName,
@@ -482,11 +484,7 @@ export const enrollDownlineMember = async (req, res) => {
         totalIncome: 0.00,
       });
     } else {
-      if (newEnrolledUser.accountStatus !== 'Approved') {
-        newEnrolledUser.password = dynamicOtp;
-        newEnrolledUser.isOneTimePassword = true;
-        newEnrolledUser.accountStatus = 'Pending Admin Approval';
-      }
+      // Preserve existing user's password so login OTP remains valid!
       newEnrolledUser.selectedPackage = normalizedPackageName;
       newEnrolledUser.rank = userRank;
       newEnrolledUser.parentSponsorId = resolvedParentId;
