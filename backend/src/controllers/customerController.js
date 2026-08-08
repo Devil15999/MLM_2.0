@@ -436,6 +436,25 @@ export const enrollDownlineMember = async (req, res) => {
       }
     }
 
+    // Package Details Resolver
+    const pStr = String(packageName || '').toLowerCase();
+    let normalizedPackageName = 'Starter Package (₹10,000)';
+    let price = 10000;
+    let l1Bonus = 1000;
+    let userRank = 'Member';
+
+    if (pStr.includes('30,000') || pStr.includes('30000') || pStr.includes('elite')) {
+      normalizedPackageName = 'Elite Package (₹30,000)';
+      price = 30000;
+      l1Bonus = 3000;
+      userRank = 'Platinum';
+    } else if (pStr.includes('20,000') || pStr.includes('20000') || pStr.includes('premium')) {
+      normalizedPackageName = 'Premium Package (₹20,000)';
+      price = 20000;
+      l1Bonus = 2000;
+      userRank = 'Silver';
+    }
+
     // 3. Create or Update User Account in DB for the enrolled downline
     let newEnrolledUser = await User.findOne({ email: emailToUse });
     if (!newEnrolledUser) {
@@ -449,8 +468,8 @@ export const enrollDownlineMember = async (req, res) => {
         parentSponsorId: resolvedParentId,
         parentSponsorCode: resolvedParentCode,
         parentSponsorEmail: resolvedParentEmail,
-        rank: packageName.includes('Elite') ? 'Platinum' : (packageName.includes('Premium') ? 'Silver' : 'Member'),
-        selectedPackage: packageName,
+        rank: userRank,
+        selectedPackage: normalizedPackageName,
         legPreference: 'Direct Level 1',
         walletBalance: 0.00,
         totalEarnings: 0.00,
@@ -468,32 +487,16 @@ export const enrollDownlineMember = async (req, res) => {
         newEnrolledUser.isOneTimePassword = true;
         newEnrolledUser.accountStatus = 'Pending Admin Approval';
       }
+      newEnrolledUser.selectedPackage = normalizedPackageName;
+      newEnrolledUser.rank = userRank;
       newEnrolledUser.parentSponsorId = resolvedParentId;
       newEnrolledUser.parentSponsorCode = resolvedParentCode;
       newEnrolledUser.parentSponsorEmail = resolvedParentEmail;
       await newEnrolledUser.save();
     }
 
-    // 3. Determine package commission amount
-    const packagePrices = {
-      'Starter Package (₹10,000)': 10000,
-      'Premium Package (₹20,000)': 20000,
-      'Elite Package (₹30,000)': 30000,
-      'Starter Package': 10000,
-      'Premium Package': 20000,
-      'Elite Package': 30000,
-    };
-    const price = packagePrices[packageName] || 20000;
     const isLevel1 = position.includes('Node 1') || position === 'Left Leg' || position === 'Right Leg' || !position.includes('L2');
-    const level1BonusMap = {
-      'Starter Package (₹10,000)': 1000,
-      'Premium Package (₹20,000)': 2000,
-      'Elite Package (₹30,000)': 3000,
-      'Starter Package': 1000,
-      'Premium Package': 2000,
-      'Elite Package': 3000,
-    };
-    const commAmount = isLevel1 ? (level1BonusMap[packageName] || (price * 0.10)) : 500;
+    const commAmount = isLevel1 ? l1Bonus : 500;
 
     // 4. Update sponsor's tree count (wallet remains pending until Admin Approval)
     if (isLevel1) {

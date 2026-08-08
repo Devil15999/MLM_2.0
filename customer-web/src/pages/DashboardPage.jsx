@@ -46,7 +46,7 @@ export const DashboardPage = () => {
   // Tree Enrollment Modal State
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [selectedSlotPosition, setSelectedSlotPosition] = useState('');
-  const [enrollFormData, setEnrollFormData] = useState({ memberName: '', memberEmail: '', packageName: 'Premium Package (₹20,000)' });
+  const [enrollFormData, setEnrollFormData] = useState({ memberName: '', memberEmail: '', packageName: 'Starter Package (₹10,000)' });
   const [enrollSuccessMessage, setEnrollSuccessMessage] = useState('');
   const [issuedCredentialModal, setIssuedCredentialModal] = useState(null);
 
@@ -101,7 +101,7 @@ export const DashboardPage = () => {
               name: m.name,
               email: m.email,
               position: m.legPreference || 'Direct Level 1',
-              package: m.selectedPackage || 'Starter Package',
+              package: m.selectedPackage || 'Starter Package (₹10,000)',
               joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
               status: m.accountStatus || 'Active',
               level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
@@ -115,7 +115,7 @@ export const DashboardPage = () => {
               name: m.name,
               email: m.email,
               position: m.legPreference || 'Level 2 Node',
-              package: m.selectedPackage || 'Starter Package',
+              package: m.selectedPackage || 'Starter Package (₹10,000)',
               joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
               status: m.accountStatus || 'Active',
               level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
@@ -144,7 +144,7 @@ export const DashboardPage = () => {
 
   const handleOpenEnrollModal = (position) => {
     setSelectedSlotPosition(position);
-    setEnrollFormData({ memberName: '', memberEmail: '', packageName: 'Starter (₹10,000)' });
+    setEnrollFormData({ memberName: '', memberEmail: '', packageName: 'Starter Package (₹10,000)' });
     setEnrollModalOpen(true);
   };
 
