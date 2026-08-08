@@ -13,8 +13,8 @@ export const registerUser = async (req, res) => {
   try {
     const { name, email, password, sponsorId, aadhaarNumber, aadhaarPhoto, panPhoto, transactionPhoto, selectedPackage } = req.body;
 
-    if (!name || !email || !password || !sponsorId || !aadhaarNumber || !selectedPackage || !aadhaarPhoto || !transactionPhoto) {
-      return res.status(400).json({ message: 'Please provide all required fields (Name, Email, Password, Sponsor ID, Aadhaar Number, Package, Aadhaar Photo, Transaction Photo)' });
+    if (!name || !email || !password || !aadhaarNumber || !selectedPackage || !aadhaarPhoto || !transactionPhoto) {
+      return res.status(400).json({ message: 'Please provide all required fields (Name, Email, Password, Aadhaar Number, Package, Aadhaar Photo, Transaction Photo)' });
     }
 
     const userExists = await User.findOne({ email });
@@ -42,14 +42,23 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Distributor already registered with this Aadhaar Number' });
     }
 
-    // Verify Sponsor ID exists in database
-    const reqSponsorId = sponsorId.trim();
-    let sponsor = await User.findOne({
-      $or: [{ sponsorId: reqSponsorId }, { _id: reqSponsorId.match(/^[0-9a-fA-F]{24}$/) ? reqSponsorId : null }, { email: reqSponsorId.toLowerCase() }]
-    }).catch(() => null);
+    // Verify Sponsor ID if provided, otherwise default to System Admin
+    const reqSponsorId = sponsorId ? sponsorId.trim() : '';
+    let sponsor = null;
 
-    if (!sponsor && reqSponsorId !== 'MASTER-HEAD' && reqSponsorId !== 'NEXIS-TOP') {
-      return res.status(400).json({ message: `Invalid Sponsor ID '${reqSponsorId}'. Sponsor code does not exist in network database.` });
+    if (reqSponsorId !== '') {
+      sponsor = await User.findOne({
+        $or: [{ sponsorId: reqSponsorId }, { _id: reqSponsorId.match(/^[0-9a-fA-F]{24}$/) ? reqSponsorId : null }, { email: reqSponsorId.toLowerCase() }]
+      }).catch(() => null);
+
+      if (!sponsor && reqSponsorId !== 'MASTER-HEAD' && reqSponsorId !== 'NEXIS-TOP') {
+        return res.status(400).json({ message: `Invalid Sponsor ID '${reqSponsorId}'. Sponsor code does not exist in network database.` });
+      }
+    }
+
+    // If sponsor is empty or set to master head without explicit user record, default to System Admin user
+    if (!sponsor) {
+      sponsor = await User.findOne({ role: 'admin' });
     }
 
     // Generate unique Sponsor ID for the new user (format: firstname-mid4aadhaar@nexismlm.com)

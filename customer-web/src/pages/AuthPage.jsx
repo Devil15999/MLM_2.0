@@ -9,7 +9,7 @@ export const AuthPage = () => {
     name: '',
     email: '',
     password: '',
-    sponsorId: 'SP-1001',
+    sponsorId: '',
     aadhaarNumber: '',
     selectedPackage: 'Starter (₹10,000)',
     aadhaarPhoto: '',
@@ -209,14 +209,14 @@ export const AuthPage = () => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
-                    Sponsor ID Code
+                    Sponsor ID Code <span style={{ fontWeight: '400', color: 'var(--text-muted)' }}>(Optional)</span>
                   </label>
                   <div style={{ position: 'relative' }}>
                     <Share2 size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
                       type="text"
                       name="sponsorId"
-                      placeholder="e.g. SP-1001"
+                      placeholder="e.g. alex-6789@nexismlm.com (Leave empty for Admin)"
                       value={formData.sponsorId}
                       onChange={handleChange}
                       style={{
@@ -241,7 +241,8 @@ export const AuthPage = () => {
                       type="text"
                       name="aadhaarNumber"
                       required
-                      placeholder="e.g. 1234 5678 9012"
+                      maxLength={14}
+                      placeholder="e.g. 2345 6789 0123"
                       value={formData.aadhaarNumber}
                       onChange={handleChange}
                       style={{

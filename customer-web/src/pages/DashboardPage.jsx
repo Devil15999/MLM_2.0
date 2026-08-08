@@ -64,10 +64,11 @@ export const DashboardPage = () => {
     } catch (e) { return []; }
   });
 
-  const [dynamicWallet, setDynamicWallet] = useState(user?.walletBalance ?? (isFreshUser ? 0 : 6250));
-  const [dynamicTotalIncome, setDynamicTotalIncome] = useState(user?.totalIncome ?? (isFreshUser ? 0 : 10450));
-  const [dynamicL1Income, setDynamicL1Income] = useState(user?.level1AffiliateIncome ?? (isFreshUser ? 0 : 4850));
-  const [dynamicL2Income, setDynamicL2Income] = useState(user?.level2AffiliateIncome ?? (isFreshUser ? 0 : 2420));
+  const isDemoAlexUser = user?.email === 'alex@nexismlm.com';
+  const [dynamicWallet, setDynamicWallet] = useState(user?.walletBalance ?? (isDemoAlexUser ? 6250 : 0));
+  const [dynamicTotalIncome, setDynamicTotalIncome] = useState(user?.totalIncome ?? (isDemoAlexUser ? 10450 : 0));
+  const [dynamicL1Income, setDynamicL1Income] = useState(user?.level1AffiliateIncome ?? (isDemoAlexUser ? 4850 : 0));
+  const [dynamicL2Income, setDynamicL2Income] = useState(user?.level2AffiliateIncome ?? (isDemoAlexUser ? 2420 : 0));
 
   // Notifications State
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -284,11 +285,11 @@ export const DashboardPage = () => {
     { name: 'Rachel Green', position: 'Right-Right Leg (L2 Node 4)', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Package (₹10,000)', level2Earned: '₹500', status: 'Active' }
   ];
 
-  const level1MembersList = isFreshUser ? enrolledLevel1 : [...defaultL1, ...enrolledLevel1];
-  const level2MembersList = isFreshUser ? enrolledLevel2 : [...defaultL2, ...enrolledLevel2];
+  const level1MembersList = isDemoAlexUser ? [...defaultL1, ...enrolledLevel1] : enrolledLevel1;
+  const level2MembersList = isDemoAlexUser ? [...defaultL2, ...enrolledLevel2] : enrolledLevel2;
 
-  const l1Count = isFreshUser ? enrolledLevel1.length : (2 + enrolledLevel1.length);
-  const l2Count = isFreshUser ? enrolledLevel2.length : (4 + enrolledLevel2.length);
+  const l1Count = isDemoAlexUser ? (2 + enrolledLevel1.length) : enrolledLevel1.length;
+  const l2Count = isDemoAlexUser ? (4 + enrolledLevel2.length) : enrolledLevel2.length;
   const totalCount = l1Count + l2Count;
 
   // Metrics required by user (2 Nodes Max Level 1, 2 Max Levels)
@@ -755,32 +756,7 @@ export const DashboardPage = () => {
                 </div>
               </div>
 
-              {/* Referral Link Bar */}
-              <div className="light-card" style={{ padding: '20px 24px', marginBottom: '28px', background: '#eef2ff', border: '1px solid #c7d2fe' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#4f46e5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Share2 size={20} />
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>Your Unique Referral Link</h3>
-                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Share this link to enroll direct Level 1 downline members into your network.</p>
-                    </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#ffffff', padding: '6px 6px 6px 14px', borderRadius: '12px', border: '1px solid #c7d2fe' }}>
-                    <span className="code-font" style={{ fontSize: '13px', fontWeight: '600', color: '#4338ca' }}>{referralLink}</span>
-                    <button
-                      onClick={handleCopyLink}
-                      className="btn-indigo"
-                      style={{ padding: '8px 16px', fontSize: '13px', borderRadius: '8px' }}
-                    >
-                      {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                      {copied ? 'Copied!' : 'Copy Link'}
-                    </button>
-                  </div>
-                </div>
-              </div>
 
               {/* REQUIRED STATISTICAL METRICS GRID (8 Core Cards) */}
               <div style={{ marginBottom: '16px' }}>
