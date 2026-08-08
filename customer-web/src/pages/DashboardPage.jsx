@@ -1325,8 +1325,8 @@ export const DashboardPage = () => {
                             </tr>
                           ) : (
                             level1MembersList.map((m, idx) => {
-                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name);
-                              const isApproved = notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance';
+                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+                              const isApproved = m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance';
                               return (
                                 <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
                                   <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
@@ -1391,8 +1391,8 @@ export const DashboardPage = () => {
                             </tr>
                           ) : (
                             level2MembersList.map((m, idx) => {
-                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name);
-                              const isApproved = notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet';
+                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+                              const isApproved = m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet';
                               return (
                                 <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
                                   <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
