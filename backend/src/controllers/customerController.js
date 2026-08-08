@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { User } from '../models/User.js';
 import { Approval } from '../models/Approval.js';
 import bcrypt from 'bcryptjs';
@@ -228,24 +229,30 @@ export const getCustomerTeamDetails = async (req, res) => {
       const uEmail = user.email || null;
       const uName = user.name || null;
 
+      const validSponsorObjectIds = [
+        ...(user._id ? [user._id] : []),
+        ...(uId && typeof uId === 'string' && uId.match(/^[0-9a-fA-F]{24}$/) ? [uId] : []),
+        ...(uSponsorId && typeof uSponsorId === 'string' && uSponsorId.match(/^[0-9a-fA-F]{24}$/) ? [uSponsorId] : [])
+      ];
+
       // 1. Direct Level 1 downlines sponsored by this user
       level1Members = await User.find({
         $or: [
-          ...(user._id ? [{ parentSponsorId: user._id }, { parentSponsorId: uId }, { sponsorId: uId }] : []),
+          ...(validSponsorObjectIds.length > 0 ? [{ parentSponsorId: { $in: validSponsorObjectIds } }, { sponsorId: { $in: validSponsorObjectIds } }] : []),
           ...(uSponsorId ? [{ parentSponsorCode: uSponsorId }, { sponsorId: uSponsorId }] : []),
           ...(uEmail ? [{ parentSponsorEmail: uEmail }, { sponsorId: uEmail }] : [])
         ]
       }).select('-password');
 
-      // Also check Approvals created by this user as sponsor
-      const l1Approvals = await Approval.find({
-        $or: [
-          ...(user._id ? [{ sponsorId: user._id }, { sponsorId: uId }] : []),
-          ...(uSponsorId ? [{ sponsorId: uSponsorId }] : []),
-          ...(uEmail ? [{ sponsorId: uEmail }] : []),
-          ...(uName ? [{ sponsorName: uName }] : [])
-        ]
-      });
+      // Also check Approvals created by this user as sponsor (only pass valid ObjectIds to sponsorId field)
+      const l1ApprovalOrQueries = [
+        ...(validSponsorObjectIds.length > 0 ? [{ sponsorId: { $in: validSponsorObjectIds } }] : []),
+        ...(uName ? [{ sponsorName: uName }] : [])
+      ];
+
+      const l1Approvals = l1ApprovalOrQueries.length > 0
+        ? await Approval.find({ $or: l1ApprovalOrQueries })
+        : [];
 
       const existingL1Emails = new Set(level1Members.map(m => m.email.toLowerCase()));
       const l1EmailsFromApprovals = l1Approvals.map(a => a.enrolledMemberEmail).filter(Boolean);
@@ -284,33 +291,33 @@ export const getCustomerTeamDetails = async (req, res) => {
       }
 
       // Collect identifiers for all Level 1 members
-      const l1ObjectIds = level1Members.map(u => u._id);
-      const l1UserStrIds = level1Members.map(u => u._id.toString());
+      const l1ObjectIds = level1Members.map(u => u._id).filter(id => id && mongoose.Types.ObjectId.isValid(id));
+      const l1UserStrIds = level1Members.map(u => u._id ? u._id.toString() : null).filter(id => id && id.match(/^[0-9a-fA-F]{24}$/));
       const l1SponsorCodes = level1Members.map(u => u.sponsorId).filter(Boolean);
       const l1Emails = level1Members.map(u => u.email).filter(Boolean);
       const l1Names = level1Members.map(u => u.name).filter(Boolean);
 
-      const allL1IdMatches = [...l1ObjectIds, ...l1UserStrIds];
+      const allValidL1ObjectIds = [...l1ObjectIds, ...l1UserStrIds];
 
-      if (allL1IdMatches.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0 || l1Names.length > 0) {
+      if (allValidL1ObjectIds.length > 0 || l1SponsorCodes.length > 0 || l1Emails.length > 0 || l1Names.length > 0) {
         // 2. Level 2 downlines sponsored by any Level 1 member
         level2Members = await User.find({
           $or: [
-            ...(allL1IdMatches.length > 0 ? [{ parentSponsorId: { $in: allL1IdMatches } }, { sponsorId: { $in: allL1IdMatches } }] : []),
+            ...(allValidL1ObjectIds.length > 0 ? [{ parentSponsorId: { $in: allValidL1ObjectIds } }, { sponsorId: { $in: allValidL1ObjectIds } }] : []),
             ...(l1SponsorCodes.length > 0 ? [{ parentSponsorCode: { $in: l1SponsorCodes } }, { sponsorId: { $in: l1SponsorCodes } }] : []),
             ...(l1Emails.length > 0 ? [{ parentSponsorEmail: { $in: l1Emails } }, { sponsorId: { $in: l1Emails } }] : [])
           ]
         }).select('-password');
 
         // Also check Approvals sponsored by any Level 1 member
-        const l2Approvals = await Approval.find({
-          $or: [
-            ...(allL1IdMatches.length > 0 ? [{ sponsorId: { $in: allL1IdMatches } }] : []),
-            ...(l1SponsorCodes.length > 0 ? [{ sponsorId: { $in: l1SponsorCodes } }] : []),
-            ...(l1Emails.length > 0 ? [{ sponsorId: { $in: l1Emails } }] : []),
-            ...(l1Names.length > 0 ? [{ sponsorName: { $in: l1Names } }] : [])
-          ]
-        });
+        const l2ApprovalOrQueries = [
+          ...(allValidL1ObjectIds.length > 0 ? [{ sponsorId: { $in: allValidL1ObjectIds } }] : []),
+          ...(l1Names.length > 0 ? [{ sponsorName: { $in: l1Names } }] : [])
+        ];
+
+        const l2Approvals = l2ApprovalOrQueries.length > 0
+          ? await Approval.find({ $or: l2ApprovalOrQueries })
+          : [];
 
         const l2EmailsFromApprovals = l2Approvals.map(a => a.enrolledMemberEmail).filter(Boolean);
         if (l2EmailsFromApprovals.length > 0) {
