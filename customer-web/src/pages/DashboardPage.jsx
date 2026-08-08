@@ -1338,8 +1338,8 @@ export const DashboardPage = () => {
                                       {m.package || 'Starter Package (₹10,000)'}
                                     </span>
                                   </td>
-                                  <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
-                                    {m.level1Earned || '₹1,000'}
+                                  <td style={{ padding: '14px 16px', fontWeight: '800', color: isApproved ? '#059669' : 'var(--text-muted)' }}>
+                                    {isApproved ? (m.level1Earned || '₹1,000') : '₹0'}
                                   </td>
                                   <td style={{ padding: '14px 16px' }}>
                                     {isApproved ? (
@@ -1405,8 +1405,8 @@ export const DashboardPage = () => {
                                       {m.package || 'Premium Package (₹20,000)'}
                                     </span>
                                   </td>
-                                  <td style={{ padding: '14px 16px', fontWeight: '800', color: '#8b5cf6' }}>
-                                    {m.level2Earned || '₹500'}
+                                  <td style={{ padding: '14px 16px', fontWeight: '800', color: isApproved ? '#8b5cf6' : 'var(--text-muted)' }}>
+                                    {isApproved ? (m.level2Earned || '₹500') : '₹0'}
                                   </td>
                                   <td style={{ padding: '14px 16px' }}>
                                     {isApproved ? (
