@@ -487,8 +487,8 @@ const PendingApprovalsSection = () => {
     setModalTitle(title);
   };
 
-  const joiningRequests = approvals.filter(a => a.type === 'Joining Request');
-  const commissionApprovals = approvals.filter(a => a.type !== 'Joining Request');
+  const joiningRequests = approvals.filter(a => a.type === 'Joining Request' || a.type === 'Enrolled Downline Commission');
+  const commissionApprovals = approvals.filter(a => a.type !== 'Joining Request' && a.type !== 'Enrolled Downline Commission');
 
   return (
     <>
@@ -498,10 +498,10 @@ const PendingApprovalsSection = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', color: '#1e40af', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
-              <Users size={14} /> New Joining Requests ({joiningRequests.filter(a => a.status === 'Pending').length} Pending)
+              <Users size={14} /> New Joining & Downline Member Requests ({joiningRequests.filter(a => a.status === 'Pending').length} Pending)
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Joining Requests</h3>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve new distributor registrations and process initial package commissions</p>
+            <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Pending Joining & Downline Requests</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Approve new distributor registrations & downline member additions (Level 1 / Level 2)</p>
           </div>
 
           <button
@@ -533,8 +533,8 @@ const PendingApprovalsSection = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                <th style={{ padding: '12px 16px' }}>Applicant Name</th>
-                <th style={{ padding: '12px 16px' }}>Package</th>
+                <th style={{ padding: '12px 16px' }}>Applicant / Member Name</th>
+                <th style={{ padding: '12px 16px' }}>Package / Level</th>
                 <th style={{ padding: '12px 16px' }}>Aadhaar Number</th>
                 <th style={{ padding: '12px 16px' }}>Documents</th>
                 <th style={{ padding: '12px 16px' }}>Status</th>
@@ -545,7 +545,7 @@ const PendingApprovalsSection = () => {
               {joiningRequests.length === 0 ? (
                 <tr>
                   <td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No pending joining requests.
+                    No pending joining or downline member requests.
                   </td>
                 </tr>
               ) : (
@@ -554,23 +554,41 @@ const PendingApprovalsSection = () => {
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName}</div>
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{app.enrolledMemberEmail}</div>
-                      <div style={{ fontSize: '11px', color: '#059669', marginTop: '2px', fontWeight: '600' }}>Sponsor: {app.sponsorName}</div>
+                      <div style={{ fontSize: '11px', color: '#059669', marginTop: '2px', fontWeight: '600' }}>
+                        Sponsor: {app.sponsorName || 'System Admin'}
+                      </div>
                     </td>
-                    <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ fontWeight: '600' }}>{app.packageName}</div>
+                      {app.position && (
+                        <span style={{ background: '#ecfdf5', color: '#059669', padding: '2px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', display: 'inline-block', marginTop: '4px' }}>
+                          {app.position}
+                        </span>
+                      )}
+                    </td>
                     <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }}>
                       {app.userId?.aadhaarNumber || 'N/A'}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        <button onClick={() => openImageModal(app.userId?.aadhaarPhoto, 'Aadhaar Photo')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
-                          Aadhaar
-                        </button>
-                        <button onClick={() => openImageModal(app.userId?.panPhoto, 'PAN Photo')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
-                          PAN
-                        </button>
-                        <button onClick={() => openImageModal(app.userId?.transactionPhoto, 'Transaction Proof')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
-                          Tx Proof
-                        </button>
+                        {app.userId?.aadhaarPhoto && (
+                          <button onClick={() => openImageModal(app.userId?.aadhaarPhoto, 'Aadhaar Photo')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                            Aadhaar
+                          </button>
+                        )}
+                        {app.userId?.panPhoto && (
+                          <button onClick={() => openImageModal(app.userId?.panPhoto, 'PAN Photo')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                            PAN
+                          </button>
+                        )}
+                        {app.userId?.transactionPhoto && (
+                          <button onClick={() => openImageModal(app.userId?.transactionPhoto, 'Transaction Proof')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                            Tx Proof
+                          </button>
+                        )}
+                        {!app.userId?.aadhaarPhoto && !app.userId?.panPhoto && !app.userId?.transactionPhoto && (
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Portal Direct</span>
+                        )}
                       </div>
                     </td>
                     <td style={{ padding: '14px 16px' }}>

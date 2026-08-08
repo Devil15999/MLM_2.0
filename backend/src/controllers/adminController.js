@@ -34,7 +34,15 @@ export const approveCommissionRequest = async (req, res) => {
 
     if (approval.type === 'Joining Request') {
       // Find the new user and activate
-      const enrolledUser = await User.findById(approval.userId);
+      let enrolledUser = approval.userId ? await User.findById(approval.userId).catch(() => null) : null;
+      if (!enrolledUser && (approval.enrolledMemberEmail || approval.enrolledMemberName)) {
+        enrolledUser = await User.findOne({
+          $or: [
+            { email: approval.enrolledMemberEmail },
+            { name: approval.enrolledMemberName }
+          ]
+        });
+      }
       if (enrolledUser) {
         enrolledUser.accountStatus = 'Approved';
         await enrolledUser.save();
@@ -47,13 +55,19 @@ export const approveCommissionRequest = async (req, res) => {
       else if (packageString.includes('20,000')) packageAmount = 20000;
       else if (packageString.includes('30,000')) packageAmount = 30000;
 
-      const level1Commission = packageAmount * 0.10; // 10%
+      let level1Commission = packageAmount * 0.10; // 10%
+      if (level1Commission === 0 && approval.commissionAmount) {
+        level1Commission = approval.commissionAmount;
+      }
       const level2Commission = 500; // Flat 500
 
       // Find Level 1 Sponsor
       let sponsorUser = null;
       if (approval.sponsorId) {
         sponsorUser = await User.findById(approval.sponsorId).catch(() => null);
+      }
+      if (!sponsorUser && approval.sponsorName) {
+        sponsorUser = await User.findOne({ name: approval.sponsorName });
       }
       
       if (sponsorUser) {
