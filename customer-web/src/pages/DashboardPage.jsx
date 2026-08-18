@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updatePermanentPassword } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -45,6 +45,44 @@ export const DashboardPage = () => {
   // Storage key for local persistence
   const userKey = user?._id || user?.email || 'fresh';
 
+  // Force Permanent Password Modal for OTP users
+  const [forcePasswordModalOpen, setForcePasswordModalOpen] = useState(false);
+  const [permanentPassForm, setPermanentPassForm] = useState({ newPassword: '', confirmPassword: '' });
+  const [permanentPassErr, setPermanentPassErr] = useState(null);
+  const [permanentPassLoading, setPermanentPassLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.isOneTimePassword) {
+      setForcePasswordModalOpen(true);
+    } else {
+      setForcePasswordModalOpen(false);
+    }
+  }, [user]);
+
+  const handleForcePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!permanentPassForm.newPassword || permanentPassForm.newPassword.length < 6) {
+      setPermanentPassErr('New permanent password must be at least 6 characters long.');
+      return;
+    }
+    if (permanentPassForm.newPassword !== permanentPassForm.confirmPassword) {
+      setPermanentPassErr('Passwords do not match.');
+      return;
+    }
+
+    setPermanentPassLoading(true);
+    setPermanentPassErr(null);
+
+    const res = await updatePermanentPassword(permanentPassForm.newPassword, permanentPassForm.confirmPassword, user._id);
+    setPermanentPassLoading(false);
+    if (res.success) {
+      alert('Permanent password created successfully! Your temporary OTP has been invalidated.');
+      setForcePasswordModalOpen(false);
+    } else {
+      setPermanentPassErr(res.message || 'Failed to set permanent password.');
+    }
+  };
+
   // Tree Enrollment Modal State
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [selectedSlotPosition, setSelectedSlotPosition] = useState('');
@@ -52,7 +90,6 @@ export const DashboardPage = () => {
     memberName: '', 
     phone: '', 
     memberEmail: '', 
-    password: '', 
     aadhaarNumber: '', 
     packageName: 'Starter Package (₹10,000)', 
     aadhaarPhoto: '', 
@@ -112,8 +149,8 @@ export const DashboardPage = () => {
             position: m.legPreference || 'Direct Level 1',
             package: m.selectedPackage || 'Starter Package (₹10,000)',
             joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
-            status: m.accountStatus || 'Active',
-            accountStatus: m.accountStatus,
+            status: m.accountStatus || 'Pending Admin Approval',
+            accountStatus: m.accountStatus || 'Pending Admin Approval',
             level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
             level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
             sponsor: user?.name || 'You'
@@ -127,8 +164,8 @@ export const DashboardPage = () => {
             position: m.legPreference || 'Level 2 Node',
             package: m.selectedPackage || 'Starter Package (₹10,000)',
             joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
-            status: m.accountStatus || 'Active',
-            accountStatus: m.accountStatus,
+            status: m.accountStatus || 'Pending Admin Approval',
+            accountStatus: m.accountStatus || 'Pending Admin Approval',
             level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
             level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
             sponsor: 'Level 1 Member'
@@ -173,7 +210,6 @@ export const DashboardPage = () => {
       memberName: '',
       phone: '',
       memberEmail: '',
-      password: '',
       aadhaarNumber: '',
       packageName: 'Starter Package (₹10,000)',
       aadhaarPhoto: '',
@@ -212,7 +248,6 @@ export const DashboardPage = () => {
           memberName: enrollFormData.memberName,
           phone: enrollFormData.phone,
           memberEmail: memberEmailToUse,
-          password: enrollFormData.password,
           aadhaarNumber: enrollFormData.aadhaarNumber,
           aadhaarPhoto: enrollFormData.aadhaarPhoto,
           panPhoto: enrollFormData.panPhoto,
@@ -1809,17 +1844,6 @@ export const DashboardPage = () => {
                 />
               </div>
 
-              <div>
-                <label className="form-label">Account Password <span style={{ color: 'var(--text-muted)', fontWeight: '400' }}>(Optional - Auto-generates OTP if empty)</span></label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  className="form-input"
-                  value={enrollFormData.password}
-                  onChange={(e) => setEnrollFormData({ ...enrollFormData, password: e.target.value })}
-                />
-              </div>
-
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
                   <label className="form-label">Aadhaar Number *</label>
@@ -1979,6 +2003,98 @@ export const DashboardPage = () => {
                 Done
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* FORCE CREATION OF PERMANENT PASSWORD MODAL */}
+      {forcePasswordModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div className="light-card" style={{ maxWidth: '440px', width: '100%', padding: '32px', background: '#ffffff', borderRadius: '20px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                background: '#fef3c7',
+                color: '#d97706',
+                marginBottom: '16px'
+              }}>
+                <Lock size={28} />
+              </div>
+              <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>🔑 Set Permanent Password</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', lineHeight: '1.5' }}>
+                You logged in using a temporary One-Time Password (OTP). You must create a permanent password before proceeding. Once created, your temporary OTP will no longer work for login.
+              </p>
+            </div>
+
+            {permanentPassErr && (
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                marginBottom: '20px',
+                color: '#991b1b',
+                fontSize: '13px',
+                fontWeight: '600'
+              }}>
+                ⚠️ {permanentPassErr}
+              </div>
+            )}
+
+            <form onSubmit={handleForcePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label className="form-label">New Permanent Password *</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  placeholder="Min 6 characters (e.g. MyPass#2026)"
+                  className="form-input"
+                  value={permanentPassForm.newPassword}
+                  onChange={(e) => setPermanentPassForm({ ...permanentPassForm, newPassword: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Confirm Permanent Password *</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  placeholder="Re-enter new password"
+                  className="form-input"
+                  value={permanentPassForm.confirmPassword}
+                  onChange={(e) => setPermanentPassForm({ ...permanentPassForm, confirmPassword: e.target.value })}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={permanentPassLoading}
+                className="btn-emerald"
+                style={{ width: '100%', padding: '12px', fontSize: '14px', fontWeight: '800', marginTop: '8px' }}
+              >
+                {permanentPassLoading ? 'Updating Password...' : 'Create Password & Invalidate OTP'}
+              </button>
+            </form>
           </div>
         </div>
       )}

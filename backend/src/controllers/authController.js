@@ -193,10 +193,59 @@ export const loginUser = async (req, res) => {
       country: user.country,
       kycStatus: user.kycStatus,
       kycData: user.kycData,
+      isOneTimePassword: !!user.isOneTimePassword,
       token: generateToken(user._id, user.role),
     };
 
     res.json(userResponse);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Set Permanent Password after OTP login
+// @route   POST /api/auth/set-permanent-password
+// @access  Public / Private
+export const setPermanentPassword = async (req, res) => {
+  try {
+    const { userId, newPassword, confirmPassword } = req.body;
+    const targetUserId = req.user?._id || userId;
+
+    if (!targetUserId) {
+      return res.status(401).json({ message: 'User identifier missing. Please log in first.' });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'New permanent password must be at least 6 characters long.' });
+    }
+
+    if (confirmPassword && newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'New password and confirm password do not match.' });
+    }
+
+    const user = await User.findById(targetUserId);
+    if (!user) {
+      return res.status(404).json({ message: 'User account not found.' });
+    }
+
+    // Update to new permanent password & invalidate one-time password
+    user.password = newPassword;
+    user.isOneTimePassword = false;
+    await user.save();
+
+    // Return updated user profile
+    const updatedUser = await User.findById(targetUserId).select('-password');
+    const token = generateToken(user._id, user.role);
+
+    res.json({
+      success: true,
+      message: 'Permanent password created successfully! Your temporary OTP has been invalidated.',
+      user: {
+        ...updatedUser.toObject(),
+        isOneTimePassword: false,
+        token
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

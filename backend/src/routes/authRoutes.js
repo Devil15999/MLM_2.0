@@ -2,6 +2,7 @@ import express from 'express';
 import {
   registerUser,
   loginUser,
+  setPermanentPassword,
   getMe,
   getUsers,
   seedAccounts,
@@ -12,6 +13,7 @@ const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/set-permanent-password', setPermanentPassword);
 router.get('/me', protect, getMe);
 router.get('/users', protect, requireAdmin, getUsers);
 router.post('/seed', seedAccounts);

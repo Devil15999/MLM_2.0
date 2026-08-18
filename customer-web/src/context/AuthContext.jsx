@@ -31,7 +31,42 @@ export const AuthProvider = ({ children }) => {
 
       setUser(data);
       localStorage.setItem('customer_user', JSON.stringify(data));
-      return { success: true };
+      return { success: true, user: data };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, message: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePermanentPassword = async (newPassword, confirmPassword, targetUserId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const activeUserId = targetUserId || user?._id;
+      const response = await fetch(`${getApiBaseUrl()}/set-permanent-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {})
+        },
+        body: JSON.stringify({
+          userId: activeUserId,
+          newPassword,
+          confirmPassword
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update permanent password');
+      }
+
+      const updatedUser = data.user || { ...user, isOneTimePassword: false };
+      setUser(updatedUser);
+      localStorage.setItem('customer_user', JSON.stringify(updatedUser));
+      return { success: true, message: data.message };
     } catch (err) {
       setError(err.message);
       return { success: false, message: err.message };
@@ -71,7 +106,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, logout, setError }}>
+    <AuthContext.Provider value={{ user, loading, error, login, updatePermanentPassword, register, logout, setError }}>
       {children}
     </AuthContext.Provider>
   );
