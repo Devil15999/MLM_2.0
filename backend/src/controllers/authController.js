@@ -11,10 +11,10 @@ const generateToken = (id, role) => {
 // @route   POST /api/auth/register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, sponsorId, aadhaarNumber, aadhaarPhoto, panPhoto, transactionPhoto, selectedPackage } = req.body;
+    const { name, phone, email, password, sponsorId, aadhaarNumber, aadhaarPhoto, panPhoto, transactionPhoto, selectedPackage } = req.body;
 
-    if (!name || !email || !password || !aadhaarNumber || !selectedPackage || !aadhaarPhoto || !transactionPhoto) {
-      return res.status(400).json({ message: 'Please provide all required fields (Name, Email, Password, Aadhaar Number, Package, Aadhaar Photo, Transaction Photo)' });
+    if (!name || !phone || !email || !password || !aadhaarNumber || !selectedPackage || !aadhaarPhoto || !transactionPhoto) {
+      return res.status(400).json({ message: 'Please provide all required fields (Name, Phone Number, Email, Password, Aadhaar Number, Package, Aadhaar Photo, Transaction Photo)' });
     }
 
     const userExists = await User.findOne({ email });
@@ -87,6 +87,7 @@ export const registerUser = async (req, res) => {
 
     const user = await User.create({
       name,
+      phone,
       email,
       password,
       sponsorId: userOwnSponsorId,

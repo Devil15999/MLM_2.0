@@ -40,14 +40,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, sponsorId, aadhaarNumber, selectedPackage, aadhaarPhoto, panPhoto, transactionPhoto) => {
+  const register = async (name, phone, email, password, sponsorId, aadhaarNumber, selectedPackage, aadhaarPhoto, panPhoto, transactionPhoto) => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${getApiBaseUrl()}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, sponsorId, aadhaarNumber, selectedPackage, aadhaarPhoto, panPhoto, transactionPhoto }),
+        body: JSON.stringify({ name, phone, email, password, sponsorId, aadhaarNumber, selectedPackage, aadhaarPhoto, panPhoto, transactionPhoto }),
       });
 
       const data = await response.json();

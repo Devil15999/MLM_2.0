@@ -122,7 +122,8 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      default: '+1 (555) 234-5678',
+      required: [true, 'Phone number is required'],
+      trim: true,
     },
     address: {
       type: String,

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Network, Lock, Mail, User, Share2, ArrowRight, AlertCircle, Sparkles, Image as ImageIcon, CheckCircle } from 'lucide-react';
+import { Network, Lock, Mail, User, Phone, Share2, ArrowRight, AlertCircle, Sparkles, Image as ImageIcon, CheckCircle } from 'lucide-react';
 
 export const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
+    phone: '',
     email: '',
     password: '',
     sponsorId: '',
@@ -50,6 +51,7 @@ export const AuthPage = () => {
     } else {
       result = await register(
         formData.name,
+        formData.phone,
         formData.email,
         formData.password,
         formData.sponsorId,
@@ -193,6 +195,32 @@ export const AuthPage = () => {
                       required
                       placeholder="e.g. Alex Rivera"
                       value={formData.name}
+                      onChange={handleChange}
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px 12px 42px',
+                        background: 'var(--bg-subtle)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '10px',
+                        color: 'var(--text-main)',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
+                    Phone Number <span style={{ color: '#ef4444' }}>* Required</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Phone size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="tel"
+                      name="phone"
+                      required
+                      placeholder="e.g. +91 98765 43210"
+                      value={formData.phone}
                       onChange={handleChange}
                       style={{
                         width: '100%',

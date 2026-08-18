@@ -404,20 +404,59 @@ export const enrollDownlineMember = async (req, res) => {
       return res.status(401).json({ message: 'Authentication required to enroll downline members.' });
     }
     const userId = enrollingUser._id;
-    const { memberName, memberEmail, position, packageName, parentSponsorId, parentSponsorCode, parentSponsorEmail, sponsorId, sponsorName } = req.body;
+    const {
+      memberName,
+      phone,
+      memberEmail,
+      password,
+      aadhaarNumber,
+      aadhaarPhoto,
+      panPhoto,
+      transactionPhoto,
+      position,
+      packageName,
+      parentSponsorId,
+      parentSponsorCode,
+      parentSponsorEmail,
+      sponsorId,
+      sponsorName
+    } = req.body;
 
-    if (!memberName || !position || !packageName) {
-      return res.status(400).json({ message: 'Please provide member name, leg position, and package.' });
+    if (!memberName || !phone || !memberEmail || !aadhaarNumber || !packageName || !aadhaarPhoto || !transactionPhoto) {
+      return res.status(400).json({
+        message: 'Please provide all required Join Network fields (Name, Phone Number, Email, Aadhaar Number, Package, Aadhaar Photo, Transaction Photo)'
+      });
     }
 
-    const emailToUse = String(memberEmail || `${memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`).toLowerCase().trim();
+    const emailToUse = String(memberEmail).toLowerCase().trim();
+    const cleanPhone = String(phone).trim();
+    const trimmedAadhaar = String(aadhaarNumber).trim();
+    const cleanAadhaar = trimmedAadhaar.replace(/[\s-]/g, '');
+
+    // Validate 12-digit Aadhaar format
+    if (!/^[2-9]\d{11}$/.test(cleanAadhaar)) {
+      return res.status(400).json({
+        message: 'Invalid Aadhaar Number. Must be a valid 12-digit number (e.g. 2345 6789 0123).'
+      });
+    }
+
+    const aadhaarExists = await User.findOne({
+      $or: [
+        { aadhaarNumber: trimmedAadhaar },
+        { aadhaarNumber: cleanAadhaar }
+      ]
+    });
+    if (aadhaarExists) {
+      return res.status(400).json({ message: 'Distributor already registered with this Aadhaar Number' });
+    }
+
     const resolvedParentId = parentSponsorId || enrollingUser._id;
     const resolvedParentCode = parentSponsorCode || sponsorId || enrollingUser.sponsorId;
     const resolvedParentEmail = parentSponsorEmail || enrollingUser.email;
     const resolvedSponsorName = sponsorName || enrollingUser.name || enrollingUser.email || 'Sponsor';
 
-    // 1. Generate Dynamic One-Time Password (OTP)
-    const dynamicOtp = `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
+    // 1. Password / Dynamic OTP handling
+    const dynamicOtp = password && password.trim().length >= 6 ? password.trim() : `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
 
     // 2. Generate unique Sponsor ID for the new downline member
     const namePrefix = memberName.trim().split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
@@ -465,9 +504,10 @@ export const enrollDownlineMember = async (req, res) => {
 
     const newEnrolledUser = await User.create({
       name: memberName,
+      phone: cleanPhone,
       email: emailToUse,
       password: dynamicOtp,
-      isOneTimePassword: true,
+      isOneTimePassword: !password,
       accountStatus: 'Pending Admin Approval',
       sponsorId: ownSponsorId,
       parentSponsorId: resolvedParentId,
@@ -475,6 +515,10 @@ export const enrollDownlineMember = async (req, res) => {
       parentSponsorEmail: resolvedParentEmail,
       rank: userRank,
       selectedPackage: normalizedPackageName,
+      aadhaarNumber: trimmedAadhaar,
+      aadhaarPhoto: aadhaarPhoto || '',
+      panPhoto: panPhoto || '',
+      transactionPhoto: transactionPhoto || '',
       legPreference: 'Direct Level 1',
       walletBalance: 0.00,
       totalEarnings: 0.00,

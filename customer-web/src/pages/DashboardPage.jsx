@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
   User,
+  Phone,
   ShieldCheck,
   Package,
   Users,
@@ -27,7 +28,8 @@ import {
   PlusCircle,
   Menu,
   X,
-  Bell
+  Bell,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export const DashboardPage = () => {
@@ -46,9 +48,30 @@ export const DashboardPage = () => {
   // Tree Enrollment Modal State
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [selectedSlotPosition, setSelectedSlotPosition] = useState('');
-  const [enrollFormData, setEnrollFormData] = useState({ memberName: '', memberEmail: '', packageName: 'Starter Package (₹10,000)' });
+  const [enrollFormData, setEnrollFormData] = useState({ 
+    memberName: '', 
+    phone: '', 
+    memberEmail: '', 
+    password: '', 
+    aadhaarNumber: '', 
+    packageName: 'Starter Package (₹10,000)', 
+    aadhaarPhoto: '', 
+    panPhoto: '', 
+    transactionPhoto: '' 
+  });
   const [enrollSuccessMessage, setEnrollSuccessMessage] = useState('');
   const [issuedCredentialModal, setIssuedCredentialModal] = useState(null);
+
+  const handleEnrollFileChange = (e) => {
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEnrollFormData((prev) => ({ ...prev, [name]: reader.result }));
+      };
+      reader.readAsDataURL(files[0]);
+    }
+  };
 
   // Dynamic Nodes State (Persistent across sessions/logins)
   const [enrolledLevel1, setEnrolledLevel1] = useState(() => {
@@ -146,12 +169,27 @@ export const DashboardPage = () => {
 
   const handleOpenEnrollModal = (position) => {
     setSelectedSlotPosition(position);
-    setEnrollFormData({ memberName: '', memberEmail: '', packageName: 'Starter Package (₹10,000)' });
+    setEnrollFormData({
+      memberName: '',
+      phone: '',
+      memberEmail: '',
+      password: '',
+      aadhaarNumber: '',
+      packageName: 'Starter Package (₹10,000)',
+      aadhaarPhoto: '',
+      panPhoto: '',
+      transactionPhoto: ''
+    });
     setEnrollModalOpen(true);
   };
 
   const handleEnrollSubmit = async (e) => {
     e.preventDefault();
+
+    if (!enrollFormData.memberName || !enrollFormData.phone || !enrollFormData.memberEmail || !enrollFormData.aadhaarNumber || !enrollFormData.aadhaarPhoto || !enrollFormData.transactionPhoto) {
+      alert('Please fill out all required Join Network fields (Name, Phone, Email, Aadhaar Number, Aadhaar Photo, Transaction Proof).');
+      return;
+    }
 
     const isLevel1 = selectedSlotPosition.includes('Node 1') || selectedSlotPosition === 'Left Leg' || selectedSlotPosition === 'Right Leg' || !selectedSlotPosition.includes('L2');
     const level1BonusMap = {
@@ -160,7 +198,7 @@ export const DashboardPage = () => {
       'Elite Package (₹30,000)': 3000,
     };
     const commAmount = isLevel1 ? (level1BonusMap[enrollFormData.packageName] || 1000) : 500;
-    const memberEmailToUse = enrollFormData.memberEmail || `${enrollFormData.memberName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+    const memberEmailToUse = String(enrollFormData.memberEmail || '').trim().toLowerCase();
 
     try {
       const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api/auth').replace('/auth', '');
@@ -172,7 +210,13 @@ export const DashboardPage = () => {
         },
         body: JSON.stringify({
           memberName: enrollFormData.memberName,
+          phone: enrollFormData.phone,
           memberEmail: memberEmailToUse,
+          password: enrollFormData.password,
+          aadhaarNumber: enrollFormData.aadhaarNumber,
+          aadhaarPhoto: enrollFormData.aadhaarPhoto,
+          panPhoto: enrollFormData.panPhoto,
+          transactionPhoto: enrollFormData.transactionPhoto,
           position: selectedSlotPosition,
           packageName: enrollFormData.packageName,
           parentSponsorId: user?._id,
@@ -1645,7 +1689,7 @@ export const DashboardPage = () => {
           zIndex: 1000,
           padding: '20px'
         }}>
-          <div className="light-card" style={{ maxWidth: '480px', width: '100%', padding: '28px', background: '#ffffff', borderRadius: '16px' }}>
+          <div className="light-card" style={{ maxWidth: '520px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '28px', background: '#ffffff', borderRadius: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Enroll New Downline Member</h3>
@@ -1656,19 +1700,19 @@ export const DashboardPage = () => {
               </button>
             </div>
 
-            <form onSubmit={handleEnrollSubmit}>
-              <div style={{ marginBottom: '14px' }}>
+            <form onSubmit={handleEnrollSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
                 <label className="form-label">Sponsor ID</label>
                 <input type="text" disabled value={referralCode} className="form-input" style={{ background: '#f1f5f9', cursor: 'not-allowed', color: '#4f46e5', fontWeight: '700' }} />
               </div>
 
-              <div style={{ marginBottom: '14px' }}>
+              <div>
                 <label className="form-label">Target Binary Leg Position</label>
                 <input type="text" disabled value={selectedSlotPosition} className="form-input" style={{ background: '#ecfdf5', cursor: 'not-allowed', color: '#059669', fontWeight: '700' }} />
               </div>
 
-              <div style={{ marginBottom: '14px' }}>
-                <label className="form-label">Member Full Name *</label>
+              <div>
+                <label className="form-label">Member Full Legal Name *</label>
                 <input
                   type="text"
                   required
@@ -1679,10 +1723,23 @@ export const DashboardPage = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: '14px' }}>
-                <label className="form-label">Member Email Address</label>
+              <div>
+                <label className="form-label">Phone Number *</label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="e.g. +91 98765 43210"
+                  className="form-input"
+                  value={enrollFormData.phone}
+                  onChange={(e) => setEnrollFormData({ ...enrollFormData, phone: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Member Email Address *</label>
                 <input
                   type="email"
+                  required
                   placeholder="michael.scott@example.com"
                   className="form-input"
                   value={enrollFormData.memberEmail}
@@ -1690,20 +1747,94 @@ export const DashboardPage = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: '24px' }}>
-                <label className="form-label">Product Package Choice *</label>
-                <select
+              <div>
+                <label className="form-label">Account Password <span style={{ color: 'var(--text-muted)', fontWeight: '400' }}>(Optional - Auto-generates OTP if empty)</span></label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
                   className="form-input"
-                  value={enrollFormData.packageName}
-                  onChange={(e) => setEnrollFormData({ ...enrollFormData, packageName: e.target.value })}
-                >
-                  <option value="Starter Package (₹10,000)">Starter Package (₹10,000) — Level 1: ₹1,000 (10%) | Level 2: ₹500</option>
-                  <option value="Premium Package (₹20,000)">Premium Package (₹20,000) — Level 1: ₹2,000 (10%) | Level 2: ₹500</option>
-                  <option value="Elite Package (₹30,000)">Elite Package (₹30,000) — Level 1: ₹3,000 (10%) | Level 2: ₹500</option>
-                </select>
+                  value={enrollFormData.password}
+                  onChange={(e) => setEnrollFormData({ ...enrollFormData, password: e.target.value })}
+                />
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label">Aadhaar Number *</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={14}
+                    placeholder="e.g. 2345 6789 0123"
+                    className="form-input"
+                    value={enrollFormData.aadhaarNumber}
+                    onChange={(e) => setEnrollFormData({ ...enrollFormData, aadhaarNumber: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label">Product Package *</label>
+                  <select
+                    className="form-input"
+                    required
+                    value={enrollFormData.packageName}
+                    onChange={(e) => setEnrollFormData({ ...enrollFormData, packageName: e.target.value })}
+                  >
+                    <option value="Starter Package (₹10,000)">Starter (₹10,000)</option>
+                    <option value="Premium Package (₹20,000)">Premium (₹20,000)</option>
+                    <option value="Elite Package (₹30,000)">Elite (₹30,000)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>Verification Document Proofs</div>
+
+                <div>
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
+                    <span>Aadhaar Photo</span>
+                    <span style={{ color: '#ef4444' }}>* Required</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    name="aadhaarPhoto"
+                    required
+                    onChange={handleEnrollFileChange}
+                    style={{ width: '100%', fontSize: '12px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
+                    <span>PAN Photo</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Optional</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    name="panPhoto"
+                    onChange={handleEnrollFileChange}
+                    style={{ width: '100%', fontSize: '12px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
+                    <span>Transaction Proof</span>
+                    <span style={{ color: '#ef4444' }}>* Required</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    name="transactionPhoto"
+                    required
+                    onChange={handleEnrollFileChange}
+                    style={{ width: '100%', fontSize: '12px' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="button" onClick={() => setEnrollModalOpen(false)} className="btn-outline" style={{ flex: 1 }}>
                   Cancel
                 </button>

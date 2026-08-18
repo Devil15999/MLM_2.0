@@ -665,6 +665,7 @@ const PendingApprovalsSection = () => {
                 <th style={{ padding: '12px 16px' }}>Enrolled Member</th>
                 <th style={{ padding: '12px 16px' }}>Tree Position</th>
                 <th style={{ padding: '12px 16px' }}>Package</th>
+                <th style={{ padding: '12px 16px' }}>Documents</th>
                 <th style={{ padding: '12px 16px' }}>Commission</th>
                 <th style={{ padding: '12px 16px' }}>Status</th>
                 <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
@@ -673,7 +674,7 @@ const PendingApprovalsSection = () => {
             <tbody>
               {downlineRequests.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan="8" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
                     No pending downline member requests.
                   </td>
                 </tr>
@@ -691,6 +692,28 @@ const PendingApprovalsSection = () => {
                       </span>
                     </td>
                     <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {app.userId?.aadhaarPhoto && (
+                          <button onClick={() => openImageModal(app.userId?.aadhaarPhoto, 'Aadhaar Photo')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                            Aadhaar
+                          </button>
+                        )}
+                        {app.userId?.panPhoto && (
+                          <button onClick={() => openImageModal(app.userId?.panPhoto, 'PAN Photo')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                            PAN
+                          </button>
+                        )}
+                        {app.userId?.transactionPhoto && (
+                          <button onClick={() => openImageModal(app.userId?.transactionPhoto, 'Transaction Proof')} className="btn-outline" style={{ padding: '4px 8px', fontSize: '11px' }}>
+                            Tx Proof
+                          </button>
+                        )}
+                        {!app.userId?.aadhaarPhoto && !app.userId?.panPhoto && !app.userId?.transactionPhoto && (
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>N/A</span>
+                        )}
+                      </div>
+                    </td>
                     <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669' }}>
                       +₹{Number(app.commissionAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
