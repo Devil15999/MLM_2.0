@@ -142,12 +142,15 @@ export const updateCustomerProfile = async (req, res) => {
 export const updateCustomerKYC = async (req, res) => {
   try {
     const userId = req.user?._id;
-    const { documentType, documentNumber, bankName, accountNumber, ifscCode, upiId } = req.body;
+    const { documentType, documentNumber, bankName, accountNumber, ifscCode, upiId, panPhoto, panNumber } = req.body;
 
+    let updatedUser = null;
     if (userId) {
       const user = await User.findById(userId);
       if (user) {
         user.kycStatus = 'Under Review';
+        if (panPhoto) user.panPhoto = panPhoto;
+        if (panNumber) user.panNumber = panNumber;
         user.kycData = {
           documentType: documentType || user.kycData?.documentType,
           documentNumber: documentNumber || user.kycData?.documentNumber,
@@ -155,15 +158,18 @@ export const updateCustomerKYC = async (req, res) => {
           accountNumber: accountNumber || user.kycData?.accountNumber,
           ifscCode: ifscCode || user.kycData?.ifscCode,
           upiId: upiId || user.kycData?.upiId,
+          panNumber: panNumber || user.panNumber
         };
         await user.save();
+        updatedUser = user;
       }
     }
 
     res.json({
       success: true,
-      message: 'KYC documents submitted successfully. Verification status set to Under Review.',
+      message: 'KYC details & PAN document submitted successfully. Verification status set to Under Review.',
       kycStatus: 'Under Review',
+      user: updatedUser
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

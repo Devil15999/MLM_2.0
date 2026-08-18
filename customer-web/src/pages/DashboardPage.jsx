@@ -43,7 +43,7 @@ export const DashboardPage = () => {
   const [teamViewMode, setTeamViewMode] = useState('tree');
   const isFreshUser = user?.email === 'fresh@nexismlm.com' || user?.sponsorId === 'SP-2000';
   const [activePackage, setActivePackage] = useState(user?.selectedPackage || 'Starter Package (₹10,000)');
-  
+
   // Storage key for local persistence
   const userKey = user?._id || user?.email || 'fresh';
 
@@ -88,15 +88,15 @@ export const DashboardPage = () => {
   // Tree Enrollment Modal State
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [selectedSlotPosition, setSelectedSlotPosition] = useState('');
-  const [enrollFormData, setEnrollFormData] = useState({ 
-    memberName: '', 
-    phone: '', 
-    memberEmail: '', 
-    aadhaarNumber: '', 
-    packageName: 'Starter Package (₹10,000)', 
-    aadhaarPhoto: '', 
-    panPhoto: '', 
-    transactionPhoto: '' 
+  const [enrollFormData, setEnrollFormData] = useState({
+    memberName: '',
+    phone: '',
+    memberEmail: '',
+    aadhaarNumber: '',
+    packageName: 'Starter Package (₹10,000)',
+    aadhaarPhoto: '',
+    panPhoto: '',
+    transactionPhoto: ''
   });
   const [enrollSuccessMessage, setEnrollSuccessMessage] = useState('');
   const [issuedCredentialModal, setIssuedCredentialModal] = useState(null);
@@ -175,7 +175,7 @@ export const DashboardPage = () => {
           setEnrolledLevel2(mappedL2);
         }
       }
-    } catch (err) {}
+    } catch (err) { }
   }, [user]);
 
   useEffect(() => {
@@ -189,7 +189,7 @@ export const DashboardPage = () => {
           const data = await res.json();
           setNotificationsList(data.notifications || []);
         }
-      } catch (err) {}
+      } catch (err) { }
     };
 
     fetchNotifications();
@@ -403,11 +403,64 @@ export const DashboardPage = () => {
     }
   };
 
-  const handleKycSubmit = (e) => {
+  const [panPhoto, setPanPhoto] = useState(user?.panPhoto || '');
+  const [panNumber, setPanNumber] = useState(user?.panNumber || '');
+  const [kycLoading, setKycLoading] = useState(false);
+
+  const handlePanFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPanPhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleKycSubmit = async (e) => {
     e.preventDefault();
-    setKycStatus('Under Review');
-    setKycSaved(true);
-    setTimeout(() => setKycSaved(false), 3000);
+    setKycLoading(true);
+    setKycSaved(false);
+
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api/auth').replace('/auth', '');
+      const res = await fetch(`${baseUrl}/customer/kyc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {})
+        },
+        body: JSON.stringify({
+          documentType: 'Aadhaar & PAN Card',
+          documentNumber: user?.aadhaarNumber || kycData.documentNumber,
+          bankName: kycData.bankName,
+          accountNumber: kycData.accountNumber,
+          ifscCode: kycData.ifscCode,
+          upiId: kycData.upiId,
+          panPhoto: panPhoto,
+          panNumber: panNumber
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'KYC update failed');
+      }
+
+      if (data.user) {
+        const updatedUser = { ...user, ...data.user };
+        localStorage.setItem('customer_user', JSON.stringify(updatedUser));
+      }
+
+      setKycStatus('Under Review');
+      setKycSaved(true);
+      setTimeout(() => setKycSaved(false), 5000);
+    } catch (err) {
+      alert(`KYC Update Error: ${err.message}`);
+    } finally {
+      setKycLoading(false);
+    }
   };
 
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -881,12 +934,12 @@ export const DashboardPage = () => {
               borderRadius: '20px',
               cursor: 'pointer'
             }}
-            onClick={() => {
-              navigator.clipboard.writeText(referralCode);
-              setHeaderCopied(true);
-              setTimeout(() => setHeaderCopied(false), 3000);
-            }}
-            title="Click to Copy Parent Sponsor Code (Phone)"
+              onClick={() => {
+                navigator.clipboard.writeText(referralCode);
+                setHeaderCopied(true);
+                setTimeout(() => setHeaderCopied(false), 3000);
+              }}
+              title="Click to Copy Parent Sponsor Code (Phone)"
             >
               <Phone size={15} color="#4f46e5" />
               <span style={{ fontSize: '13px', color: '#3730a3', fontWeight: '700' }}>
@@ -931,7 +984,7 @@ export const DashboardPage = () => {
 
         {/* View Container */}
         <main style={{ flex: 1, padding: '32px', maxWidth: '1280px', width: '100%', margin: '0 auto' }}>
-          
+
           {/* TAB 1: HOME (DASHBOARD) */}
           {activeTab === 'home' && (
             <div>
@@ -1135,7 +1188,7 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Email Address * (Editable)</label>
+                    <label className="form-label">Email Address * </label>
                     <input
                       type="email"
                       required
@@ -1148,16 +1201,15 @@ export const DashboardPage = () => {
 
                   {/* MERGED PHONE & PARENT SPONSOR CODE FIELD WITH COPY BUTTON */}
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <label className="form-label">Phone Number & Parent Sponsor Code *</label>
+                    <label className="form-label">Phone Number & Sponsor Code *</label>
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <input
                         type="text"
-                        required
-                        placeholder="Enter phone number (serves as Sponsor Code)"
+                        disabled
+                        placeholder="Phone Number (serves as Sponsor Code)"
                         className="form-input"
                         value={profileData.phone}
-                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                        style={{ fontWeight: '700', color: '#4f46e5' }}
+                        style={{ background: '#f1f5f9', cursor: 'not-allowed', fontWeight: '700', color: '#4f46e5' }}
                       />
                       <button
                         type="button"
@@ -1190,7 +1242,7 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">City (Editable)</label>
+                    <label className="form-label">City </label>
                     <input
                       type="text"
                       placeholder="Enter city"
@@ -1201,7 +1253,7 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Country (Editable)</label>
+                    <label className="form-label">Country </label>
                     <input
                       type="text"
                       placeholder="Enter country"
@@ -1247,34 +1299,101 @@ export const DashboardPage = () => {
                   </span>
                 </div>
 
+                {/* DOCUMENT STATUS CARDS */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                  <div style={{
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: (user?.aadhaarPhoto || user?.aadhaarNumber) ? '#f0fdf4' : '#fffbeb',
+                    border: `1.5px solid ${(user?.aadhaarPhoto || user?.aadhaarNumber) ? '#bbf7d0' : '#fde68a'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: '800', color: (user?.aadhaarPhoto || user?.aadhaarNumber) ? '#166534' : '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Aadhaar Card Photo
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
+                        {(user?.aadhaarPhoto || user?.aadhaarNumber) ? (user?.aadhaarNumber ? `Aadhaar: ${user.aadhaarNumber}` : 'Photo Uploaded') : 'Not Uploaded'}
+                      </div>
+                    </div>
+                    <span style={{
+                      background: (user?.aadhaarPhoto || user?.aadhaarNumber) ? '#dcfce7' : '#fef3c7',
+                      color: (user?.aadhaarPhoto || user?.aadhaarNumber) ? '#166534' : '#92400e',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      {(user?.aadhaarPhoto || user?.aadhaarNumber) ? <CheckCircle2 size={13} color="#166534" /> : <Clock size={13} color="#92400e" />}
+                      {(user?.aadhaarPhoto || user?.aadhaarNumber) ? '🟢 Uploaded' : '🟡 Pending'}
+                    </span>
+                  </div>
+
+                  <div style={{
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: (panPhoto || user?.panPhoto) ? '#f0fdf4' : '#eff6ff',
+                    border: `1.5px solid ${(panPhoto || user?.panPhoto) ? '#bbf7d0' : '#bfdbfe'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: '800', color: (panPhoto || user?.panPhoto) ? '#166534' : '#1e40af', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        PAN Card Photo
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
+                        {(panPhoto || user?.panPhoto) ? 'PAN Photo Uploaded' : 'Upload Required'}
+                      </div>
+                    </div>
+                    <span style={{
+                      background: (panPhoto || user?.panPhoto) ? '#dcfce7' : '#dbeafe',
+                      color: (panPhoto || user?.panPhoto) ? '#166534' : '#1e40af',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      {(panPhoto || user?.panPhoto) ? <CheckCircle2 size={13} color="#166534" /> : <Upload size={13} color="#1e40af" />}
+                      {(panPhoto || user?.panPhoto) ? '🟢 Uploaded' : '🔵 Upload Required'}
+                    </span>
+                  </div>
+                </div>
+
                 {kycSaved && (
-                  <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontSize: '14px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <CheckCircle2 size={18} /> KYC application submitted for verification review!
+                  <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontSize: '13px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CheckCircle2 size={18} /> KYC application & PAN details submitted for review!
                   </div>
                 )}
 
                 <form onSubmit={handleKycSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   <div>
-                    <label className="form-label">Identity Document Type</label>
-                    <select
+                    <label className="form-label">Aadhaar Card Number</label>
+                    <input
+                      type="text"
+                      disabled
                       className="form-input"
-                      value={kycData.documentType}
-                      onChange={(e) => setKycData({ ...kycData, documentType: e.target.value })}
-                    >
-                      <option>Aadhaar Card / Govt ID</option>
-                      <option>Passport</option>
-                      <option>National Identity Card</option>
-                      <option>Driving License</option>
-                    </select>
+                      value={user?.aadhaarNumber || kycData.documentNumber || 'Uploaded during Registration'}
+                      style={{ background: '#f1f5f9', cursor: 'not-allowed', fontWeight: '700', color: '#059669' }}
+                    />
                   </div>
 
                   <div>
-                    <label className="form-label">Document Identification Number</label>
+                    <label className="form-label">PAN Card Number</label>
                     <input
                       type="text"
+                      placeholder="Enter PAN Number (e.g. ABCDE1234F)"
                       className="form-input"
-                      value={kycData.documentNumber}
-                      onChange={(e) => setKycData({ ...kycData, documentNumber: e.target.value })}
+                      value={panNumber}
+                      onChange={(e) => setPanNumber(e.target.value)}
                     />
                   </div>
 
@@ -1282,6 +1401,7 @@ export const DashboardPage = () => {
                     <label className="form-label">Bank Name</label>
                     <input
                       type="text"
+                      placeholder="Enter Bank Name"
                       className="form-input"
                       value={kycData.bankName}
                       onChange={(e) => setKycData({ ...kycData, bankName: e.target.value })}
@@ -1292,6 +1412,7 @@ export const DashboardPage = () => {
                     <label className="form-label">Bank Account Number</label>
                     <input
                       type="text"
+                      placeholder="Enter Account Number"
                       className="form-input"
                       value={kycData.accountNumber}
                       onChange={(e) => setKycData({ ...kycData, accountNumber: e.target.value })}
@@ -1299,9 +1420,10 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">IFSC Code / Swift Code</label>
+                    <label className="form-label">IFSC Code</label>
                     <input
                       type="text"
+                      placeholder="Enter IFSC Code"
                       className="form-input"
                       value={kycData.ifscCode}
                       onChange={(e) => setKycData({ ...kycData, ifscCode: e.target.value })}
@@ -1309,34 +1431,56 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">UPI ID / Crypto Wallet</label>
+                    <label className="form-label">UPI ID / PhonePe</label>
                     <input
                       type="text"
+                      placeholder="Enter UPI ID"
                       className="form-input"
                       value={kycData.upiId}
                       onChange={(e) => setKycData({ ...kycData, upiId: e.target.value })}
                     />
                   </div>
 
+                  {/* PAN CARD FILE UPLOADER SECTION */}
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <label className="form-label">Upload Proof Document (Front & Back)</label>
+                    <label className="form-label">Upload PAN Card Photo *</label>
                     <div style={{
-                      border: '2px dashed var(--border-color)',
-                      borderRadius: '12px',
+                      border: '2px dashed #bfdbfe',
+                      borderRadius: '14px',
                       padding: '24px',
                       textAlign: 'center',
-                      background: '#f8fafc',
-                      cursor: 'pointer'
+                      background: '#eff6ff',
+                      position: 'relative'
                     }}>
-                      <Upload size={32} color="#059669" style={{ margin: '0 auto 8px auto', display: 'block' }} />
-                      <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-main)' }}>Click or drag PDF/JPG image files here</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Max file size 5MB</div>
+                      {(panPhoto || user?.panPhoto) ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                          <img
+                            src={panPhoto || user?.panPhoto}
+                            alt="PAN Card Preview"
+                            style={{ maxHeight: '140px', borderRadius: '10px', objectFit: 'contain', border: '2px solid #bbf7d0' }}
+                          />
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <CheckCircle2 size={16} /> PAN Card Photo Uploaded & Attached
+                          </div>
+                          <label className="btn-outline" style={{ padding: '6px 14px', fontSize: '12px', cursor: 'pointer', background: '#ffffff' }}>
+                            Change PAN Photo
+                            <input type="file" accept="image/*" onChange={handlePanFileChange} style={{ display: 'none' }} />
+                          </label>
+                        </div>
+                      ) : (
+                        <label style={{ cursor: 'pointer', display: 'block' }}>
+                          <Upload size={32} color="#2563eb" style={{ margin: '0 auto 8px auto', display: 'block' }} />
+                          <div style={{ fontWeight: '800', fontSize: '14px', color: '#1e40af' }}>Click to Upload PAN Card Photo</div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>PNG, JPG or JPEG (Max 5MB)</div>
+                          <input type="file" accept="image/*" onChange={handlePanFileChange} style={{ display: 'none' }} />
+                        </label>
+                      )}
                     </div>
                   </div>
 
                   <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
-                    <button type="submit" className="btn-emerald">
-                      Update KYC Document Details
+                    <button type="submit" disabled={kycLoading} className="btn-emerald" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '800' }}>
+                      {kycLoading ? 'Submitting KYC...' : 'Submit & Update KYC Details'}
                     </button>
                   </div>
                 </form>
@@ -1379,7 +1523,7 @@ export const DashboardPage = () => {
                       )}
 
                       <h4 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>{pkg.name}</h4>
-                      
+
                       <div style={{ marginBottom: '16px' }}>
                         <div style={{ fontSize: '32px', fontWeight: '800', color: '#059669' }}>{pkg.price}</div>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '2px' }}>
