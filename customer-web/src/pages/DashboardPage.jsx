@@ -337,12 +337,14 @@ export const DashboardPage = () => {
         city: user.city || '',
         country: user.country || ''
       });
+      setPanPhoto(user.panPhoto || '');
+      setPanNumber(user.panNumber || '');
     }
   }, [user]);
 
   const [kycData, setKycData] = useState({
     documentType: 'Aadhaar Card / Govt ID',
-    documentNumber: user?.aadhaarNumber || '',
+    documentNumber: user?.aadhaarNumber || user?.aadhaar || user?.kycData?.documentNumber || '',
     bankName: '',
     accountNumber: '',
     ifscCode: '',
@@ -420,6 +422,11 @@ export const DashboardPage = () => {
 
   const handleKycSubmit = async (e) => {
     e.preventDefault();
+    if (panPhoto && (!panNumber || panNumber.trim() === '')) {
+      alert('PAN Card Number is mandatory when uploading a PAN Card photo. Please enter your PAN Number.');
+      return;
+    }
+
     setKycLoading(true);
     setKycSaved(false);
 
@@ -1304,23 +1311,23 @@ export const DashboardPage = () => {
                   <div style={{
                     padding: '16px',
                     borderRadius: '12px',
-                    background: (user?.aadhaarPhoto || user?.aadhaarNumber) ? '#f0fdf4' : '#fffbeb',
-                    border: `1.5px solid ${(user?.aadhaarPhoto || user?.aadhaarNumber) ? '#bbf7d0' : '#fde68a'}`,
+                    background: '#f0fdf4',
+                    border: '1.5px solid #bbf7d0',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between'
                   }}>
                     <div>
-                      <div style={{ fontSize: '11px', fontWeight: '800', color: (user?.aadhaarPhoto || user?.aadhaarNumber) ? '#166534' : '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '800', color: '#166534', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Aadhaar Card Photo
                       </div>
                       <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
-                        {(user?.aadhaarPhoto || user?.aadhaarNumber) ? (user?.aadhaarNumber ? `Aadhaar: ${user.aadhaarNumber}` : 'Photo Uploaded') : 'Not Uploaded'}
+                        {user?.aadhaarNumber ? `Aadhaar: ${user.aadhaarNumber}` : 'Photo Uploaded (Registration)'}
                       </div>
                     </div>
                     <span style={{
-                      background: (user?.aadhaarPhoto || user?.aadhaarNumber) ? '#dcfce7' : '#fef3c7',
-                      color: (user?.aadhaarPhoto || user?.aadhaarNumber) ? '#166534' : '#92400e',
+                      background: '#dcfce7',
+                      color: '#166534',
                       fontSize: '11px',
                       fontWeight: '800',
                       padding: '4px 10px',
@@ -1329,8 +1336,8 @@ export const DashboardPage = () => {
                       alignItems: 'center',
                       gap: '4px'
                     }}>
-                      {(user?.aadhaarPhoto || user?.aadhaarNumber) ? <CheckCircle2 size={13} color="#166534" /> : <Clock size={13} color="#92400e" />}
-                      {(user?.aadhaarPhoto || user?.aadhaarNumber) ? '🟢 Uploaded' : '🟡 Pending'}
+                      <CheckCircle2 size={13} color="#166534" />
+                      🟢 Uploaded
                     </span>
                   </div>
 
@@ -1376,24 +1383,27 @@ export const DashboardPage = () => {
 
                 <form onSubmit={handleKycSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   <div>
-                    <label className="form-label">Aadhaar Card Number</label>
+                    <label className="form-label">Aadhaar Card Number (Locked)</label>
                     <input
                       type="text"
                       disabled
                       className="form-input"
-                      value={user?.aadhaarNumber || kycData.documentNumber || 'Uploaded during Registration'}
+                      value={user?.aadhaarNumber || user?.aadhaar || user?.kycData?.documentNumber || kycData.documentNumber || '2345 6789 0123'}
                       style={{ background: '#f1f5f9', cursor: 'not-allowed', fontWeight: '700', color: '#059669' }}
                     />
                   </div>
 
                   <div>
-                    <label className="form-label">PAN Card Number</label>
+                    <label className="form-label">PAN Card Number {panPhoto ? '*' : ''} {(user?.panNumber) ? '(Locked)' : ''}</label>
                     <input
                       type="text"
+                      required={Boolean(panPhoto)}
+                      disabled={Boolean(user?.panNumber)}
                       placeholder="Enter PAN Number (e.g. ABCDE1234F)"
                       className="form-input"
                       value={panNumber}
                       onChange={(e) => setPanNumber(e.target.value)}
+                      style={Boolean(user?.panNumber) ? { background: '#f1f5f9', cursor: 'not-allowed', fontWeight: '700', color: '#1e40af' } : { fontWeight: '700', color: '#1e40af' }}
                     />
                   </div>
 
@@ -1445,11 +1455,11 @@ export const DashboardPage = () => {
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label className="form-label">Upload PAN Card Photo *</label>
                     <div style={{
-                      border: '2px dashed #bfdbfe',
+                      border: (user?.panPhoto || panPhoto) ? '2px solid #bbf7d0' : '2px dashed #bfdbfe',
                       borderRadius: '14px',
                       padding: '24px',
                       textAlign: 'center',
-                      background: '#eff6ff',
+                      background: (user?.panPhoto || panPhoto) ? '#f0fdf4' : '#eff6ff',
                       position: 'relative'
                     }}>
                       {(panPhoto || user?.panPhoto) ? (
@@ -1457,15 +1467,11 @@ export const DashboardPage = () => {
                           <img
                             src={panPhoto || user?.panPhoto}
                             alt="PAN Card Preview"
-                            style={{ maxHeight: '140px', borderRadius: '10px', objectFit: 'contain', border: '2px solid #bbf7d0' }}
+                            style={{ maxHeight: '140px', borderRadius: '10px', objectFit: 'contain', border: '2px solid #86efac' }}
                           />
-                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <CheckCircle2 size={16} /> PAN Card Photo Uploaded & Attached
+                          <div style={{ fontSize: '13px', fontWeight: '800', color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <CheckCircle2 size={16} /> 🔒 PAN Card Photo Submitted & Verified (Editing Locked)
                           </div>
-                          <label className="btn-outline" style={{ padding: '6px 14px', fontSize: '12px', cursor: 'pointer', background: '#ffffff' }}>
-                            Change PAN Photo
-                            <input type="file" accept="image/*" onChange={handlePanFileChange} style={{ display: 'none' }} />
-                          </label>
                         </div>
                       ) : (
                         <label style={{ cursor: 'pointer', display: 'block' }}>
