@@ -330,38 +330,63 @@ export const DashboardPage = () => {
   const [kycSaved, setKycSaved] = useState(false);
 
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+  const [withdrawMethod, setWithdrawMethod] = useState('Bank Account (Global Chase - •••• 4920)');
+  const [withdrawSuccess, setWithdrawSuccess] = useState(null);
+  const [withdrawError, setWithdrawError] = useState(null);
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
 
-  const referralCode = user?.phone || user?.sponsorId || 'N/A';
-  const referralLink = `https://nexismlm.com/join?ref=${encodeURIComponent(referralCode)}`;
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
-  };
-
-  const handleProfileSave = (e) => {
+  const handleWithdraw = async (e) => {
     e.preventDefault();
-    setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 3000);
-  };
+    const amountNum = Number(withdrawAmount);
+    if (!withdrawAmount || isNaN(amountNum) || amountNum < 500) {
+      setWithdrawError('Minimum withdrawal amount is ₹500.');
+      return;
+    }
+    if (amountNum > dynamicWallet) {
+      setWithdrawError(`Insufficient balance. Available wallet balance is ₹${dynamicWallet.toLocaleString('en-IN')}.`);
+      return;
+    }
 
-  const handleKycSubmit = (e) => {
-    e.preventDefault();
-    setKycStatus('Under Review');
-    setKycSaved(true);
-    setTimeout(() => setKycSaved(false), 3000);
-  };
+    setWithdrawLoading(true);
+    setWithdrawError(null);
+    setWithdrawSuccess(null);
 
-  const handleWithdraw = (e) => {
-    e.preventDefault();
-    if (!withdrawAmount || Number(withdrawAmount) <= 0) return;
-    setWithdrawSuccess(true);
-    setTimeout(() => {
-      setWithdrawSuccess(false);
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api/auth').replace('/auth', '');
+      const res = await fetch(`${baseUrl}/customer/wallet/withdraw`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {})
+        },
+        body: JSON.stringify({
+          amount: amountNum,
+          method: withdrawMethod
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Withdrawal request failed');
+      }
+
+      if (typeof data.walletBalance === 'number') {
+        setDynamicWallet(data.walletBalance);
+        if (user) {
+          const updatedUser = { ...user, walletBalance: data.walletBalance };
+          localStorage.setItem('customer_user', JSON.stringify(updatedUser));
+        }
+      }
+
+      setWithdrawSuccess(data.message || 'Withdrawal request submitted to admin!');
       setWithdrawAmount('');
-    }, 3000);
+      fetchTeamData();
+      setTimeout(() => setWithdrawSuccess(null), 6000);
+    } catch (err) {
+      setWithdrawError(err.message);
+    } finally {
+      setWithdrawLoading(false);
+    }
   };
 
   const defaultL1 = [
@@ -1691,7 +1716,7 @@ export const DashboardPage = () => {
                 </div>
               </div>
 
-              {/* Request Payout Form */}
+              {/* Request Payout Form & History */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px' }}>
                 <div className="light-card" style={{ padding: '28px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '20px' }}>
@@ -1699,69 +1724,104 @@ export const DashboardPage = () => {
                   </h3>
 
                   {withdrawSuccess && (
-                    <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontSize: '14px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <CheckCircle2 size={18} /> Withdrawal request submitted to admin!
+                    <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontSize: '13px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CheckCircle2 size={18} /> {withdrawSuccess}
+                    </div>
+                  )}
+
+                  {withdrawError && (
+                    <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#991b1b', fontSize: '13px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertCircle size={18} /> {withdrawError}
                     </div>
                   )}
 
                   <form onSubmit={handleWithdraw}>
                     <div style={{ marginBottom: '16px' }}>
-                      <label className="form-label">Withdrawal Amount ($)</label>
+                      <label className="form-label">Withdrawal Amount (₹) *</label>
                       <input
                         type="number"
+                        required
+                        min={500}
+                        max={dynamicWallet}
                         className="form-input"
-                        placeholder="Enter amount (min ₹1000)"
+                        placeholder="Enter amount (min ₹500)"
                         value={withdrawAmount}
-                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        onChange={(e) => {
+                          setWithdrawAmount(e.target.value);
+                          if (withdrawError) setWithdrawError(null);
+                        }}
                       />
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        Available: <strong>₹{dynamicWallet.toLocaleString('en-IN')}</strong> (Min: ₹500)
+                      </div>
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>
                       <label className="form-label">Payout Method</label>
-                      <select className="form-input">
-                        <option>Bank Account (Global Chase - •••• 4920)</option>
-                        <option>USDT (TRC20 Wallet)</option>
-                        <option>UPI Transfer (alexrivera@upi)</option>
+                      <select
+                        className="form-input"
+                        value={withdrawMethod}
+                        onChange={(e) => setWithdrawMethod(e.target.value)}
+                      >
+                        <option value="Bank Account (Global Chase - •••• 4920)">Bank Account (Global Chase - •••• 4920)</option>
+                        <option value="UPI Transfer (alexrivera@upi)">UPI Transfer (alexrivera@upi)</option>
+                        <option value="USDT (TRC20 Wallet)">USDT (TRC20 Wallet)</option>
                       </select>
                     </div>
 
-                    <button type="submit" className="btn-emerald" style={{ width: '100%' }}>
-                      Submit Withdrawal Payout
+                    <button type="submit" disabled={withdrawLoading} className="btn-emerald" style={{ width: '100%', padding: '12px', fontSize: '14px', fontWeight: '800' }}>
+                      {withdrawLoading ? 'Submitting Request...' : 'Submit Withdrawal Payout'}
                     </button>
                   </form>
                 </div>
 
-                {/* Recent Payout Statement */}
+                {/* Recent Payout Statement & Withdrawal Requests */}
                 <div className="light-card" style={{ padding: '28px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '20px' }}>
-                    Recent Wallet Transactions
+                    Payout Withdrawal Requests & Status
                   </h3>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
-                      <div>
-                        <div style={{ fontWeight: '700', fontSize: '14px' }}>Level 1 Referral Commission</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>From Sarah Connor • Aug 01, 2026</div>
-                      </div>
-                      <span style={{ color: '#059669', fontWeight: '800' }}>+₹10,000.00</span>
+                  {notificationsList.filter(n => n.type === 'Wallet Withdrawal').length === 0 ? (
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
+                      No withdrawal requests raised yet. Submit a payout request on the left to start.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {notificationsList.filter(n => n.type === 'Wallet Withdrawal').map((req, idx) => {
+                        const isAppr = req.status === 'Approved';
+                        const isRej = req.status === 'Rejected';
+                        return (
+                          <div key={req._id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                            <div>
+                              <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-main)' }}>
+                                Withdrawal via {req.packageName || 'Bank Payout'}
+                              </div>
+                              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                Requested on {req.createdAt ? new Date(req.createdAt).toLocaleDateString('en-IN') : 'Recent'}
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontWeight: '800', fontSize: '15px', color: isRej ? '#dc2626' : (isAppr ? '#059669' : '#d97706') }}>
+                                -₹{Number(req.amount || req.commissionAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </div>
+                              <span style={{
+                                display: 'inline-block',
+                                marginTop: '4px',
+                                background: isAppr ? '#dcfce7' : (isRej ? '#fef2f2' : '#fef3c7'),
+                                color: isAppr ? '#166534' : (isRej ? '#991b1b' : '#92400e'),
+                                fontSize: '11px',
+                                fontWeight: '800',
+                                padding: '2px 8px',
+                                borderRadius: '8px'
+                              }}>
+                                {isAppr ? '🟢 Payout Approved' : (isRej ? '🔴 Rejected (Refunded)' : '🟡 Pending Admin Review')}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
-                      <div>
-                        <div style={{ fontWeight: '700', fontSize: '14px' }}>Daily Package Yield ROI</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Gold Package • Aug 02, 2026</div>
-                      </div>
-                      <span style={{ color: '#d97706', fontWeight: '800' }}>+₹500.00</span>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
-                      <div>
-                        <div style={{ fontWeight: '700', fontSize: '14px' }}>Level 2 Override Commission</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>From Kevin Flynn • July 29, 2026</div>
-                      </div>
-                      <span style={{ color: '#8b5cf6', fontWeight: '800' }}>+₹2,000.00</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -387,14 +387,50 @@ export const getCustomerTeamDetails = async (req, res) => {
 // @route   POST /api/customer/wallet/withdraw
 export const requestWalletWithdrawal = async (req, res) => {
   try {
-    const { amount, method } = req.body;
-    if (!amount || Number(amount) < 500) {
-      return res.status(400).json({ message: 'Minimum withdrawal amount is ₹500' });
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: 'Authentication required to raise withdrawal request.' });
     }
+
+    const { amount, method } = req.body;
+    const withdrawAmt = Number(amount);
+
+    if (!withdrawAmt || isNaN(withdrawAmt) || withdrawAmt < 500) {
+      return res.status(400).json({ message: 'Minimum withdrawal amount is ₹500.' });
+    }
+
+    const currentWallet = Number(user.walletBalance || 0);
+    if (withdrawAmt > currentWallet) {
+      return res.status(400).json({
+        message: `Insufficient wallet balance. Requested ₹${withdrawAmt.toLocaleString('en-IN')}, but available wallet balance is ₹${currentWallet.toLocaleString('en-IN')}.`
+      });
+    }
+
+    // 1. Lock/deduct requested amount from user's wallet
+    user.walletBalance = Math.max(0, currentWallet - withdrawAmt);
+    await user.save();
+
+    // 2. Create Pending Wallet Withdrawal Approval Record for Admin Panel
+    const approval = await Approval.create({
+      type: 'Wallet Withdrawal',
+      userId: user._id,
+      sponsorId: user.sponsorId || user._id,
+      sponsorName: user.name,
+      enrolledMemberName: user.name,
+      enrolledMemberEmail: user.email,
+      commissionAmount: withdrawAmt,
+      amount: withdrawAmt,
+      packageName: `Withdrawal via ${method || 'Bank Account'}`,
+      position: method || 'Bank Payout',
+      status: 'Pending',
+      submittedDate: new Date()
+    });
 
     res.json({
       success: true,
-      message: `Withdrawal request of ₹${Number(amount).toLocaleString('en-IN')} via ${method || 'Bank Account'} submitted successfully!`,
+      message: `Withdrawal request of ₹${withdrawAmt.toLocaleString('en-IN')} via ${method || 'Bank Account'} submitted successfully! Pending Admin review & approval.`,
+      approval,
+      walletBalance: user.walletBalance,
       transactionId: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
       timestamp: new Date().toISOString(),
     });

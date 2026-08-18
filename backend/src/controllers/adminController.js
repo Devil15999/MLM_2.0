@@ -29,6 +29,15 @@ export const approveCommissionRequest = async (req, res) => {
     approval.actionDate = new Date();
     await approval.save();
 
+    // If request type is Wallet Withdrawal, handle payout approval
+    if (approval.type === 'Wallet Withdrawal') {
+      return res.json({
+        success: true,
+        message: `Approved wallet withdrawal of ₹${(approval.amount || approval.commissionAmount || 0).toLocaleString('en-IN')} for ${approval.enrolledMemberName}.`,
+        approval,
+      });
+    }
+
     // 1. Find Level 1 Sponsor
     let sponsorUser = null;
     if (approval.sponsorId) {
@@ -162,6 +171,28 @@ export const rejectCommissionRequest = async (req, res) => {
     approval.status = 'Rejected';
     approval.actionDate = new Date();
     await approval.save();
+
+    if (approval.type === 'Wallet Withdrawal') {
+      const refundAmt = Number(approval.amount || approval.commissionAmount || 0);
+      let customerUser = null;
+      if (approval.userId) {
+        customerUser = await User.findById(approval.userId).catch(() => null);
+      }
+      if (!customerUser && approval.enrolledMemberEmail) {
+        customerUser = await User.findOne({ email: approval.enrolledMemberEmail }).catch(() => null);
+      }
+
+      if (customerUser && refundAmt > 0) {
+        customerUser.walletBalance = (customerUser.walletBalance || 0) + refundAmt;
+        await customerUser.save();
+      }
+
+      return res.json({
+        success: true,
+        message: `Rejected wallet withdrawal request for ${approval.enrolledMemberName}. Refunded ₹${refundAmt.toLocaleString('en-IN')} back to member wallet.`,
+        approval,
+      });
+    }
 
     if (approval.enrolledMemberEmail || approval.enrolledMemberName) {
       let enrolledUser = await User.findOne({

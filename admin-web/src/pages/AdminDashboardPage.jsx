@@ -488,7 +488,8 @@ const PendingApprovalsSection = () => {
   };
 
   const joiningRequests = approvals.filter(a => a.type === 'Joining Request');
-  const downlineRequests = approvals.filter(a => a.type === 'Enrolled Downline Commission' || a.type !== 'Joining Request');
+  const downlineRequests = approvals.filter(a => a.type === 'Enrolled Downline Commission');
+  const walletRequests = approvals.filter(a => a.type === 'Wallet Withdrawal');
 
   return (
     <>
@@ -525,8 +526,8 @@ const PendingApprovalsSection = () => {
         </div>
 
         {actionMessage && (
-          <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontWeight: '700', fontSize: '13px', marginBottom: '20px' }}>
-            {actionMessage}
+          <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', padding: '12px 16px', borderRadius: '10px', marginBottom: '20px', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CheckCircle2 size={16} /> {actionMessage}
           </div>
         )}
 
@@ -534,10 +535,12 @@ const PendingApprovalsSection = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                <th style={{ padding: '12px 16px' }}>Applicant Name</th>
-                <th style={{ padding: '12px 16px' }}>Package</th>
-                <th style={{ padding: '12px 16px' }}>Aadhaar Number</th>
+                <th style={{ padding: '12px 16px' }}>Distributor Name</th>
+                <th style={{ padding: '12px 16px' }}>Email</th>
+                <th style={{ padding: '12px 16px' }}>Sponsor Phone / Code</th>
+                <th style={{ padding: '12px 16px' }}>Package Tier</th>
                 <th style={{ padding: '12px 16px' }}>Documents</th>
+                <th style={{ padding: '12px 16px' }}>Date</th>
                 <th style={{ padding: '12px 16px' }}>Status</th>
                 <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
               </tr>
@@ -545,24 +548,17 @@ const PendingApprovalsSection = () => {
             <tbody>
               {joiningRequests.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No pending public joining requests.
+                  <td colSpan="8" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No pending registration requests.
                   </td>
                 </tr>
               ) : (
                 joiningRequests.map((app) => (
                   <tr key={app._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{app.enrolledMemberEmail}</div>
-                      <div style={{ fontSize: '11px', color: '#059669', marginTop: '2px', fontWeight: '600' }}>
-                        Sponsor: {app.sponsorName || 'System Admin'}
-                      </div>
-                    </td>
+                    <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName}</td>
+                    <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }} className="code-font">{app.enrolledMemberEmail}</td>
+                    <td style={{ padding: '14px 16px', fontWeight: '600', color: '#4f46e5' }}>{app.sponsorId || app.sponsorName || 'Direct Sign-up'}</td>
                     <td style={{ padding: '14px 16px', fontWeight: '600' }}>{app.packageName}</td>
-                    <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }}>
-                      {app.userId?.aadhaarNumber || 'N/A'}
-                    </td>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         {app.userId?.aadhaarPhoto && (
@@ -581,9 +577,12 @@ const PendingApprovalsSection = () => {
                           </button>
                         )}
                         {!app.userId?.aadhaarPhoto && !app.userId?.panPhoto && !app.userId?.transactionPhoto && (
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Portal Direct</span>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>N/A</span>
                         )}
                       </div>
+                    </td>
+                    <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                      {app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-IN') : 'Today'}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <span style={{
@@ -745,6 +744,114 @@ const PendingApprovalsSection = () => {
                             style={{ padding: '6px 12px', fontSize: '12px', color: '#dc2626', borderColor: '#fca5a5' }}
                           >
                             Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Completed</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Block 3: Wallet Withdrawal Payout Requests */}
+      <div className="light-card" style={{ padding: '28px', marginBottom: '28px', border: '2px solid #8b5cf6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f3e8ff', color: '#6b21a8', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>
+              <CreditCard size={14} /> Wallet Payout Requests ({walletRequests.filter(a => a.status === 'Pending').length} Pending)
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Distributor Wallet Payout Requests</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Review and approve distributor wallet withdrawal payout requests</p>
+          </div>
+
+          <button
+            onClick={fetchApprovals}
+            style={{
+              padding: '8px 14px',
+              background: '#ffffff',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              color: 'var(--text-main)',
+              fontSize: '13px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'pulse-dot' : ''} /> Refresh Requests
+          </button>
+        </div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                <th style={{ padding: '12px 16px' }}>Distributor Name</th>
+                <th style={{ padding: '12px 16px' }}>Distributor Email</th>
+                <th style={{ padding: '12px 16px' }}>Requested Amount</th>
+                <th style={{ padding: '12px 16px' }}>Payout Method</th>
+                <th style={{ padding: '12px 16px' }}>Request Date</th>
+                <th style={{ padding: '12px 16px' }}>Status</th>
+                <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {walletRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No wallet withdrawal payout requests submitted yet.
+                  </td>
+                </tr>
+              ) : (
+                walletRequests.map((app) => (
+                  <tr key={app._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                    <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{app.enrolledMemberName || app.sponsorName}</td>
+                    <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '13px' }} className="code-font">{app.enrolledMemberEmail}</td>
+                    <td style={{ padding: '14px 16px', fontWeight: '800', color: '#8b5cf6', fontSize: '15px' }}>
+                      ₹{Number(app.amount || app.commissionAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ background: '#f1f5f9', color: '#475569', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                        {app.packageName || 'Bank Payout'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                      {app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-IN') : 'Today'}
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{
+                        background: app.status === 'Approved' ? '#dcfce7' : (app.status === 'Rejected' ? '#fef2f2' : '#fef3c7'),
+                        color: app.status === 'Approved' ? '#166534' : (app.status === 'Rejected' ? '#991b1b' : '#92400e'),
+                        padding: '4px 12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '700'
+                      }}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                      {app.status === 'Pending' ? (
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => handleApprove(app._id, app.enrolledMemberName || 'Distributor')}
+                            className="btn-emerald"
+                            style={{ padding: '6px 12px', fontSize: '12px' }}
+                          >
+                            Approve Payout
+                          </button>
+                          <button
+                            onClick={() => handleReject(app._id, app.enrolledMemberName || 'Distributor')}
+                            className="btn-outline"
+                            style={{ padding: '6px 12px', fontSize: '12px', color: '#dc2626', borderColor: '#fca5a5' }}
+                          >
+                            Reject & Refund
                           </button>
                         </div>
                       ) : (
