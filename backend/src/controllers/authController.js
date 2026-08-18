@@ -42,17 +42,22 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Distributor already registered with this Aadhaar Number' });
     }
 
-    // Verify Sponsor ID if provided, otherwise default to System Admin
+    // Verify Sponsor Phone Number if provided, otherwise default to System Admin
     const reqSponsorId = sponsorId ? sponsorId.trim() : '';
     let sponsor = null;
 
     if (reqSponsorId !== '') {
       sponsor = await User.findOne({
-        $or: [{ sponsorId: reqSponsorId }, { _id: reqSponsorId.match(/^[0-9a-fA-F]{24}$/) ? reqSponsorId : null }, { email: reqSponsorId.toLowerCase() }]
+        $or: [
+          { phone: reqSponsorId },
+          { sponsorId: reqSponsorId },
+          { _id: reqSponsorId.match(/^[0-9a-fA-F]{24}$/) ? reqSponsorId : null },
+          { email: reqSponsorId.toLowerCase() }
+        ]
       }).catch(() => null);
 
       if (!sponsor && reqSponsorId !== 'MASTER-HEAD' && reqSponsorId !== 'NEXIS-TOP') {
-        return res.status(400).json({ message: `Invalid Sponsor ID '${reqSponsorId}'. Sponsor code does not exist in network database.` });
+        return res.status(400).json({ message: `Invalid Sponsor Phone Number '${reqSponsorId}'. Sponsor phone number does not exist in network database.` });
       }
     }
 
@@ -61,6 +66,7 @@ export const registerUser = async (req, res) => {
       sponsor = await User.findOne({
         $or: [
           { email: 'dev2@gmail.com' },
+          { phone: '+919876543210' },
           { sponsorId: 'SP-dev2-3997' },
           { role: 'admin' },
           { sponsorId: 'MASTER-HEAD' }
@@ -68,31 +74,19 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Generate unique Sponsor ID for the new user (format: firstname-mid4aadhaar@nexismlm.com)
-    const namePrefix = name.trim().split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
-    const mid4Aadhaar = cleanAadhaar.slice(4, 8) || '1234';
-    let userOwnSponsorId = `${namePrefix}-${mid4Aadhaar}@nexismlm.com`;
-
-    let isUnique = false;
-    let attempts = 0;
-    while (!isUnique && attempts < 50) {
-      const existing = await User.findOne({ sponsorId: userOwnSponsorId });
-      if (!existing) {
-        isUnique = true;
-      } else {
-        attempts++;
-        userOwnSponsorId = `${namePrefix}-${mid4Aadhaar}${attempts}@nexismlm.com`;
-      }
-    }
+    // Use Phone Number as User's own Sponsor ID / Code
+    const cleanPhone = phone.trim();
+    const userOwnSponsorId = cleanPhone || `SP-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const user = await User.create({
       name,
-      phone,
+      phone: cleanPhone,
       email,
       password,
       sponsorId: userOwnSponsorId,
       parentSponsorId: sponsor ? sponsor._id : null,
-      parentSponsorCode: sponsor ? sponsor.sponsorId : 'SP-dev2-3997',
+      parentSponsorCode: sponsor ? (sponsor.phone || sponsor.sponsorId) : (reqSponsorId || 'Admin'),
+      parentSponsorEmail: sponsor ? sponsor.email : 'dev2@gmail.com',
       parentSponsorEmail: sponsor ? sponsor.email : 'dev2@gmail.com',
       role: 'customer',
       rank: 'Member',

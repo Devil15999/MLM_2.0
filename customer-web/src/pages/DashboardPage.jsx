@@ -297,8 +297,8 @@ export const DashboardPage = () => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
-  const referralCode = user?.sponsorId || 'SP-1001';
-  const referralLink = `https://nexismlm.com/join?ref=${referralCode}`;
+  const referralCode = user?.phone || user?.sponsorId || 'N/A';
+  const referralLink = `https://nexismlm.com/join?ref=${encodeURIComponent(referralCode)}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -948,7 +948,7 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Sponsor Referral Code</label>
+                    <label className="form-label">Your Sponsor Phone Number / Referral Code</label>
                     <input
                       type="text"
                       className="form-input"
@@ -1702,7 +1702,7 @@ export const DashboardPage = () => {
 
             <form onSubmit={handleEnrollSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label className="form-label">Sponsor ID</label>
+                <label className="form-label">Sponsor Phone Number</label>
                 <input type="text" disabled value={referralCode} className="form-input" style={{ background: '#f1f5f9', cursor: 'not-allowed', color: '#4f46e5', fontWeight: '700' }} />
               </div>
 

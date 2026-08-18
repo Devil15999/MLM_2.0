@@ -246,6 +246,7 @@ export const getCustomerTeamDetails = async (req, res) => {
         $or: [
           ...(user._id ? [{ parentSponsorId: user._id }] : []),
           ...(uId ? [{ parentSponsorId: uId }] : []),
+          ...(user.phone ? [{ parentSponsorCode: user.phone }] : []),
           ...(uSponsorId ? [{ parentSponsorCode: uSponsorId }] : []),
           ...(uEmail ? [{ parentSponsorEmail: uEmail }] : [])
         ]
@@ -451,29 +452,15 @@ export const enrollDownlineMember = async (req, res) => {
     }
 
     const resolvedParentId = parentSponsorId || enrollingUser._id;
-    const resolvedParentCode = parentSponsorCode || sponsorId || enrollingUser.sponsorId;
+    const resolvedParentCode = enrollingUser.phone || parentSponsorCode || sponsorId || enrollingUser.sponsorId;
     const resolvedParentEmail = parentSponsorEmail || enrollingUser.email;
     const resolvedSponsorName = sponsorName || enrollingUser.name || enrollingUser.email || 'Sponsor';
 
     // 1. Password / Dynamic OTP handling
     const dynamicOtp = password && password.trim().length >= 6 ? password.trim() : `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 2. Generate unique Sponsor ID for the new downline member
-    const namePrefix = memberName.trim().split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
-    const randCode = Math.floor(1000 + Math.random() * 9000);
-    let ownSponsorId = `SP-${namePrefix}-${randCode}`;
-
-    let isUnique = false;
-    let attempts = 0;
-    while (!isUnique && attempts < 30) {
-      const existing = await User.findOne({ sponsorId: ownSponsorId });
-      if (!existing) {
-        isUnique = true;
-      } else {
-        attempts++;
-        ownSponsorId = `SP-${namePrefix}-${randCode + attempts}`;
-      }
-    }
+    // 2. Use Phone Number as Sponsor ID / Code for new downline member
+    const ownSponsorId = cleanPhone || `SP-${Math.floor(1000 + Math.random() * 9000)}`;
 
     // Package Details Resolver
     const pStr = String(packageName || '').toLowerCase();

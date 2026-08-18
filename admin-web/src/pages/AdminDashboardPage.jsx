@@ -308,7 +308,7 @@ export const AdminDashboardPage = () => {
                   <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input
                     type="text"
-                    placeholder="Search distributor or sponsor ID..."
+                    placeholder="Search distributor, phone, or sponsor phone..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{
@@ -349,7 +349,7 @@ export const AdminDashboardPage = () => {
                   <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     <th style={{ padding: '12px 16px' }}>Distributor Name</th>
                     <th style={{ padding: '12px 16px' }}>Email</th>
-                    <th style={{ padding: '12px 16px' }}>Sponsor ID</th>
+                    <th style={{ padding: '12px 16px' }}>Sponsor Phone / Code</th>
                     <th style={{ padding: '12px 16px' }}>Rank Level</th>
                     <th style={{ padding: '12px 16px' }}>Wallet Balance</th>
                     <th style={{ padding: '12px 16px' }}>Direct Downlines</th>
@@ -374,7 +374,7 @@ export const AdminDashboardPage = () => {
                       <tr key={u._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
                         <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{u.name}</td>
                         <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '13px' }} className="code-font">{u.email}</td>
-                        <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }} className="code-font">{u.sponsorId || 'NEXIS-TOP'}</td>
+                        <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }} className="code-font">{u.phone || u.sponsorId || 'NEXIS-TOP'}</td>
                         <td style={{ padding: '14px 16px' }}>
                           <span style={{
                             padding: '4px 10px',

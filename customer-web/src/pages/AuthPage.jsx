@@ -237,14 +237,14 @@ export const AuthPage = () => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
-                    Sponsor ID Code <span style={{ fontWeight: '400', color: 'var(--text-muted)' }}>(Optional)</span>
+                    Sponsor Phone Number <span style={{ fontWeight: '400', color: 'var(--text-muted)' }}>(Optional)</span>
                   </label>
                   <div style={{ position: 'relative' }}>
                     <Share2 size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
                       type="text"
                       name="sponsorId"
-                      placeholder="e.g. alex-6789@nexismlm.com (Leave empty for Admin)"
+                      placeholder="e.g. +91 98765 43210 (Leave empty for Admin)"
                       value={formData.sponsorId}
                       onChange={handleChange}
                       style={{
