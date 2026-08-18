@@ -87,6 +87,7 @@ export const getCustomerDashboard = async (req, res) => {
 };
 
 // @desc    Update Distributor Profile
+// @desc    Update Distributor Profile
 // @route   PUT /api/customer/profile
 export const updateCustomerProfile = async (req, res) => {
   try {
@@ -95,7 +96,7 @@ export const updateCustomerProfile = async (req, res) => {
       return res.status(401).json({ message: 'User authorization required' });
     }
 
-    const { name, phone, address, city, country } = req.body;
+    const { name, phone, email, address, city, country } = req.body;
     const user = await User.findById(userId);
 
     if (!user) {
@@ -103,10 +104,14 @@ export const updateCustomerProfile = async (req, res) => {
     }
 
     if (name) user.name = name;
-    if (phone) user.phone = phone;
-    if (address) user.address = address;
-    if (city) user.city = city;
-    if (country) user.country = country;
+    if (phone) {
+      user.phone = phone;
+      user.sponsorId = phone; // Phone number serves as sponsorId
+    }
+    if (email) user.email = String(email).toLowerCase().trim();
+    if (address !== undefined) user.address = address;
+    if (city !== undefined) user.city = city;
+    if (country !== undefined) user.country = country;
 
     await user.save();
 
@@ -117,9 +122,14 @@ export const updateCustomerProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        sponsorId: user.sponsorId || user.phone,
         address: user.address,
         city: user.city,
         country: user.country,
+        walletBalance: user.walletBalance,
+        totalIncome: user.totalIncome,
+        level1AffiliateIncome: user.level1AffiliateIncome,
+        level2AffiliateIncome: user.level2AffiliateIncome
       },
     });
   } catch (error) {

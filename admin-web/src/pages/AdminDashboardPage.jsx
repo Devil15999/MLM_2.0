@@ -10,6 +10,8 @@ import {
   RefreshCw,
   Search,
   CheckCircle,
+  CheckCircle2,
+  CreditCard,
   Play,
   Share2,
   Award,

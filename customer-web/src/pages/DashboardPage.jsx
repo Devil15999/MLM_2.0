@@ -13,6 +13,8 @@ import {
   Share2,
   Copy,
   CheckCircle2,
+  AlertCircle,
+  Lock,
   DollarSign,
   TrendingUp,
   ArrowUpRight,
@@ -307,27 +309,106 @@ export const DashboardPage = () => {
   };
 
 
-  // Forms state
+  // Copy feedback states
+  const [phoneCopied, setPhoneCopied] = useState(false);
+  const [sidebarCopied, setSidebarCopied] = useState(false);
+  const [headerCopied, setHeaderCopied] = useState(false);
+
+  // Forms state (populated ONLY with actual user data, no fake hardcoded defaults)
   const [profileData, setProfileData] = useState({
-    name: user?.name || 'Alex Rivera',
-    email: user?.email || 'alex.rivera@example.com',
-    phone: '+1 (555) 234-5678',
-    address: '742 Evergreen Terrace',
-    city: 'Springfield',
-    country: 'United States'
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || user?.sponsorId || '',
+    address: user?.address || '',
+    city: user?.city || '',
+    country: user?.country || ''
   });
   const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || user.sponsorId || '',
+        address: user.address || '',
+        city: user.city || '',
+        country: user.country || ''
+      });
+    }
+  }, [user]);
 
   const [kycData, setKycData] = useState({
     documentType: 'Aadhaar Card / Govt ID',
-    documentNumber: '8942-1049-5821',
-    bankName: 'Global Chase Bank',
-    accountNumber: '•••• •••• 4920',
-    ifscCode: 'CHAS0009182',
-    upiId: 'alexrivera@upi'
+    documentNumber: user?.aadhaarNumber || '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    upiId: ''
   });
   const [kycStatus, setKycStatus] = useState('Verified');
   const [kycSaved, setKycSaved] = useState(false);
+
+  const referralCode = profileData.phone || user?.phone || user?.sponsorId || 'N/A';
+  const referralLink = `https://nexismlm.com/join?ref=${encodeURIComponent(referralCode)}`;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  };
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault();
+    setProfileLoading(true);
+    setProfileError(null);
+    setProfileSaved(false);
+
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api/auth').replace('/auth', '');
+      const res = await fetch(`${baseUrl}/customer/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {})
+        },
+        body: JSON.stringify({
+          name: profileData.name,
+          email: profileData.email,
+          phone: profileData.phone,
+          address: profileData.address,
+          city: profileData.city,
+          country: profileData.country
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update profile');
+      }
+
+      if (data.user) {
+        const updatedUser = { ...user, ...data.user };
+        localStorage.setItem('customer_user', JSON.stringify(updatedUser));
+      }
+
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 4000);
+    } catch (err) {
+      setProfileError(err.message);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleKycSubmit = (e) => {
+    e.preventDefault();
+    setKycStatus('Under Review');
+    setKycSaved(true);
+    setTimeout(() => setKycSaved(false), 3000);
+  };
 
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('Bank Account (Global Chase - •••• 4920)');
@@ -404,15 +485,17 @@ export const DashboardPage = () => {
   const level1MembersList = isDemoAlexUser ? [...defaultL1, ...enrolledLevel1] : enrolledLevel1;
   const level2MembersList = isDemoAlexUser ? [...defaultL2, ...enrolledLevel2] : enrolledLevel2;
 
+  const safeNotifs = Array.isArray(notificationsList) ? notificationsList : [];
+
   const approvedL1Members = level1MembersList.filter((m) => {
-    const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+    const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
     const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
     if (isRejected) return false;
     return m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance';
   });
 
   const approvedL2Members = level2MembersList.filter((m) => {
-    const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+    const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
     const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
     if (isRejected) return false;
     return m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet';
@@ -614,27 +697,43 @@ export const DashboardPage = () => {
 
         {/* Sidebar User Profile Summary & Logout */}
         <div style={{ padding: '16px 14px', borderTop: '1px solid var(--border-color)', background: '#f8fafc' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', padding: '4px 6px' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: '#059669',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: '800',
-              fontSize: '14px'
-            }}>
-              {(user?.name || 'Alex Rivera').charAt(0)}
-            </div>
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {user?.name || 'Alex Rivera'}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px', padding: '6px 8px', background: '#ffffff', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+              <div style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: '#059669',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: '800',
+                fontSize: '13px',
+                flexShrink: 0
+              }}>
+                {(user?.name || 'User').charAt(0).toUpperCase()}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {referralCode}</div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                  {user?.name || 'Distributor'}
+                </div>
+                <div style={{ fontSize: '11px', color: '#4f46e5', fontWeight: '700', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                  Sponsor: {referralCode}
+                </div>
+              </div>
             </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(referralCode);
+                setSidebarCopied(true);
+                setTimeout(() => setSidebarCopied(false), 3000);
+              }}
+              title="Copy Sponsor Code (Phone)"
+              style={{ background: '#eff6ff', border: '1px solid #c7d2fe', padding: '6px 8px', borderRadius: '8px', cursor: 'pointer', color: '#4f46e5', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', flexShrink: 0 }}
+            >
+              {sidebarCopied ? <CheckCircle2 size={13} color="#059669" /> : <Copy size={13} />}
+            </button>
           </div>
 
           <button
@@ -770,6 +869,32 @@ export const DashboardPage = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 14px',
+              background: '#eef2ff',
+              border: '1px solid #c7d2fe',
+              borderRadius: '20px',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              navigator.clipboard.writeText(referralCode);
+              setHeaderCopied(true);
+              setTimeout(() => setHeaderCopied(false), 3000);
+            }}
+            title="Click to Copy Parent Sponsor Code (Phone)"
+            >
+              <Phone size={15} color="#4f46e5" />
+              <span style={{ fontSize: '13px', color: '#3730a3', fontWeight: '700' }}>
+                Sponsor Code: <strong>{referralCode}</strong>
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', color: '#4f46e5', marginLeft: '2px' }}>
+                {headerCopied ? <Check size={14} color="#059669" /> : <Copy size={14} />}
+              </span>
             </div>
 
             <div style={{
@@ -985,16 +1110,24 @@ export const DashboardPage = () => {
                 </h3>
 
                 {profileSaved && (
-                  <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontSize: '14px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '10px', color: '#166534', fontSize: '13px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <CheckCircle2 size={18} /> Profile details saved successfully!
+                  </div>
+                )}
+
+                {profileError && (
+                  <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#991b1b', fontSize: '13px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AlertCircle size={18} /> {profileError}
                   </div>
                 )}
 
                 <form onSubmit={handleProfileSave} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   <div>
-                    <label className="form-label">Full Name</label>
+                    <label className="form-label">Full Name *</label>
                     <input
                       type="text"
+                      required
+                      placeholder="Enter full name"
                       className="form-input"
                       value={profileData.name}
                       onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
@@ -1002,40 +1135,54 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Email Address</label>
+                    <label className="form-label">Email Address * (Editable)</label>
                     <input
                       type="email"
+                      required
+                      placeholder="Enter email address"
                       className="form-input"
                       value={profileData.email}
                       onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                     />
                   </div>
 
-                  <div>
-                    <label className="form-label">Phone Number</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="form-label">Your Sponsor Phone Number / Referral Code</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      disabled
-                      value={referralCode}
-                      style={{ background: '#f1f5f9', cursor: 'not-allowed', fontWeight: '700', color: '#4f46e5' }}
-                    />
+                  {/* MERGED PHONE & PARENT SPONSOR CODE FIELD WITH COPY BUTTON */}
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label className="form-label">Phone Number & Parent Sponsor Code *</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Enter phone number (serves as Sponsor Code)"
+                        className="form-input"
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                        style={{ fontWeight: '700', color: '#4f46e5' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(profileData.phone || referralCode);
+                          setPhoneCopied(true);
+                          setTimeout(() => setPhoneCopied(false), 3000);
+                        }}
+                        className="btn-outline"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0 18px', whiteSpace: 'nowrap', color: '#4f46e5', borderColor: '#c7d2fe', background: '#eff6ff', fontWeight: '700' }}
+                      >
+                        {phoneCopied ? <CheckCircle2 size={16} color="#059669" /> : <Copy size={16} />}
+                        {phoneCopied ? 'Copied Code!' : 'Copy Sponsor Code'}
+                      </button>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                      Your phone number acts as your official Sponsor Code when enrolling new downlines.
+                    </div>
                   </div>
 
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label className="form-label">Address Line</label>
                     <input
                       type="text"
+                      placeholder="Enter street address"
                       className="form-input"
                       value={profileData.address}
                       onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
@@ -1043,9 +1190,10 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">City</label>
+                    <label className="form-label">City (Editable)</label>
                     <input
                       type="text"
+                      placeholder="Enter city"
                       className="form-input"
                       value={profileData.city}
                       onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
@@ -1053,9 +1201,10 @@ export const DashboardPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Country</label>
+                    <label className="form-label">Country (Editable)</label>
                     <input
                       type="text"
+                      placeholder="Enter country"
                       className="form-input"
                       value={profileData.country}
                       onChange={(e) => setProfileData({ ...profileData, country: e.target.value })}
@@ -1063,8 +1212,8 @@ export const DashboardPage = () => {
                   </div>
 
                   <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
-                    <button type="submit" className="btn-emerald">
-                      Save Profile Changes
+                    <button type="submit" disabled={profileLoading} className="btn-emerald" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '800' }}>
+                      {profileLoading ? 'Saving Changes...' : 'Save Profile Changes'}
                     </button>
                   </div>
                 </form>
@@ -1427,7 +1576,7 @@ export const DashboardPage = () => {
                             </tr>
                           ) : (
                             level1MembersList.map((m, idx) => {
-                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+                              const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
                               const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
                               const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance');
 
@@ -1499,7 +1648,7 @@ export const DashboardPage = () => {
                             </tr>
                           ) : (
                             level2MembersList.map((m, idx) => {
-                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+                              const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
                               const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
                               const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet');
 
@@ -1582,7 +1731,7 @@ export const DashboardPage = () => {
                           </thead>
                           <tbody>
                             {level1MembersList.map((m, i) => {
-                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+                              const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
                               const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
                               const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance');
 
@@ -1640,7 +1789,7 @@ export const DashboardPage = () => {
                           </thead>
                           <tbody>
                             {level2MembersList.map((m, i) => {
-                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+                              const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
                               const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
                               const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet');
 
@@ -1781,13 +1930,13 @@ export const DashboardPage = () => {
                     Payout Withdrawal Requests & Status
                   </h3>
 
-                  {notificationsList.filter(n => n.type === 'Wallet Withdrawal').length === 0 ? (
+                  {safeNotifs.filter(n => n && n.type === 'Wallet Withdrawal').length === 0 ? (
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
                       No withdrawal requests raised yet. Submit a payout request on the left to start.
                     </p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {notificationsList.filter(n => n.type === 'Wallet Withdrawal').map((req, idx) => {
+                      {safeNotifs.filter(n => n && n.type === 'Wallet Withdrawal').map((req, idx) => {
                         const isAppr = req.status === 'Approved';
                         const isRej = req.status === 'Rejected';
                         return (
