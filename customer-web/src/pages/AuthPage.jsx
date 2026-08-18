@@ -244,7 +244,7 @@ export const AuthPage = () => {
                     <input
                       type="text"
                       name="sponsorId"
-                      placeholder="e.g. +91 98765 43210 (Leave empty for Admin)"
+                      placeholder="e.g. +919876543210"
                       value={formData.sponsorId}
                       onChange={handleChange}
                       style={{

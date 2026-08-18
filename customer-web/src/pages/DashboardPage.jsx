@@ -344,17 +344,31 @@ export const DashboardPage = () => {
   const level1MembersList = isDemoAlexUser ? [...defaultL1, ...enrolledLevel1] : enrolledLevel1;
   const level2MembersList = isDemoAlexUser ? [...defaultL2, ...enrolledLevel2] : enrolledLevel2;
 
-  const l1Count = isDemoAlexUser ? (2 + enrolledLevel1.length) : enrolledLevel1.length;
-  const l2Count = isDemoAlexUser ? (4 + enrolledLevel2.length) : enrolledLevel2.length;
+  const approvedL1Members = level1MembersList.filter((m) => {
+    const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+    const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
+    if (isRejected) return false;
+    return m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance';
+  });
+
+  const approvedL2Members = level2MembersList.filter((m) => {
+    const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+    const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
+    if (isRejected) return false;
+    return m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet';
+  });
+
+  const l1Count = approvedL1Members.length;
+  const l2Count = approvedL2Members.length;
   const totalCount = l1Count + l2Count;
 
   // Metrics required by user (2 Nodes Max Level 1, 2 Max Levels)
   const statsMetrics = [
     {
       id: 'total-team',
-      title: 'Total Team (Includes Level 1 & 2)',
+      title: 'Total Approved Network Team',
       value: `${totalCount} Nodes`,
-      sub: `${l1Count} Level 1 + ${l2Count} Level 2 (Max 2 Levels)`,
+      sub: `${l1Count} Level 1 + ${l2Count} Level 2 (Approved Only)`,
       icon: Users,
       color: '#4f46e5',
       bg: '#eef2ff'
@@ -1218,23 +1232,23 @@ export const DashboardPage = () => {
                 <div className="light-card" style={{ padding: '20px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Total Network Team</div>
                   <div style={{ fontSize: '26px', fontWeight: '800', color: '#4f46e5', marginTop: '4px' }}>
-                    {level1MembersList.length + level2MembersList.length} Members
+                    {approvedL1Members.length + approvedL2Members.length} Members
                   </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Level 1 & Level 2 (2 Max Depth)</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Level 1 & Level 2 (Approved Nodes Only)</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '20px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Direct Level 1 Members</div>
                   <div style={{ fontSize: '26px', fontWeight: '800', color: '#059669', marginTop: '4px' }}>
-                    {level1MembersList.length} Members
+                    {approvedL1Members.length} Members
                   </div>
-                  <div style={{ fontSize: '12px', color: '#059669', fontWeight: '600' }}>Unlimited Level 1 Width (N Nodes)</div>
+                  <div style={{ fontSize: '12px', color: '#059669', fontWeight: '600' }}>Unlimited Level 1 Width (Approved)</div>
                 </div>
 
                 <div className="light-card" style={{ padding: '20px' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700' }}>Indirect Level 2 Members</div>
                   <div style={{ fontSize: '26px', fontWeight: '800', color: '#8b5cf6', marginTop: '4px' }}>
-                    {level2MembersList.length} Members
+                    {approvedL2Members.length} Members
                   </div>
                   <div style={{ fontSize: '12px', color: '#8b5cf6', fontWeight: '600' }}>Enrolled by Level 1 Downlines</div>
                 </div>
@@ -1306,14 +1320,14 @@ export const DashboardPage = () => {
                       className={teamTab === 'level1' ? 'btn-emerald' : 'btn-outline'}
                       style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
-                      <Users size={16} /> Level 1 Direct Members ({level1MembersList.length})
+                      <Users size={16} /> Level 1 Direct Members ({approvedL1Members.length})
                     </button>
                     <button
                       onClick={() => setTeamTab('level2')}
                       className={teamTab === 'level2' ? 'btn-indigo' : 'btn-outline'}
                       style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
-                      <Layers size={16} /> Level 2 Indirect Members ({level2MembersList.length})
+                      <Layers size={16} /> Level 2 Indirect Members ({approvedL2Members.length})
                     </button>
                   </div>
                 </div>
@@ -1354,7 +1368,9 @@ export const DashboardPage = () => {
                           ) : (
                             level1MembersList.map((m, idx) => {
                               const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
-                              const isApproved = m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance';
+                              const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
+                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance');
+
                               return (
                                 <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
                                   <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
@@ -1368,7 +1384,11 @@ export const DashboardPage = () => {
                                     {isApproved ? (m.level1Earned || '₹1,000') : '₹0'}
                                   </td>
                                   <td style={{ padding: '14px 16px' }}>
-                                    {isApproved ? (
+                                    {isRejected ? (
+                                      <span style={{ background: '#fef2f2', color: '#991b1b', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
+                                        🔴 Rejected by Admin
+                                      </span>
+                                    ) : isApproved ? (
                                       <span style={{ background: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
                                         🟢 Commission Approved
                                       </span>
@@ -1420,7 +1440,9 @@ export const DashboardPage = () => {
                           ) : (
                             level2MembersList.map((m, idx) => {
                               const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
-                              const isApproved = m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet';
+                              const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
+                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet');
+
                               return (
                                 <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
                                   <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
@@ -1435,7 +1457,11 @@ export const DashboardPage = () => {
                                     {isApproved ? (m.level2Earned || '₹500') : '₹0'}
                                   </td>
                                   <td style={{ padding: '14px 16px' }}>
-                                    {isApproved ? (
+                                    {isRejected ? (
+                                      <span style={{ background: '#fef2f2', color: '#991b1b', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
+                                        🔴 Rejected by Admin
+                                      </span>
+                                    ) : isApproved ? (
                                       <span style={{ background: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
                                         🟢 Approved (₹500 Override)
                                       </span>
@@ -1495,25 +1521,43 @@ export const DashboardPage = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {level1MembersList.map((m, i) => (
-                              <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
-                                <td style={{ padding: '16px' }}>
-                                  <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                    {m.position}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
-                                <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.email}</td>
-                                <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
-                                <td style={{ padding: '16px', fontWeight: '600' }}>{m.package}</td>
-                                <td style={{ padding: '16px', fontWeight: '800', color: '#059669' }}>{m.level1Earned}</td>
-                                <td style={{ padding: '16px' }}>
-                                  <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                    {m.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
+                            {level1MembersList.map((m, i) => {
+                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+                              const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
+                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance');
+
+                              return (
+                                <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                                  <td style={{ padding: '16px' }}>
+                                    <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                      {m.position}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
+                                  <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.email}</td>
+                                  <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
+                                  <td style={{ padding: '16px', fontWeight: '600' }}>{m.package}</td>
+                                  <td style={{ padding: '16px', fontWeight: '800', color: isApproved ? '#059669' : 'var(--text-muted)' }}>
+                                    {isApproved ? (m.level1Earned || '₹1,000') : '₹0'}
+                                  </td>
+                                  <td style={{ padding: '16px' }}>
+                                    {isRejected ? (
+                                      <span style={{ background: '#fef2f2', color: '#991b1b', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                        🔴 Rejected by Admin
+                                      </span>
+                                    ) : isApproved ? (
+                                      <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                        🟢 Approved
+                                      </span>
+                                    ) : (
+                                      <span style={{ background: '#fef3c7', color: '#92400e', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                        🟡 Pending Admin Approval
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
@@ -1535,25 +1579,43 @@ export const DashboardPage = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {level2MembersList.map((m, i) => (
-                              <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
-                                <td style={{ padding: '16px' }}>
-                                  <span style={{ background: '#f3e8ff', color: '#6b21a8', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                    {m.position}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
-                                <td style={{ padding: '16px', fontWeight: '600', color: '#059669' }}>{m.sponsor}</td>
-                                <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
-                                <td style={{ padding: '16px', fontWeight: '600' }}>{m.package}</td>
-                                <td style={{ padding: '16px', fontWeight: '800', color: '#8b5cf6' }}>{m.level2Earned}</td>
-                                <td style={{ padding: '16px' }}>
-                                  <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                    {m.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
+                            {level2MembersList.map((m, i) => {
+                              const notif = notificationsList.find(n => n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email);
+                              const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
+                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet');
+
+                              return (
+                                <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                                  <td style={{ padding: '16px' }}>
+                                    <span style={{ background: '#f3e8ff', color: '#6b21a8', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                      {m.position}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
+                                  <td style={{ padding: '16px', fontWeight: '600', color: '#059669' }}>{m.sponsor}</td>
+                                  <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{m.joined}</td>
+                                  <td style={{ padding: '16px', fontWeight: '600' }}>{m.package}</td>
+                                  <td style={{ padding: '16px', fontWeight: '800', color: isApproved ? '#8b5cf6' : 'var(--text-muted)' }}>
+                                    {isApproved ? (m.level2Earned || '₹500') : '₹0'}
+                                  </td>
+                                  <td style={{ padding: '16px' }}>
+                                    {isRejected ? (
+                                      <span style={{ background: '#fef2f2', color: '#991b1b', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                        🔴 Rejected by Admin
+                                      </span>
+                                    ) : isApproved ? (
+                                      <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                        🟢 Approved
+                                      </span>
+                                    ) : (
+                                      <span style={{ background: '#fef3c7', color: '#92400e', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                        🟡 Pending Admin Approval
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>

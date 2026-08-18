@@ -291,7 +291,7 @@ export const getCustomerTeamDetails = async (req, res) => {
         }
       }
 
-      // Also include any pending approvals directly as level1 member objects if user doc is missing
+      // Also include any pending/rejected approvals directly as level1 member objects if user doc is missing
       for (const app of l1Approvals) {
         if (app.enrolledMemberEmail && !existingL1Emails.has(app.enrolledMemberEmail.toLowerCase())) {
           level1Members.push({
@@ -300,7 +300,7 @@ export const getCustomerTeamDetails = async (req, res) => {
             email: app.enrolledMemberEmail,
             selectedPackage: app.packageName || 'Starter Package',
             legPreference: app.position || 'Direct Level 1',
-            accountStatus: app.status === 'Approved' ? 'Active' : 'Pending Admin Approval',
+            accountStatus: app.status === 'Approved' ? 'Active' : (app.status === 'Rejected' ? 'Rejected' : 'Pending Admin Approval'),
             createdAt: app.createdAt
           });
           existingL1Emails.add(app.enrolledMemberEmail.toLowerCase());
@@ -354,20 +354,27 @@ export const getCustomerTeamDetails = async (req, res) => {
         }
       }
 
+      // Calculate ONLY APPROVED node counts
+      const approvedL1Count = level1Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
+      const approvedL2Count = level2Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
+
       // Sync member counts on user document if updated
-      if (user.level1MembersCount !== level1Members.length || user.level2MembersCount !== level2Members.length) {
-        user.level1MembersCount = level1Members.length;
-        user.level2MembersCount = level2Members.length;
-        user.downlineCount = level1Members.length + level2Members.length;
+      if (user.level1MembersCount !== approvedL1Count || user.level2MembersCount !== approvedL2Count) {
+        user.level1MembersCount = approvedL1Count;
+        user.level2MembersCount = approvedL2Count;
+        user.downlineCount = approvedL1Count + approvedL2Count;
         await user.save().catch(() => null);
       }
     }
 
+    const approvedL1Count = level1Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
+    const approvedL2Count = level2Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
+
     res.json({
       maxLevels: 2,
-      level1MembersCount: level1Members.length,
-      level2MembersCount: level2Members.length,
-      totalTeamCount: level1Members.length + level2Members.length,
+      level1MembersCount: approvedL1Count,
+      level2MembersCount: approvedL2Count,
+      totalTeamCount: approvedL1Count + approvedL2Count,
       level1Members,
       level2Members,
     });
@@ -521,16 +528,7 @@ export const enrollDownlineMember = async (req, res) => {
     const isLevel1 = position.includes('Node 1') || position === 'Left Leg' || position === 'Right Leg' || !position.includes('L2');
     const commAmount = isLevel1 ? l1Bonus : 500;
 
-    // 4. Update sponsor's tree count (wallet remains pending until Admin Approval)
-    if (isLevel1) {
-      enrollingUser.level1MembersCount = (enrollingUser.level1MembersCount || 0) + 1;
-    } else {
-      enrollingUser.level2MembersCount = (enrollingUser.level2MembersCount || 0) + 1;
-    }
-    enrollingUser.downlineCount = (enrollingUser.level1MembersCount || 0) + (enrollingUser.level2MembersCount || 0);
-    await enrollingUser.save();
-
-    // 5. Create Pending Downline Enrollment Approval Record for Admin Panel
+    // 4. Create Pending Downline Enrollment Approval Record for Admin Panel
     const approval = await Approval.create({
       type: 'Enrolled Downline Commission',
       userId: newEnrolledUser._id,
