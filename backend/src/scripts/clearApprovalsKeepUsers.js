@@ -18,7 +18,7 @@ const clearDatabaseData = async () => {
 
     // 2. Reset user income/wallet stats so income data updates dynamically when new users are added
     const userUpdateResult = await User.updateMany(
-      { email: { $ne: 'admin@nexismlm.com' } },
+      { email: { $ne: 'admin@lifefundAI.com' } },
       {
         $set: {
           walletBalance: 0.00,

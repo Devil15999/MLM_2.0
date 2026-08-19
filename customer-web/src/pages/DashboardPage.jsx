@@ -41,11 +41,10 @@ export const DashboardPage = () => {
   const [copied, setCopied] = useState(false);
   const [teamTab, setTeamTab] = useState('level1');
   const [teamViewMode, setTeamViewMode] = useState('tree');
-  const isFreshUser = user?.email === 'fresh@nexismlm.com' || user?.sponsorId === 'SP-2000';
   const [activePackage, setActivePackage] = useState(user?.selectedPackage || 'Starter Package (₹10,000)');
 
   // Storage key for local persistence
-  const userKey = user?._id || user?.email || 'fresh';
+  const userKey = user?._id || user?.email || 'user';
 
   // Force Permanent Password Modal for OTP users
   const [forcePasswordModalOpen, setForcePasswordModalOpen] = useState(false);
@@ -115,22 +114,21 @@ export const DashboardPage = () => {
   // Dynamic Nodes State (Persistent across sessions/logins)
   const [enrolledLevel1, setEnrolledLevel1] = useState(() => {
     try {
-      const saved = localStorage.getItem(`nexis_l1_${userKey}`);
+      const saved = localStorage.getItem(`lifefundai_l1_${userKey}`);
       return saved ? JSON.parse(saved) : [];
     } catch (e) { return []; }
   });
   const [enrolledLevel2, setEnrolledLevel2] = useState(() => {
     try {
-      const saved = localStorage.getItem(`nexis_l2_${userKey}`);
+      const saved = localStorage.getItem(`lifefundai_l2_${userKey}`);
       return saved ? JSON.parse(saved) : [];
     } catch (e) { return []; }
   });
 
-  const isDemoAlexUser = user?.email === 'alex@nexismlm.com';
-  const [dynamicWallet, setDynamicWallet] = useState(user?.walletBalance ?? (isDemoAlexUser ? 6250 : 0));
-  const [dynamicTotalIncome, setDynamicTotalIncome] = useState(user?.totalIncome ?? (isDemoAlexUser ? 10450 : 0));
-  const [dynamicL1Income, setDynamicL1Income] = useState(user?.level1AffiliateIncome ?? (isDemoAlexUser ? 4850 : 0));
-  const [dynamicL2Income, setDynamicL2Income] = useState(user?.level2AffiliateIncome ?? (isDemoAlexUser ? 2420 : 0));
+  const [dynamicWallet, setDynamicWallet] = useState(user?.walletBalance ?? 0);
+  const [dynamicTotalIncome, setDynamicTotalIncome] = useState(user?.totalIncome ?? 0);
+  const [dynamicL1Income, setDynamicL1Income] = useState(user?.level1AffiliateIncome ?? 0);
+  const [dynamicL2Income, setDynamicL2Income] = useState(user?.level2AffiliateIncome ?? 0);
 
   // Notifications State
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -267,7 +265,7 @@ export const DashboardPage = () => {
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        const serverOtp = data.dynamicOtp || `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
+        const serverOtp = data.dynamicOtp || `LifeFundAI#${Math.floor(1000 + Math.random() * 9000)}`;
         fetchTeamData();
         setEnrollModalOpen(false);
         setIssuedCredentialModal({
@@ -354,7 +352,7 @@ export const DashboardPage = () => {
   const [kycSaved, setKycSaved] = useState(false);
 
   const referralCode = profileData.phone || user?.phone || user?.sponsorId || 'N/A';
-  const referralLink = `https://nexismlm.com/join?ref=${encodeURIComponent(referralCode)}`;
+  const referralLink = `https://lifefundAI.com/join?ref=${encodeURIComponent(referralCode)}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -530,20 +528,8 @@ export const DashboardPage = () => {
     }
   };
 
-  const defaultL1 = [
-    { name: 'Sarah Connor', position: 'Left Leg (Node 1)', email: 'sarah.c@gmail.com', joined: 'July 14, 2026', package: 'Elite Package (₹30,000)', level1Earned: '₹3,000', status: 'Active' },
-    { name: 'David Vance', position: 'Right Leg (Node 2)', email: 'david.vance@tech.io', joined: 'July 18, 2026', package: 'Premium Package (₹20,000)', level1Earned: '₹2,000', status: 'Active' }
-  ];
-
-  const defaultL2 = [
-    { name: 'Kevin Flynn', position: 'Left-Left Leg (L2 Node 1)', sponsor: 'Sarah Connor', joined: 'July 19, 2026', package: 'Elite Package (₹30,000)', level2Earned: '₹500', status: 'Active' },
-    { name: 'Claire Bennet', position: 'Left-Right Leg (L2 Node 2)', sponsor: 'Sarah Connor', joined: 'July 22, 2026', package: 'Premium Package (₹20,000)', level2Earned: '₹500', status: 'Active' },
-    { name: 'Arthur Pendelton', position: 'Right-Left Leg (L2 Node 3)', sponsor: 'David Vance', joined: 'July 24, 2026', package: 'Elite Package (₹30,000)', level2Earned: '₹500', status: 'Active' },
-    { name: 'Rachel Green', position: 'Right-Right Leg (L2 Node 4)', sponsor: 'David Vance', joined: 'July 28, 2026', package: 'Starter Package (₹10,000)', level2Earned: '₹500', status: 'Active' }
-  ];
-
-  const level1MembersList = isDemoAlexUser ? [...defaultL1, ...enrolledLevel1] : enrolledLevel1;
-  const level2MembersList = isDemoAlexUser ? [...defaultL2, ...enrolledLevel2] : enrolledLevel2;
+  const level1MembersList = enrolledLevel1;
+  const level2MembersList = enrolledLevel2;
 
   const safeNotifs = Array.isArray(notificationsList) ? notificationsList : [];
 
@@ -551,14 +537,14 @@ export const DashboardPage = () => {
     const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
     const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
     if (isRejected) return false;
-    return m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance';
+    return m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved';
   });
 
   const approvedL2Members = level2MembersList.filter((m) => {
     const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
     const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
     if (isRejected) return false;
-    return m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet';
+    return m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved';
   });
 
   const l1Count = approvedL1Members.length;
@@ -615,7 +601,7 @@ export const DashboardPage = () => {
     {
       id: 'investment-returns',
       title: 'Investment Returns',
-      value: isFreshUser ? '₹0.00' : '₹3,180.00',
+      value: `₹${(user?.investmentReturns ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
       sub: 'Package Yield & Passive ROI',
       icon: TrendingUp,
       color: '#d97706',
@@ -727,7 +713,7 @@ export const DashboardPage = () => {
           </div>
           <div>
             <h1 style={{ fontSize: '17px', fontWeight: '800', color: 'var(--text-main)', lineHeight: 1.2 }}>Customer Portal</h1>
-            <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Nexis MLM Matrix</span>
+            <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>lifefundAI Matrix</span>
           </div>
         </div>
 
@@ -1728,7 +1714,7 @@ export const DashboardPage = () => {
                             level1MembersList.map((m, idx) => {
                               const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
                               const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
-                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance');
+                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved');
 
                               return (
                                 <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
@@ -1800,12 +1786,12 @@ export const DashboardPage = () => {
                             level2MembersList.map((m, idx) => {
                               const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
                               const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
-                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet');
+                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved');
 
                               return (
                                 <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
                                   <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
-                                  <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }}>{m.sponsor || 'Sarah Connor'}</td>
+                                  <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }}>{m.sponsor || 'Direct Sponsor'}</td>
                                   <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '13px' }} className="code-font">{m.email}</td>
                                   <td style={{ padding: '14px 16px' }}>
                                     <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', background: '#f3e8ff', color: '#6b21a8' }}>
@@ -1883,7 +1869,7 @@ export const DashboardPage = () => {
                             {level1MembersList.map((m, i) => {
                               const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
                               const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
-                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Sarah Connor' || m.name === 'David Vance');
+                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved');
 
                               return (
                                 <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
@@ -1941,7 +1927,7 @@ export const DashboardPage = () => {
                             {level2MembersList.map((m, i) => {
                               const notif = safeNotifs.find(n => n && (n.enrolledMemberName === m.name || n.enrolledMemberEmail === m.email));
                               const isRejected = m.status === 'Rejected' || m.accountStatus === 'Rejected' || notif?.status === 'Rejected';
-                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved' || m.name === 'Kevin Flynn' || m.name === 'Claire Bennet');
+                              const isApproved = !isRejected && (m.status === 'Approved' || m.status === 'Active' || m.accountStatus === 'Approved' || m.accountStatus === 'Active' || notif?.status === 'Approved');
 
                               return (
                                 <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
@@ -2350,7 +2336,7 @@ export const DashboardPage = () => {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`Nexis MLM Member Credentials:\nEmail: ${issuedCredentialModal.email}\nOne-Time Password: ${issuedCredentialModal.otp}\nLogin URL: http://localhost:5173/login`);
+                  navigator.clipboard.writeText(`lifefundAI Member Credentials:\nEmail: ${issuedCredentialModal.email}\nOne-Time Password: ${issuedCredentialModal.otp}\nLogin URL: http://localhost:5173/login`);
                   alert('Credentials copied to clipboard! Share with the member via WhatsApp/Email.');
                 }}
                 className="btn-outline"

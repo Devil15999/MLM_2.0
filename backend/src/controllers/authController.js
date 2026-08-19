@@ -56,7 +56,7 @@ export const registerUser = async (req, res) => {
         ]
       }).catch(() => null);
 
-      if (!sponsor && reqSponsorId !== 'MASTER-HEAD' && reqSponsorId !== 'NEXIS-TOP') {
+      if (!sponsor && reqSponsorId !== 'MASTER-HEAD' && reqSponsorId !== 'LIFEFUNDAI-TOP') {
         return res.status(400).json({ message: `Invalid Sponsor Phone Number '${reqSponsorId}'. Sponsor phone number does not exist in network database.` });
       }
     }
@@ -176,17 +176,17 @@ export const loginUser = async (req, res) => {
       rank: user.rank,
       selectedPackage: user.selectedPackage || 'Starter Package (₹10,000)',
       accountStatus: user.accountStatus,
-      walletBalance: typeof user.walletBalance === 'number' ? user.walletBalance : (user.email === 'alex@nexismlm.com' ? 6250.00 : 0),
-      totalEarnings: typeof user.totalEarnings === 'number' ? user.totalEarnings : (user.email === 'alex@nexismlm.com' ? 10450.00 : 0),
-      downlineCount: typeof user.downlineCount === 'number' ? user.downlineCount : (user.email === 'alex@nexismlm.com' ? 36 : 0),
+      walletBalance: typeof user.walletBalance === 'number' ? user.walletBalance : (user.email === 'alex@lifefundAI.com' ? 6250.00 : 0),
+      totalEarnings: typeof user.totalEarnings === 'number' ? user.totalEarnings : (user.email === 'alex@lifefundAI.com' ? 10450.00 : 0),
+      downlineCount: typeof user.downlineCount === 'number' ? user.downlineCount : (user.email === 'alex@lifefundAI.com' ? 36 : 0),
       personalVolume: user.personalVolume ?? 0,
       groupVolume: user.groupVolume ?? 0,
-      level1MembersCount: typeof user.level1MembersCount === 'number' ? user.level1MembersCount : (user.email === 'alex@nexismlm.com' ? 12 : 0),
-      level2MembersCount: typeof user.level2MembersCount === 'number' ? user.level2MembersCount : (user.email === 'alex@nexismlm.com' ? 24 : 0),
-      level1AffiliateIncome: typeof user.level1AffiliateIncome === 'number' ? user.level1AffiliateIncome : (user.email === 'alex@nexismlm.com' ? 4850.00 : 0),
-      level2AffiliateIncome: typeof user.level2AffiliateIncome === 'number' ? user.level2AffiliateIncome : (user.email === 'alex@nexismlm.com' ? 2420.00 : 0),
-      investmentReturns: typeof user.investmentReturns === 'number' ? user.investmentReturns : (user.email === 'alex@nexismlm.com' ? 3180.00 : 0),
-      totalIncome: typeof user.totalIncome === 'number' ? user.totalIncome : (user.email === 'alex@nexismlm.com' ? 10450.00 : 0),
+      level1MembersCount: typeof user.level1MembersCount === 'number' ? user.level1MembersCount : (user.email === 'alex@lifefundAI.com' ? 12 : 0),
+      level2MembersCount: typeof user.level2MembersCount === 'number' ? user.level2MembersCount : (user.email === 'alex@lifefundAI.com' ? 24 : 0),
+      level1AffiliateIncome: typeof user.level1AffiliateIncome === 'number' ? user.level1AffiliateIncome : (user.email === 'alex@lifefundAI.com' ? 4850.00 : 0),
+      level2AffiliateIncome: typeof user.level2AffiliateIncome === 'number' ? user.level2AffiliateIncome : (user.email === 'alex@lifefundAI.com' ? 2420.00 : 0),
+      investmentReturns: typeof user.investmentReturns === 'number' ? user.investmentReturns : (user.email === 'alex@lifefundAI.com' ? 3180.00 : 0),
+      totalIncome: typeof user.totalIncome === 'number' ? user.totalIncome : (user.email === 'alex@lifefundAI.com' ? 10450.00 : 0),
       phone: user.phone,
       address: user.address,
       city: user.city,
@@ -277,11 +277,9 @@ export const getUsers = async (req, res) => {
 export const seedAccounts = async (req, res) => {
   try {
     // Clear existing to refresh with MLM accounts
-    await User.deleteMany({});
-
-    const admin = await User.create({
+    await User.deleteMany({});    const admin = await User.create({
       name: 'System Admin',
-      email: 'admin@nexismlm.com',
+      email: 'admin@lifefundAI.com',
       password: 'Admin@123456',
       role: 'admin',
       sponsorId: 'MASTER-HEAD',
@@ -295,7 +293,7 @@ export const seedAccounts = async (req, res) => {
 
     const alex = await User.create({
       name: 'Alex Rivera',
-      email: 'alex@nexismlm.com',
+      email: 'alex@lifefundAI.com',
       password: 'User@123456',
       role: 'customer',
       sponsorId: 'SP-1001',
@@ -309,7 +307,7 @@ export const seedAccounts = async (req, res) => {
 
     const sarah = await User.create({
       name: 'Sarah Connor',
-      email: 'sarah@nexismlm.com',
+      email: 'sarah@lifefundAI.com',
       password: 'User@123456',
       role: 'customer',
       sponsorId: 'SP-1002',
@@ -323,7 +321,7 @@ export const seedAccounts = async (req, res) => {
 
     const david = await User.create({
       name: 'David Vance',
-      email: 'david@nexismlm.com',
+      email: 'david@lifefundAI.com',
       password: 'User@123456',
       role: 'customer',
       sponsorId: 'SP-1003',
@@ -336,10 +334,10 @@ export const seedAccounts = async (req, res) => {
     });
 
     res.json({
-      message: 'Nexis MLM Demo Distributors seeded successfully!',
+      message: 'lifefundAI Demo Distributors seeded successfully!',
       accounts: {
-        admin: { email: 'admin@nexismlm.com', password: 'Admin@123456', role: 'admin' },
-        customer: { email: 'alex@nexismlm.com', password: 'User@123456', role: 'customer' },
+        admin: { email: 'admin@lifefundAI.com', password: 'Admin@123456', role: 'admin' },
+        customer: { email: 'alex@lifefundAI.com', password: 'User@123456', role: 'customer' },
       },
     });
   } catch (error) {

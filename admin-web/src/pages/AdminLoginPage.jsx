@@ -18,7 +18,7 @@ export const AdminLoginPage = () => {
   };
 
   const handleFillDemoAdmin = () => {
-    setEmail('admin@nexismlm.com');
+    setEmail('admin@lifefundAI.com');
     setPassword('Admin@123456');
     if (error) setError(null);
   };
@@ -50,7 +50,7 @@ export const AdminLoginPage = () => {
             <Network size={34} />
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>
-            Nexis MLM Command
+            lifefundAI Command
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>
             System Administrator & Network Operations Center
@@ -100,7 +100,7 @@ export const AdminLoginPage = () => {
                 <input
                   type="email"
                   required
-                  placeholder="admin@nexismlm.com"
+                  placeholder="admin@lifefundAI.com"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); if (error) setError(null); }}
                   style={{

@@ -121,7 +121,7 @@ export const AuthPage = () => {
             <Network size={36} />
           </div>
           <h1 style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '-0.5px', color: 'var(--text-main)' }}>
-            Nexis MLM Network
+            lifefundAI Network
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>
             Distributor Growth & Commission Portal
@@ -533,7 +533,7 @@ export const AuthPage = () => {
                     type="text"
                     name="email"
                     required
-                    placeholder="e.g. +91 98765 43210 or alex@nexismlm.com"
+                    placeholder="e.g. +91 98765 43210 or user@domain.com"
                     value={formData.email}
                     onChange={handleChange}
                     style={{
@@ -580,39 +580,6 @@ export const AuthPage = () => {
                 <ArrowRight size={18} />
               </button>
             </form>
-
-            {/* Quick Demo Fill buttons */}
-            {isLogin && (
-              <div style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-                <button
-                  onClick={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      email: 'alex@nexismlm.com',
-                      password: 'User@123456',
-                    }));
-                    setIsLogin(true);
-                    if (error) setError(null);
-                  }}
-                  style={{
-                    background: '#ecfdf5',
-                    color: '#059669',
-                    border: '1px solid #a7f3d0',
-                    borderRadius: '8px',
-                    padding: '8px 14px',
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    width: '100%',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <Sparkles size={16} /> Demo Login: Alex Rivera
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>

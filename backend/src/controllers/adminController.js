@@ -223,10 +223,10 @@ export const resetDatabaseEndpoint = async (req, res) => {
   try {
     const approvalDeleteResult = await Approval.deleteMany({});
     const userDeleteResult = await User.deleteMany({
-      email: { $nin: ['admin@nexismlm.com', 'fresh@nexismlm.com'] }
+      email: { $nin: ['admin@lifefundAI.com', 'fresh@lifefundAI.com'] }
     });
 
-    let freshUser = await User.findOne({ email: 'fresh@nexismlm.com' });
+    let freshUser = await User.findOne({ email: 'fresh@lifefundAI.com' });
     if (freshUser) {
       freshUser.rank = 'Member';
       freshUser.selectedPackage = 'None';

@@ -85,7 +85,7 @@ export const AdminDashboardPage = () => {
               <Network size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', lineHeight: 1.2 }}>Nexis MLM</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', lineHeight: 1.2 }}>lifefundAI</h3>
               <span style={{ fontSize: '12px', color: 'var(--primary-admin)', fontWeight: '700' }}>Admin Operations</span>
             </div>
           </div>
@@ -376,7 +376,7 @@ export const AdminDashboardPage = () => {
                       <tr key={u._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
                         <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{u.name}</td>
                         <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '13px' }} className="code-font">{u.email}</td>
-                        <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }} className="code-font">{u.phone || u.sponsorId || 'NEXIS-TOP'}</td>
+                        <td style={{ padding: '14px 16px', fontWeight: '700', color: '#4f46e5' }} className="code-font">{u.phone || u.sponsorId || 'LIFEFUNDAI-TOP'}</td>
                         <td style={{ padding: '14px 16px' }}>
                           <span style={{
                             padding: '4px 10px',

@@ -25,7 +25,7 @@ app.use('/api/admin', adminRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'Nexis MLM Backend API',
+    service: 'lifefundAI Backend API',
     timestamp: new Date().toISOString(),
   });
 });
@@ -37,7 +37,7 @@ const autoSeedUsers = async () => {
     if (adminCount === 0) {
       await User.create({
         name: 'System Admin',
-        email: 'admin@nexismlm.com',
+        email: 'admin@lifefundAI.com',
         password: 'Admin@123456',
         role: 'admin',
         sponsorId: 'MASTER-HEAD',
@@ -46,7 +46,7 @@ const autoSeedUsers = async () => {
         totalEarnings: 0.00,
         downlineCount: 0,
       });
-      console.log('[Seed] Nexis Admin created (admin@nexismlm.com / Admin@123456)');
+      console.log('[Seed] lifefundAI Admin created (admin@lifefundAI.com / Admin@123456)');
     }
   } catch (err) {
     console.error('[Seed Error]:', err.message);
@@ -57,15 +57,15 @@ const autoSeedUsers = async () => {
 const startServer = async () => {
   const HOST = '0.0.0.0';
   const server = app.listen(PORT, HOST, () => {
-    console.log(`[Nexis MLM Backend] Server running on http://${HOST}:${PORT}`);
+    console.log(`[lifefundAI Backend] Server running on http://${HOST}:${PORT}`);
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       const ALT_PORT = Number(PORT) + 1;
-      console.log(`[Nexis MLM Backend] Port ${PORT} busy, starting on http://${HOST}:${ALT_PORT}`);
+      console.log(`[lifefundAI Backend] Port ${PORT} busy, starting on http://${HOST}:${ALT_PORT}`);
       app.listen(ALT_PORT, HOST, () => {
-        console.log(`[Nexis MLM Backend] Server running on http://${HOST}:${ALT_PORT}`);
+        console.log(`[lifefundAI Backend] Server running on http://${HOST}:${ALT_PORT}`);
       });
     }
   });

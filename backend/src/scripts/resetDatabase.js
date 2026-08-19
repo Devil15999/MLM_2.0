@@ -16,14 +16,14 @@ const resetDatabase = async () => {
     const approvalDeleteResult = await Approval.deleteMany({});
     console.log(`[Clean Database] Deleted ${approvalDeleteResult.deletedCount} approval records.`);
 
-    // 2. Delete all users except admin@nexismlm.com and fresh@nexismlm.com
+    // 2. Delete all users except admin@lifefundAI.com and fresh@lifefundAI.com
     const userDeleteResult = await User.deleteMany({
-      email: { $nin: ['admin@nexismlm.com', 'fresh@nexismlm.com'] }
+      email: { $nin: ['admin@lifefundAI.com', 'fresh@lifefundAI.com'] }
     });
     console.log(`[Clean Database] Deleted ${userDeleteResult.deletedCount} test user records.`);
 
-    // 3. Reset fresh@nexismlm.com metrics to exact 0
-    let freshUser = await User.findOne({ email: 'fresh@nexismlm.com' });
+    // 3. Reset fresh@lifefundAI.com metrics to exact 0
+    let freshUser = await User.findOne({ email: 'fresh@lifefundAI.com' });
     if (freshUser) {
       freshUser.rank = 'Member';
       freshUser.selectedPackage = 'None';
@@ -37,15 +37,15 @@ const resetDatabase = async () => {
       freshUser.investmentReturns = 0.00;
       freshUser.totalIncome = 0.00;
       await freshUser.save();
-      console.log('[Clean Database] Reset fresh@nexismlm.com user stats to 0.');
+      console.log('[Clean Database] Reset fresh@lifefundAI.com user stats to 0.');
     } else {
-      console.log('[Clean Database] fresh@nexismlm.com user will be recreated on server start.');
+      console.log('[Clean Database] fresh@lifefundAI.com user will be recreated on server start.');
     }
 
-    // 4. Ensure admin@nexismlm.com exists
-    let adminUser = await User.findOne({ email: 'admin@nexismlm.com' });
+    // 4. Ensure admin@lifefundAI.com exists
+    let adminUser = await User.findOne({ email: 'admin@lifefundAI.com' });
     if (adminUser) {
-      console.log('[Clean Database] Preserved admin@nexismlm.com account.');
+      console.log('[Clean Database] Preserved admin@lifefundAI.com account.');
     }
 
     console.log('[SUCCESS] Database reset complete! Only Admin and Fresh User remain.');

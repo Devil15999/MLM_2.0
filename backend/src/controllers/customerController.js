@@ -11,7 +11,7 @@ export const getCustomerDashboard = async (req, res) => {
     const userId = req.user?._id;
     const user = userId ? await User.findById(userId) : null;
 
-    const isAlex = user?.email === 'alex@nexismlm.com';
+    const isAlex = user?.email === 'alex@lifefundAI.com';
     const level1Count = user ? (user.level1MembersCount || 0) : (isAlex ? 2 : 0);
     const level2Count = user ? (user.level2MembersCount || 0) : (isAlex ? 4 : 0);
     const totalTeam = level1Count + level2Count;
@@ -520,7 +520,7 @@ export const enrollDownlineMember = async (req, res) => {
     const resolvedSponsorName = sponsorName || enrollingUser.name || enrollingUser.email || 'Sponsor';
 
     // 1. Password / Dynamic OTP handling
-    const dynamicOtp = password && password.trim().length >= 6 ? password.trim() : `Nexis#${Math.floor(1000 + Math.random() * 9000)}`;
+    const dynamicOtp = password && password.trim().length >= 6 ? password.trim() : `LifeFundAI#${Math.floor(1000 + Math.random() * 9000)}`;
 
     // 2. Use Phone Number as Sponsor ID / Code for new downline member
     const ownSponsorId = cleanPhone || `SP-${Math.floor(1000 + Math.random() * 9000)}`;
