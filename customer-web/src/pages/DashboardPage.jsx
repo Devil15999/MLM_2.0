@@ -551,7 +551,7 @@ export const DashboardPage = () => {
   const l2Count = approvedL2Members.length;
   const totalCount = l1Count + l2Count;
 
-  // Metrics required by user (2 Nodes Max Level 1, 2 Max Levels)
+  // Network Metrics (Unlimited Level 1 & Level 2)
   const statsMetrics = [
     {
       id: 'total-team',
@@ -1000,7 +1000,7 @@ export const DashboardPage = () => {
                     </div>
                     <div>
                       <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#78350f' }}>Account Status: Pending Package Activation</h3>
-                      <p style={{ fontSize: '13px', color: '#92400e' }}>Select a product package tier to activate your binary tree slot and unlock affiliate earnings.</p>
+                      <p style={{ fontSize: '13px', color: '#92400e' }}>Select a product package tier to activate your network account slot and unlock affiliate earnings.</p>
                     </div>
                   </div>
 
@@ -1838,14 +1838,14 @@ export const DashboardPage = () => {
                           className={teamTab === 'level1' ? 'btn-emerald' : 'btn-outline'}
                           style={{ padding: '8px 18px', fontSize: '13px' }}
                         >
-                          Level 1 Directs (2 Nodes Max)
+                          Level 1 Directs (N Members)
                         </button>
                         <button
                           onClick={() => setTeamTab('level2')}
                           className={teamTab === 'level2' ? 'btn-indigo' : 'btn-outline'}
                           style={{ padding: '8px 18px', fontSize: '13px' }}
                         >
-                          Level 2 Indirects (4 Nodes Max)
+                          Level 2 Indirects (N Members)
                         </button>
                       </div>
                     </div>
@@ -1856,7 +1856,7 @@ export const DashboardPage = () => {
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
                             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                              <th style={{ padding: '12px 16px' }}>Binary Leg Position</th>
+                              <th style={{ padding: '12px 16px' }}>Network Level</th>
                               <th style={{ padding: '12px 16px' }}>Member Name</th>
                               <th style={{ padding: '12px 16px' }}>Email Address</th>
                               <th style={{ padding: '12px 16px' }}>Enrollment Date</th>
@@ -1914,7 +1914,7 @@ export const DashboardPage = () => {
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
                             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                              <th style={{ padding: '12px 16px' }}>Binary Leg Position</th>
+                              <th style={{ padding: '12px 16px' }}>Network Level</th>
                               <th style={{ padding: '12px 16px' }}>Member Name</th>
                               <th style={{ padding: '12px 16px' }}>Direct Sponsor (Level 1)</th>
                               <th style={{ padding: '12px 16px' }}>Enrollment Date</th>
@@ -2149,7 +2149,7 @@ export const DashboardPage = () => {
               </div>
 
               <div>
-                <label className="form-label">Target Binary Leg Position</label>
+                <label className="form-label">Network Position / Label</label>
                 <input type="text" disabled value={selectedSlotPosition} className="form-input" style={{ background: '#ecfdf5', cursor: 'not-allowed', color: '#059669', fontWeight: '700' }} />
               </div>
 

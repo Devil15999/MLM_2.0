@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { AuthPage } from './pages/AuthPage';
+import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -10,7 +10,9 @@ export function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/login" element={<AuthPage />} />
+          <Route path="/" element={<LandingPage defaultAuthMode={null} />} />
+          <Route path="/login" element={<LandingPage defaultAuthMode="login" />} />
+          <Route path="/register" element={<LandingPage defaultAuthMode="signup" />} />
           <Route
             path="/dashboard"
             element={
@@ -19,7 +21,7 @@ export function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
