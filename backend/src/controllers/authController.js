@@ -185,7 +185,8 @@ export const loginUser = async (req, res) => {
       level2MembersCount: typeof user.level2MembersCount === 'number' ? user.level2MembersCount : (user.email === 'alex@lifefundAI.com' ? 24 : 0),
       level1AffiliateIncome: typeof user.level1AffiliateIncome === 'number' ? user.level1AffiliateIncome : (user.email === 'alex@lifefundAI.com' ? 4850.00 : 0),
       level2AffiliateIncome: typeof user.level2AffiliateIncome === 'number' ? user.level2AffiliateIncome : (user.email === 'alex@lifefundAI.com' ? 2420.00 : 0),
-      investmentReturns: typeof user.investmentReturns === 'number' ? user.investmentReturns : (user.email === 'alex@lifefundAI.com' ? 3180.00 : 0),
+      investmentReturns: typeof user.investmentReturns === 'number' ? user.investmentReturns : 0,
+
       totalIncome: typeof user.totalIncome === 'number' ? user.totalIncome : (user.email === 'alex@lifefundAI.com' ? 10450.00 : 0),
       phone: user.phone,
       address: user.address,

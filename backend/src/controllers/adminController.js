@@ -252,3 +252,73 @@ export const resetDatabaseEndpoint = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Submit & Batch Update Daily ROI for Level 1 & Level 2 Distributors
+// @route   POST /api/admin/roi/update
+export const updateDailyRoi = async (req, res) => {
+  try {
+    const { level1Amount, level2Amount } = req.body;
+    const l1Amt = Number(level1Amount || 0);
+    const l2Amt = Number(level2Amount || 0);
+
+    if (isNaN(l1Amt) || isNaN(l2Amt) || (l1Amt <= 0 && l2Amt <= 0)) {
+      return res.status(400).json({ message: 'Please enter a valid ROI amount greater than ₹0 for Level 1 or Level 2.' });
+    }
+
+    // Fetch all non-admin users
+    const allUsers = await User.find({ role: { $ne: 'admin' } });
+
+    let l1Count = 0;
+    let l2Count = 0;
+    let totalCreditedAmount = 0;
+
+    for (const u of allUsers) {
+      // Determine if user is Level 1 or Level 2
+      const isL1 = u.legPreference?.includes('Level 1') ||
+        !u.parentSponsorId ||
+        u.parentSponsorCode?.toLowerCase().includes('admin') ||
+        u.parentSponsorCode?.toLowerCase().includes('master') ||
+        u.parentSponsorCode === 'LIFEFUNDAI-TOP';
+
+      const creditAmt = isL1 ? l1Amt : l2Amt;
+
+      if (creditAmt > 0) {
+        u.investmentReturns = (u.investmentReturns || 0) + creditAmt;
+        u.walletBalance = (u.walletBalance || 0) + creditAmt;
+        u.totalIncome = (u.totalIncome || 0) + creditAmt;
+        u.totalEarnings = (u.totalEarnings || 0) + creditAmt;
+        await u.save();
+
+        if (isL1) l1Count++;
+        else l2Count++;
+        totalCreditedAmount += creditAmt;
+      }
+    }
+
+    // Create Audit Log in Approvals table for daily ROI history
+    const approvalLog = await Approval.create({
+      type: 'Daily ROI Payout',
+      sponsorName: 'System Admin',
+      enrolledMemberName: `Daily ROI Batch (L1: ₹${l1Amt}, L2: ₹${l2Amt})`,
+      enrolledMemberEmail: `L1:${l1Count} Users | L2:${l2Count} Users`,
+      packageName: `L1: ₹${l1Amt} | L2: ₹${l2Amt}`,
+      commissionAmount: totalCreditedAmount,
+      amount: totalCreditedAmount,
+      position: `L1: ${l1Count} Members, L2: ${l2Count} Members`,
+      status: 'Approved',
+      actionDate: new Date()
+    });
+
+    res.json({
+      success: true,
+      message: `Daily ROI Payout Batch Completed Successfully! ₹${l1Amt} credited to ${l1Count} Level 1 users and ₹${l2Amt} credited to ${l2Count} Level 2 users. Total ₹${totalCreditedAmount.toLocaleString('en-IN')} credited directly to distributor wallets.`,
+      l1Count,
+      l2Count,
+      totalCreditedAmount,
+      approvalLog
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

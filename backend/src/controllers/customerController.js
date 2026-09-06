@@ -18,9 +18,10 @@ export const getCustomerDashboard = async (req, res) => {
 
     const level1Income = user ? (user.level1AffiliateIncome || 0) : (isAlex ? 4850.00 : 0);
     const level2Income = user ? (user.level2AffiliateIncome || 0) : (isAlex ? 2420.00 : 0);
-    const investmentReturns = user ? (user.investmentReturns || 0) : (isAlex ? 3180.00 : 0);
+    const investmentReturns = user ? (user.investmentReturns || 0) : 0;
     const totalIncome = user ? (user.totalIncome || 0) : (isAlex ? 10450.00 : 0);
     const walletBalance = user ? (user.walletBalance || 0) : (isAlex ? 6250.00 : 0);
+
 
     res.json({
       metrics: {
