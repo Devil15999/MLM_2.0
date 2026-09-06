@@ -369,14 +369,14 @@ export const AuthPage = () => {
 
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
-                      Sponsor Phone Number <span style={{ fontWeight: '400', color: 'var(--text-muted)' }}>(Optional)</span>
+                      Sponsor Phone Number / ID <span style={{ fontWeight: '400', color: 'var(--text-muted)' }}>(Optional - Defaults to MASTER-HEAD)</span>
                     </label>
                     <div style={{ position: 'relative' }}>
                       <Share2 size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                       <input
                         type="text"
                         name="sponsorId"
-                        placeholder="e.g. +919876543210"
+                        placeholder="e.g. +91 98765 43210 (Leave blank for MASTER-HEAD)"
                         value={formData.sponsorId}
                         onChange={handleChange}
                         style={{
@@ -391,6 +391,7 @@ export const AuthPage = () => {
                       />
                     </div>
                   </div>
+
 
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <div style={{ flex: 1 }}>

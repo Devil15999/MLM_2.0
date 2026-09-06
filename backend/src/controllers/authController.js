@@ -85,10 +85,10 @@ export const registerUser = async (req, res) => {
       password,
       sponsorId: userOwnSponsorId,
       parentSponsorId: sponsor ? sponsor._id : null,
-      parentSponsorCode: sponsor ? (sponsor.phone || sponsor.sponsorId) : (reqSponsorId || 'Admin'),
-      parentSponsorEmail: sponsor ? sponsor.email : 'dev2@gmail.com',
-      parentSponsorEmail: sponsor ? sponsor.email : 'dev2@gmail.com',
+      parentSponsorCode: sponsor ? (sponsor.phone || sponsor.sponsorId) : (reqSponsorId || 'MASTER-HEAD'),
+      parentSponsorEmail: sponsor ? sponsor.email : 'admin@lifefundAI.com',
       role: 'customer',
+
       rank: 'Member',
       accountStatus: 'Pending Admin Approval',
       aadhaarNumber,

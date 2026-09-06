@@ -1085,9 +1085,10 @@ export const LandingPage = ({ defaultAuthMode = null }) => {
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>Sponsor Phone / Sponsor ID (Required)</label>
-                        <input type="text" name="sponsorId" required placeholder="e.g. +91 98765 43210 or MASTER-HEAD" value={formData.sponsorId} onChange={handleChange} style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-subtle)', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '14px' }} />
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>Sponsor Phone / Sponsor ID (Optional - Defaults to MASTER-HEAD)</label>
+                        <input type="text" name="sponsorId" placeholder="e.g. +91 98765 43210 (Leave blank for MASTER-HEAD)" value={formData.sponsorId} onChange={handleChange} style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-subtle)', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '14px' }} />
                       </div>
+
 
                       <div>
                         <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>Aadhaar Number (KYC Verification)</label>
@@ -1105,18 +1106,23 @@ export const LandingPage = ({ defaultAuthMode = null }) => {
 
                       {/* File Uploads */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '700' }}>KYC Proofs (Aadhaar & PAN Photo)</label>
+                        <label style={{ fontSize: '12px', fontWeight: '700' }}>Verification Document Proofs</label>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                           <label style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border-color)', padding: '10px', borderRadius: '8px', textAlign: 'center', fontSize: '11px', cursor: 'pointer' }}>
-                            {formData.aadhaarPhoto ? '✓ Aadhaar Uploaded' : '+ Upload Aadhaar'}
-                            <input type="file" name="aadhaarPhoto" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                            {formData.aadhaarPhoto ? '✓ Aadhaar Uploaded' : '+ Upload Aadhaar *'}
+                            <input type="file" name="aadhaarPhoto" required accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
                           </label>
                           <label style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border-color)', padding: '10px', borderRadius: '8px', textAlign: 'center', fontSize: '11px', cursor: 'pointer' }}>
-                            {formData.panPhoto ? '✓ PAN Uploaded' : '+ Upload PAN'}
-                            <input type="file" name="panPhoto" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                            {formData.transactionPhoto ? '✓ Tx Proof Uploaded' : '+ Upload Tx Proof *'}
+                            <input type="file" name="transactionPhoto" required accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
                           </label>
                         </div>
+                        <label style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border-color)', padding: '10px', borderRadius: '8px', textAlign: 'center', fontSize: '11px', cursor: 'pointer' }}>
+                          {formData.panPhoto ? '✓ PAN Card Uploaded' : '+ Upload PAN Card (Optional)'}
+                          <input type="file" name="panPhoto" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                        </label>
                       </div>
+
                     </>
                   )}
 
