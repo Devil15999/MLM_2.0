@@ -4,9 +4,10 @@ const approvalSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ['Enrolled Downline Commission', 'KYC Verification', 'Wallet Withdrawal', 'Joining Request'],
+      enum: ['Enrolled Downline Commission', 'KYC Verification', 'Wallet Withdrawal', 'Joining Request', 'Daily ROI Payout'],
       default: 'Enrolled Downline Commission',
     },
+
     sponsorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

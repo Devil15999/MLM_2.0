@@ -283,11 +283,17 @@ export const updateDailyRoi = async (req, res) => {
       const creditAmt = isL1 ? l1Amt : l2Amt;
 
       if (creditAmt > 0) {
-        u.investmentReturns = (u.investmentReturns || 0) + creditAmt;
-        u.walletBalance = (u.walletBalance || 0) + creditAmt;
-        u.totalIncome = (u.totalIncome || 0) + creditAmt;
-        u.totalEarnings = (u.totalEarnings || 0) + creditAmt;
-        await u.save();
+        await User.updateOne(
+          { _id: u._id },
+          {
+            $inc: {
+              investmentReturns: creditAmt,
+              walletBalance: creditAmt,
+              totalIncome: creditAmt,
+              totalEarnings: creditAmt
+            }
+          }
+        );
 
         if (isL1) l1Count++;
         else l2Count++;
@@ -318,7 +324,9 @@ export const updateDailyRoi = async (req, res) => {
       approvalLog
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[updateDailyRoi Error]:', error);
+    res.status(500).json({ message: error.message || 'Internal Server Error' });
   }
 };
+
 
