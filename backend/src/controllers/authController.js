@@ -198,6 +198,7 @@ export const loginUser = async (req, res) => {
       panNumber: user.panNumber,
       kycStatus: user.kycStatus,
       kycData: user.kycData,
+      isActionRestricted: Boolean(user.isActionRestricted),
       isOneTimePassword: !!user.isOneTimePassword,
       token: generateToken(user._id, user.role),
     };
@@ -231,6 +232,12 @@ export const setPermanentPassword = async (req, res) => {
     const user = await User.findById(targetUserId);
     if (!user) {
       return res.status(404).json({ message: 'User account not found.' });
+    }
+
+    if (user.isActionRestricted) {
+      return res.status(403).json({
+        message: 'Action restricted: Credential updates are locked for this verified compliance account.'
+      });
     }
 
     // Update to new permanent password & invalidate one-time password

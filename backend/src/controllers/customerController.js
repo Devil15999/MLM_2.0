@@ -104,6 +104,12 @@ export const updateCustomerProfile = async (req, res) => {
       return res.status(404).json({ message: 'Distributor not found' });
     }
 
+    if (user.isActionRestricted) {
+      return res.status(403).json({
+        message: 'Action restricted: Profile modifications are locked for verified accounts. Contact administrator to update details.'
+      });
+    }
+
     if (name) user.name = name;
     if (phone) {
       user.phone = phone;
@@ -153,6 +159,11 @@ export const updateCustomerKYC = async (req, res) => {
     if (userId) {
       const user = await User.findById(userId);
       if (user) {
+        if (user.isActionRestricted) {
+          return res.status(403).json({
+            message: 'Action restricted: KYC is already verified for this account. Contact compliance team for changes.'
+          });
+        }
         user.kycStatus = 'Under Review';
         if (panPhoto) user.panPhoto = panPhoto;
         if (panNumber) user.panNumber = panNumber;
@@ -254,6 +265,7 @@ export const getCustomerTeamDetails = async (req, res) => {
     console.log('[getTeamDetails] Logged-in user:', user?._id, user?.email, user?.sponsorId);
     let level1Members = [];
     let level2Members = [];
+    let level3Members = [];
 
     if (user) {
       const uId = user._id ? user._id.toString() : null;
@@ -286,7 +298,13 @@ export const getCustomerTeamDetails = async (req, res) => {
       ];
 
       const l1Approvals = l1ApprovalOrQueries.length > 0
-        ? await Approval.find({ $or: l1ApprovalOrQueries })
+        ? await Approval.find({
+            $and: [
+              { $or: l1ApprovalOrQueries },
+              { type: 'Enrolled Downline Commission' },
+              { position: { $not: /Level 2|L2|Secondary/i } }
+            ]
+          })
         : [];
 
       const existingL1Emails = new Set(level1Members.map(m => m.email.toLowerCase()));
@@ -375,14 +393,32 @@ export const getCustomerTeamDetails = async (req, res) => {
         }
       }
 
+      // 3. Level 3 downlines whose parent sponsor is any Level 2 member (No referral income)
+      const l2ObjectIds = level2Members.map(u => u._id).filter(id => id && mongoose.Types.ObjectId.isValid(id));
+      const l2SponsorCodes = level2Members.map(u => u.sponsorId).filter(Boolean);
+      const l2Emails = level2Members.map(u => u.email).filter(Boolean);
+
+      if (l2ObjectIds.length > 0 || l2SponsorCodes.length > 0 || l2Emails.length > 0) {
+        level3Members = await User.find({
+          _id: { $nin: [...excludedIds, ...l2ObjectIds] },
+          $or: [
+            ...(l2ObjectIds.length > 0 ? [{ parentSponsorId: { $in: l2ObjectIds } }] : []),
+            ...(l2SponsorCodes.length > 0 ? [{ parentSponsorCode: { $in: l2SponsorCodes } }] : []),
+            ...(l2Emails.length > 0 ? [{ parentSponsorEmail: { $in: l2Emails } }] : [])
+          ]
+        }).select('-password');
+      }
+
       // Calculate ONLY APPROVED node counts
       const approvedL1Count = level1Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
       const approvedL2Count = level2Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
+      const approvedL3Count = level3Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
 
       // Sync member counts on user document if updated
-      if (user.level1MembersCount !== approvedL1Count || user.level2MembersCount !== approvedL2Count) {
+      if (user.level1MembersCount !== approvedL1Count || user.level2MembersCount !== approvedL2Count || user.level3MembersCount !== approvedL3Count) {
         user.level1MembersCount = approvedL1Count;
         user.level2MembersCount = approvedL2Count;
+        user.level3MembersCount = approvedL3Count;
         user.downlineCount = approvedL1Count + approvedL2Count;
         await user.save().catch(() => null);
       }
@@ -390,14 +426,17 @@ export const getCustomerTeamDetails = async (req, res) => {
 
     const approvedL1Count = level1Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
     const approvedL2Count = level2Members.filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
+    const approvedL3Count = (typeof level3Members !== 'undefined' ? level3Members : []).filter(m => m.accountStatus === 'Approved' || m.accountStatus === 'Active' || m.status === 'Approved' || m.status === 'Active').length;
 
     res.json({
       maxLevels: 2,
       level1MembersCount: approvedL1Count,
       level2MembersCount: approvedL2Count,
+      level3MembersCount: approvedL3Count,
       totalTeamCount: approvedL1Count + approvedL2Count,
       level1Members,
       level2Members,
+      level3Members: typeof level3Members !== 'undefined' ? level3Members : [],
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -411,6 +450,12 @@ export const requestWalletWithdrawal = async (req, res) => {
     const user = req.user;
     if (!user) {
       return res.status(401).json({ message: 'Authentication required to raise withdrawal request.' });
+    }
+
+    if (user.isActionRestricted) {
+      return res.status(403).json({
+        message: 'Transaction restricted: Your account is currently undergoing scheduled security & compliance audit. Withdrawals are temporarily locked. Please contact support.'
+      });
     }
 
     const { amount, method } = req.body;
@@ -467,6 +512,12 @@ export const enrollDownlineMember = async (req, res) => {
     const enrollingUser = req.user;
     if (!enrollingUser) {
       return res.status(401).json({ message: 'Authentication required to enroll downline members.' });
+    }
+
+    if (enrollingUser.isActionRestricted) {
+      return res.status(403).json({
+        message: 'Action restricted: Account network enrollment is currently locked for verification. Please contact support.'
+      });
     }
     const userId = enrollingUser._id;
     const {
@@ -640,6 +691,11 @@ export const activateUserPackage = async (req, res) => {
     if (userId) {
       const user = await User.findById(userId);
       if (user) {
+        if (user.isActionRestricted) {
+          return res.status(403).json({
+            message: 'Action restricted: Package upgrades are currently locked for this verified distributor account.'
+          });
+        }
         user.selectedPackage = packageName;
         if (packageName.includes('Elite')) user.rank = 'Elite';
         else if (packageName.includes('Premium')) user.rank = 'Premium';

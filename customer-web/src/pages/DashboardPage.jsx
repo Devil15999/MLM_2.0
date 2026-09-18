@@ -124,6 +124,7 @@ export const DashboardPage = () => {
       return saved ? JSON.parse(saved) : [];
     } catch (e) { return []; }
   });
+  const [enrolledLevel3, setEnrolledLevel3] = useState([]);
 
   const [dynamicWallet, setDynamicWallet] = useState(user?.walletBalance ?? 0);
   const [dynamicTotalIncome, setDynamicTotalIncome] = useState(user?.totalIncome ?? 0);
@@ -151,7 +152,7 @@ export const DashboardPage = () => {
             joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
             status: m.accountStatus || 'Pending Admin Approval',
             accountStatus: m.accountStatus || 'Pending Admin Approval',
-            level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
+            level1Earned: m.selectedPackage?.includes('30,000') ? '₹3,000' : (m.selectedPackage?.includes('20,000') ? '₹2,000' : (m.selectedPackage?.includes('10,000') ? '₹1,000' : `₹${(m.level1AffiliateIncome || 1000).toLocaleString('en-IN')}`)),
             level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
             sponsor: user?.name || 'You'
           }));
@@ -167,10 +168,26 @@ export const DashboardPage = () => {
             status: m.accountStatus || 'Pending Admin Approval',
             accountStatus: m.accountStatus || 'Pending Admin Approval',
             level1Earned: `₹${(m.level1AffiliateIncome || 0).toLocaleString('en-IN')}`,
-            level2Earned: `₹${(m.level2AffiliateIncome || 0).toLocaleString('en-IN')}`,
-            sponsor: 'Level 1 Member'
+            level2Earned: '₹500',
+            sponsor: m.parentSponsorName || m.parentSponsorEmail || 'Level 1 Member'
           }));
           setEnrolledLevel2(mappedL2);
+        }
+        if (Array.isArray(data.level3Members)) {
+          const mappedL3 = data.level3Members.map((m) => ({
+            name: m.name,
+            email: m.email,
+            position: m.legPreference || 'Level 3 Node',
+            package: m.selectedPackage || 'Starter Package (₹10,000)',
+            joined: m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-IN') : 'Recent',
+            status: m.accountStatus || 'Approved',
+            accountStatus: m.accountStatus || 'Approved',
+            level1Earned: '₹0',
+            level2Earned: '₹0',
+            level3Earned: '₹0 (No referral income)',
+            sponsor: m.parentSponsorName || m.parentSponsorEmail || 'Level 2 Member'
+          }));
+          setEnrolledLevel3(mappedL3);
         }
       }
     } catch (err) { }
@@ -530,6 +547,7 @@ export const DashboardPage = () => {
 
   const level1MembersList = enrolledLevel1;
   const level2MembersList = enrolledLevel2;
+  const level3MembersList = enrolledLevel3;
 
   const safeNotifs = Array.isArray(notificationsList) ? notificationsList : [];
 
@@ -1674,6 +1692,13 @@ export const DashboardPage = () => {
                     >
                       <Layers size={16} /> Level 2 Indirect Members ({approvedL2Members.length})
                     </button>
+                    <button
+                      onClick={() => setTeamTab('level3')}
+                      className={teamTab === 'level3' ? 'btn-amber' : 'btn-outline'}
+                      style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Layers size={16} /> Level 3 Downline ({level3MembersList.length} - No Referral Income)
+                    </button>
                   </div>
                 </div>
 
@@ -1820,6 +1845,63 @@ export const DashboardPage = () => {
                                 </tr>
                               );
                             })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: LEVEL 3 DOWNLINE MEMBERS */}
+                {teamTab === 'level3' && (
+                  <div>
+                    <div style={{ marginBottom: '16px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>Level 3 Downline Roster</h4>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Members enrolled by your Level 2 downlines (Level 3 - No referral income as per compensation plan)</p>
+                    </div>
+
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            <th style={{ padding: '12px 16px' }}>Member Name</th>
+                            <th style={{ padding: '12px 16px' }}>Direct Sponsor (Level 2)</th>
+                            <th style={{ padding: '12px 16px' }}>Email</th>
+                            <th style={{ padding: '12px 16px' }}>Package Tier</th>
+                            <th style={{ padding: '12px 16px' }}>Referral Income</th>
+                            <th style={{ padding: '12px 16px' }}>Status</th>
+                            <th style={{ padding: '12px 16px' }}>Joined Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {level3MembersList.length === 0 ? (
+                            <tr>
+                              <td colSpan="7" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                No Level 3 members yet.
+                              </td>
+                            </tr>
+                          ) : (
+                            level3MembersList.map((m, idx) => (
+                              <tr key={m._id || idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                                <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-main)' }}>{m.name}</td>
+                                <td style={{ padding: '14px 16px', fontWeight: '700', color: '#d97706' }}>{m.sponsor || 'Level 2 Sponsor'}</td>
+                                <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '13px' }} className="code-font">{m.email}</td>
+                                <td style={{ padding: '14px 16px' }}>
+                                  <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', background: '#fef3c7', color: '#92400e' }}>
+                                    {m.package || 'Starter Package (₹10,000)'}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '14px 16px', fontWeight: '700', color: '#64748b' }}>
+                                  ₹0 (No Referral Income)
+                                </td>
+                                <td style={{ padding: '14px 16px' }}>
+                                  <span style={{ background: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '10px' }}>
+                                    🟢 Approved
+                                  </span>
+                                </td>
+                                <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>{m.joined || 'Recent'}</td>
+                              </tr>
+                            ))
                           )}
                         </tbody>
                       </table>

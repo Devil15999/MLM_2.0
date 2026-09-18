@@ -104,6 +104,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    level3MembersCount: {
+      type: Number,
+      default: 0,
+    },
+    isActionRestricted: {
+      type: Boolean,
+      default: false,
+    },
     level1AffiliateIncome: {
       type: Number,
       default: 0.00,
